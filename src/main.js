@@ -87,3 +87,9 @@ demoToggle.addEventListener('click', () => {
  $('demo-caption').textContent = removed ? 'Background removed · Click to see the original' : 'Original photo · Click to reveal the cutout';
  $('demo-label').replaceChildren(document.createTextNode(removed ? 'Click to see the original ↶' : 'Click to remove the background ↗'));
 });
+
+import {watchGoogleAuth,signInWithGoogle,signOutGoogle} from './firebase-auth.js';
+const signInButton=$('google-signin'),accountControl=$('account-control'),authStatus=$('auth-status');
+watchGoogleAuth(user=>{signInButton.hidden=Boolean(user);accountControl.hidden=!user;authStatus.textContent=user?'Google account connected. Photo processing still happens on this device.':'';},()=>{authStatus.textContent='Google sign-in is temporarily unavailable.';});
+signInButton.onclick=async()=>{signInButton.disabled=true;authStatus.textContent='Opening Google sign-in…';try{await signInWithGoogle();}catch(error){authStatus.textContent=error?.code==='auth/popup-closed-by-user'?'Sign-in was cancelled.':'Could not sign in with Google. Please try again.';}finally{signInButton.disabled=false;}};
+$('#google-signout').onclick=async()=>{try{await signOutGoogle();authStatus.textContent='Signed out.';}catch{authStatus.textContent='Could not sign out. Please try again.';}};
