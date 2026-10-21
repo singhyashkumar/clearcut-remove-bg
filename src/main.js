@@ -94,5 +94,5 @@ function googleAuthMessage(error){switch(error?.code){case'auth/unauthorized-dom
 signInButton.disabled=true;
 watchGoogleAuth(user=>{signInButton.hidden=Boolean(user);accountControl.hidden=!user;authStatus.textContent=user?'Google account connected. Photo processing still happens on this device.':'';},error=>{authStatus.textContent=googleAuthMessage(error);}).then(()=>{signInButton.disabled=false;}).catch(()=>{});
 signInButton.onclick=async()=>{signInButton.disabled=true;authStatus.textContent='Opening Google sign-in…';try{await signInWithGoogle();}catch(error){authStatus.textContent=googleAuthMessage(error);}finally{signInButton.disabled=false;}};
-$('#google-signout').onclick=async()=>{try{await signOutGoogle();authStatus.textContent='Signed out.';}catch{authStatus.textContent='Could not sign out. Please try again.';}};
+$('google-signout').onclick=async()=>{try{await signOutGoogle();authStatus.textContent='Signed out.';}catch{authStatus.textContent='Could not sign out. Please try again.';}};
 
