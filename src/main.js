@@ -1,11 +1,12 @@
 import {validateFile,MAX_PIXELS,alphaBounds,brushAlpha} from './image-utils.js';
 const $=id=>document.getElementById(id);
 const canvas=$('canvas'),ctx=canvas.getContext('2d',{willReadFrequently:true});
+const canvasWrap=$('canvas-wrap'),brushCursor=$('brush-cursor');
 let controller=null,busy=false,source=null,basePixels=null,alpha=null,initialAlpha=null,sourceAlpha=null,undo=null,bg=null,background='transparent',tool='view',sourceUrl=null,drawing=false,lastPoint=null,frame=0,runId=0,bgRevision=0;
 const cutout=document.createElement('canvas'),cutCtx=cutout.getContext('2d');
 function fail(message){$('error').textContent=message;$('error').hidden=false;}
 function panels(mode){$('showcase').hidden=mode!=='upload';$('upload-panel').hidden=mode!=='upload';$('processing').hidden=mode!=='processing';$('editor').hidden=mode!=='editor';}
-function setTool(value){tool=value;for(const id of ['move','erase','restore'])$(id).classList.toggle('active',(id==='move'?'view':id)===value);canvas.style.cursor=value==='view'?'default':'crosshair';if(value!=='view')showResult();}
+function setTool(value){tool=value;for(const id of ['move','erase','restore'])$(id).classList.toggle('active',(id==='move'?'view':id)===value);canvas.style.cursor='default';if(value==='view')canvasWrap.classList.remove('brush-visible');else if(canvas.matches(':hover'))canvasWrap.classList.add('brush-visible');if(value!=='view')showResult();}
 function showResult(){canvas.hidden=false;$('original').hidden=true;$('result-view').classList.add('active');$('original-view').classList.remove('active');}
 function release(){cancelAnimationFrame(frame);frame=0;drawing=false;lastPoint=null;source?.close();source=null;bg?.close();bg=null;basePixels=alpha=initialAlpha=sourceAlpha=undo=null;if(sourceUrl)URL.revokeObjectURL(sourceUrl);sourceUrl=null;$('original').removeAttribute('src');canvas.width=canvas.height=cutout.width=cutout.height=1;$('undo').disabled=true;$('file').value='';$('bg-file').value='';$('edit-status').textContent='';}
 function reset(){++runId;controller?.abort();controller=null;busy=false;release();panels('upload');$('error').hidden=true;}
@@ -55,9 +56,11 @@ document.querySelectorAll('[data-color]').forEach(b=>b.onclick=()=>{bgRevision++
 $('color').oninput=e=>{bgRevision++;background=e.target.value;bg?.close();bg=null;selectSwatch('');showResult();render();};
 $('bg-file').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;const ticket=runId,revision=++bgRevision;try{await validateFile(f);const b=await createImageBitmap(f);if(b.width*b.height>MAX_PIXELS){b.close();throw Error('Background photos must be up to 25 megapixels.');}if(!basePixels||ticket!==runId||revision!==bgRevision){b.close();return;}bg?.close();bg=b;selectSwatch('');showResult();render();}catch(e){fail(e.message);}};
 for(const [id,value] of [['move','view'],['erase','erase'],['restore','restore']])$(id).onclick=()=>setTool(value);
-$('brush').oninput=e=>$('brush-value').value=e.target.value;
+function updateBrushCursor(e){const wrap=canvasWrap.getBoundingClientRect();brushCursor.style.left=`${e.clientX-wrap.left}px`;brushCursor.style.top=`${e.clientY-wrap.top}px`;}
+function resizeBrushCursor(){const size=`${$('brush').value}px`;brushCursor.style.width=size;brushCursor.style.height=size;}
+$('brush').oninput=e=>{$('brush-value').value=e.target.value;resizeBrushCursor();};resizeBrushCursor();
 function paint(e){const rect=canvas.getBoundingClientRect();const point={x:(e.clientX-rect.left)*canvas.width/rect.width,y:(e.clientY-rect.top)*canvas.height/rect.height};const radius=Number($('brush').value)*canvas.width/rect.width/2;const start=lastPoint??point;const count=Math.max(1,Math.ceil(Math.hypot(point.x-start.x,point.y-start.y)/Math.max(1,radius/3)));for(let n=1;n<=count;n++)brushAlpha(alpha,sourceAlpha,canvas.width,canvas.height,start.x+(point.x-start.x)*n/count,start.y+(point.y-start.y)*n/count,radius,tool==='restore');lastPoint=point;queueRender();}
-canvas.addEventListener('pointerdown',e=>{if(tool==='view'||!alpha||e.button!==0)return;undo=alpha.slice();$('undo').disabled=false;drawing=true;lastPoint=null;canvas.setPointerCapture(e.pointerId);paint(e);});canvas.addEventListener('pointermove',e=>{if(drawing)paint(e);});function endStroke(){drawing=false;lastPoint=null;}canvas.addEventListener('pointerup',endStroke);canvas.addEventListener('pointercancel',endStroke);
+canvas.addEventListener('pointerdown',e=>{updateBrushCursor(e);if(tool==='view'||!alpha||e.button!==0)return;undo=alpha.slice();$('undo').disabled=false;drawing=true;lastPoint=null;canvas.setPointerCapture(e.pointerId);paint(e);});canvas.addEventListener('pointermove',e=>{updateBrushCursor(e);if(drawing)paint(e);});canvas.addEventListener('pointerleave',()=>{if(!drawing)canvasWrap.classList.remove('brush-visible');});canvas.addEventListener('pointerenter',e=>{if(tool!=='view'&&alpha){canvasWrap.classList.add('brush-visible');updateBrushCursor(e);}});function endStroke(){drawing=false;lastPoint=null;if(!canvas.matches(':hover'))canvasWrap.classList.remove('brush-visible');}canvas.addEventListener('pointerup',endStroke);canvas.addEventListener('pointercancel',endStroke);
 $('undo').onclick=()=>{if(undo){alpha=undo;undo=null;$('undo').disabled=true;render();}};$('reset-mask').onclick=()=>{if(!alpha)return;undo=alpha.slice();$('undo').disabled=false;alpha=initialAlpha.slice();render();};
 $('download').onclick=async()=>{
  const button=$('download');button.disabled=true;
