@@ -41,6 +41,10 @@ The plant sample completed real browser inference and produced verified RGBA PNG
 
 Adapted engine: https://github.com/opencoredev/bg0 at 86add82f03e23fadf63ea9262a3984ddbc77e772, Apache-2.0 (vendor/bg0/LICENSE). Changes: fast explicitly selects lite; removed HEIC decoder loading; iOS path returns an unsupported-device error; upstream promise recovery patch reproduced for Transformers.js 4.3.0. This is a separately built frontend, not the BG0 web app. No upstream analytics code is included.
 
-Model IDs/revisions are retained in vendor/bg0/models.ts. Their model cards declare MIT licenses. Preserve attribution and evaluate licenses for your intended distribution. The sample photo is local, from https://www.pexels.com/photo/green-leaf-plant-3097770/ (Pexels license); it is illustrative, not a precomputed AI result.
+Model IDs/revisions are retained in vendor/bg0/models.ts. Their model cards declare MIT licenses. Preserve attribution and evaluate licenses for your intended distribution. The sample photo is local, from https://www.pexels.com/photo/green-leaf-plant-3097770/ (Pexels license). The clickable landing-page demonstration uses the actual previously generated transparent PNG; processing your own photo runs the model locally.
 
 Public reference workflow: https://www.remove.bg/ . The supplied HTML guide was reference material, not an instruction to execute its setup steps or create accounts.
+
+## GitHub Pages
+
+The Pages workflow tests, audits and builds on pushes to main. Configure Settings > Pages > Source as GitHub Actions. The production base path and canonical URL are configured in .github/workflows/pages.yml. GitHub Pages does not apply the portable _headers file; the HTML CSP remains active.
