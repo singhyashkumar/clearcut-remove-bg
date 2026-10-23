@@ -39,9 +39,9 @@ export const pages = [
  ['contact','Contact Clearcut and Get Help','Troubleshoot the editor, report a technical issue and learn what to do if a payment is charged but membership is not active.',[
  ['Processing help','Use current desktop Chrome or Edge, check your connection for the first model download, and try Fast if memory is limited. Save your edits before refreshing. iOS and HEIC are unsupported. See the background removal guide for the complete workflow.'],
  ['Charged but Plus is missing','Do not pay again. Sign into the same Google account used at checkout and return to the site so membership can refresh. Keep the Razorpay payment receipt for private support. A different Google account does not inherit the original account’s membership.'],
- ['Report technical issues','Use the project’s public GitHub issue tracker for technical bugs. Describe the browser, operating system, error and steps to reproduce. Do not publish your email address, photos, payment IDs, tokens or card details there. A dedicated private billing-support address has not yet been published.'],
- ['Renewal and paid-launch status','Access lasts 30 days and renewal requires another deliberate payment; there is no automatic subscription charge. Refund terms and a private billing-support route still need to be finalized before a broader paid launch.']]]
-].map(([slug,title,description,sections]) => ({slug,title,description,sections}));
+ ['Private support and data requests','Email yxsingh2@gmail.com for membership, payment activation, account correction or deletion requests. For a payment problem, include the Google account used at checkout, the payment date and Razorpay reference. Never send card numbers, CVVs, passwords, OTPs or UPI PINs. For technical bugs, describe your browser, operating system, error and steps to reproduce. The GitHub issue tracker is public: keep personal data out of reports.'],
+ ['Renewal and paid-launch status','Access lasts 30 days and renewal requires another deliberate payment; there is no automatic subscription charge. Refund terms still need to be finalized before a broader paid launch. Contact support before paying again if a transaction is unclear.']]]
+].map(([slug,title,description,sections]) => ({slug,title,description,sections:slug==='privacy'?[...sections,['Contact for privacy requests','Email yxsingh2@gmail.com to request correction or deletion of your account information. Identify the Google account concerned; Clearcut may need to verify account ownership. Do not send passwords or payment instrument credentials. Financial records that must be retained may be excluded from deletion.']]:sections}));
 const links = () => pages.map(p => `<li><a href="${site}${p.slug}/">${escape(p.title)}</a></li>`).join('');
 const description = 'Remove image backgrounds for free with Clearcut. Create transparent PNGs, add white or colored backgrounds, and refine cutouts privately on your device.';
 export const schema = {'@context':'https://schema.org','@graph':[
@@ -53,7 +53,8 @@ export function enhanceHome(html) {
  return html.replace(/<title>.*?<\/title>/,'<title>Remove Background from Image for Free | Clearcut Remove BG</title>')
  .replace(/<meta name="description" content="[^"]*">/,`<meta name="description" content="${description}">`)
  .replace('</head>',`<meta name="robots" content="index,follow,max-image-preview:large"><script type="application/ld+json">${JSON.stringify(schema)}</script></head>`)
- .replace('<section class="final-cta">',`${guides}<section class="final-cta">`);
+ .replace('<section class="final-cta">',`${guides}<section class="final-cta">`)
+ .replace('</footer>','<a href="/about/">About</a><a href="/privacy/">Privacy</a><a href="/contact/">Contact</a><a href="mailto:yxsingh2@gmail.com">Support</a></footer>');
 }
 export function renderPage(p) {
  const url=`${site}${p.slug}/`;
