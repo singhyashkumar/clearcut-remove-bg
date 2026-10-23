@@ -65,4 +65,4 @@ The frontend displays a Plus badge, membership email and expiry, and an explicit
 
 Before deploying backend changes, run `npm test`, inspect pending D1 migrations and apply them to `clearcut-payments` using Wrangler, then deploy the Worker. Deploy the frontend through the existing GitHub Pages workflow. Never commit `.dev.vars`, `.env.local`, API secrets or D1 data.
 
-The hero uses the supplied `public/artwork/hero-demo.mp4` as muted, inline, looping autoplay video without player controls. Reduced-motion users see it paused. Browsers may block autoplay or evict cached assets.
+The hero uses `public/artwork/hero-demo.gif`, converted from the supplied video to a 360px-wide, 10 fps, 64-color continuously looping GIF (about 2 MB). There are no player controls. Reduced-motion users see `hero-demo.jpg` unless they enable Animated preview; that explicit preference is saved in the browser. The original MP4 remains available as a source asset.

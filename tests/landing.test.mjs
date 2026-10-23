@@ -7,7 +7,7 @@ import { createHash } from 'node:crypto';
 const source = readFileSync(new URL('../src/landing.js', import.meta.url), 'utf8')
   .replace("import useCases from './use-cases.json' with { type: 'json' };", `const useCases = ${readFileSync(new URL('../src/use-cases.json', import.meta.url), 'utf8')};`)
   .replaceAll('import.meta.env.BASE_URL', "'/test-base/'");
-const { initLanding, initHeroVideo } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
+const { initLanding, initHeroAnimation } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
 
 class Element extends EventTarget {
   constructor(id, dataset = {}) {
@@ -67,55 +67,48 @@ test('use-case cards open their actual content and close returns keyboard focus'
 test('original artwork is not reused across sections and borrowed media is absent', () => {
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   assert.equal(html.includes('examples/'), false);
-  assert.match(html, /<video[^>]*autoplay[^>]*muted[^>]*loop[^>]*playsinline/);
-  assert.doesNotMatch(html.match(/<video[^>]*>/)[0], /\bcontrols(?:=|\s|>)/);
+  assert.equal(html.includes('<video'), false);
+  assert.match(html, /id="hero-animation"[^>]+data-animation-src="%BASE_URL%artwork\/hero-demo\.gif"/);
+  assert.equal(readFileSync(new URL('../public/artwork/hero-demo.gif', import.meta.url)).subarray(0, 6).toString(), 'GIF89a');
   const comparison = new Set(['products', 'people', 'animals', 'cars', 'graphics'].map(category => `%BASE_URL%artwork/${category}.png`));
   const outsideComparison = html.replace(/<div id="quality-panel"[\s\S]*?<\/section>/, '');
   const outsideImages = [...outsideComparison.matchAll(/<img[^>]+src="([^"]+)"/g)].map(match => match[1]);
   assert.equal(new Set(outsideImages).size, outsideImages.length, 'A display image was repeated in another section');
   for (const path of outsideImages) assert.equal(comparison.has(path), false, 'Comparison artwork must not reappear in other sections');
-  const paths = [...new Set([...outsideImages, ...comparison, '%BASE_URL%artwork/hero.png'])];
+  const paths = [...new Set([...outsideImages, ...comparison])];
   assert.equal(paths.length, 9, 'The nine original artwork assets must all be represented');
   const hashes = paths.map(path => createHash('sha256').update(readFileSync(new URL(`../public/${path.replace('%BASE_URL%', '')}`, import.meta.url))).digest('hex'));
   assert.equal(new Set(hashes).size, hashes.length, 'The same image was copied to a different filename');
 });
 
 
-test('hero video plays silently, respects reduced motion and handles autoplay rejection', async () => {
-  const motion = new EventTarget();
-  motion.matches = false;
-  const video = { muted: false, currentTime: 3, plays: 0, pauses: 0,
-    play() { this.plays++; return Promise.reject(new Error('Autoplay blocked')); },
-    pause() { this.pauses++; } };
-  initHeroVideo(video, motion);
-  assert.equal(video.muted, true);
-  assert.equal(video.plays, 1);
+test('hero GIF animates by default and uses its still frame for reduced motion', () => {
+  const motion = new EventTarget(); motion.matches = false;
+  const image = { dataset: { animationSrc: '/hero.gif', posterSrc: '/hero.jpg' } };
+  initHeroAnimation(image, motion);
+  assert.equal(image.src, '/hero.gif');
   motion.matches = true;
   motion.dispatchEvent(new Event('change'));
-  assert.equal(video.pauses, 1);
-  assert.equal(video.currentTime, 0);
-  motion.matches = false;
-  motion.dispatchEvent(new Event('change'));
-  assert.equal(video.plays, 2);
-  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(image.src, '/hero.jpg');
 });
 
-
-test('explicit animation preference overrides reduced motion and is restored on later visits', () => {
+test('explicit GIF preference overrides reduced motion and is restored on later visits', () => {
   const motion = new EventTarget(); motion.matches = true;
   const preference = new EventTarget(); preference.checked = false;
   const values = new Map();
   const storage = { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value) };
-  const video = { muted: false, plays: 0, pauses: 0, play() { this.plays++; return Promise.resolve(); }, pause() { this.pauses++; } };
-  initHeroVideo(video, motion, preference, storage);
-  assert.equal(video.plays, 0);
+  const image = { dataset: { animationSrc: '/hero.gif', posterSrc: '/hero.jpg' } };
+  initHeroAnimation(image, motion, preference, storage);
+  assert.equal(image.src, '/hero.jpg');
   preference.checked = true;
   preference.dispatchEvent(new Event('change'));
-  assert.equal(video.plays, 1);
+  assert.equal(image.src, '/hero.gif');
   assert.equal(storage.getItem('clearcut-hero-motion'), 'on');
-  initHeroVideo(video, motion, new EventTarget(), storage);
-  assert.equal(video.plays, 2);
+  const restored = { dataset: image.dataset };
+  initHeroAnimation(restored, motion, new EventTarget(), storage);
+  assert.equal(restored.src, '/hero.gif');
   preference.checked = false;
   preference.dispatchEvent(new Event('change'));
+  assert.equal(image.src, '/hero.jpg');
   assert.equal(storage.getItem('clearcut-hero-motion'), 'off');
 });
