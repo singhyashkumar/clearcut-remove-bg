@@ -25,8 +25,8 @@ export function initLanding(doc) {
       item.tabIndex = item === tab ? 0 : -1;
     }
     comparison.style.setProperty('--preview-background', backdrops[category]);
-    before.src = `${import.meta.env.BASE_URL}artwork/${category}.png`;
-    after.src = `${import.meta.env.BASE_URL}artwork/${category}.png`;
+    before.src = `${import.meta.env.BASE_URL}artwork/${category}.webp`;
+    after.src = `${import.meta.env.BASE_URL}artwork/${category}.webp`;
     before.alt = `Original ${category} Clearcut artwork on a studio backdrop`;
     after.alt = `Original ${category} Clearcut artwork on transparency`;
     panel.setAttribute('aria-labelledby', tab.id);
