@@ -77,17 +77,28 @@ export function initLanding(doc) {
   });
 }
 
-export function initHeroVideo(video, motion) {
+export function initHeroVideo(video, motion, preference, storage) {
   if (!video) return;
+  let saved = null;
+  try { saved = storage?.getItem('clearcut-hero-motion'); } catch {}
   const update = () => {
-    if (motion.matches) { video.pause(); video.currentTime = 0; }
-    else { video.muted = true; video.play().catch(() => {}); }
+    const animate = saved === 'on' || (saved !== 'off' && !motion.matches);
+    if (preference) preference.checked = animate;
+    if (animate) { video.muted = true; video.play().catch(() => {}); }
+    else { video.pause(); video.currentTime = 0; }
   };
+  preference?.addEventListener('change', () => {
+    saved = preference.checked ? 'on' : 'off';
+    try { storage?.setItem('clearcut-hero-motion', saved); } catch {}
+    update();
+  });
   motion.addEventListener('change', update);
   update();
 }
 
 if (typeof document !== 'undefined') {
   initLanding(document);
-  initHeroVideo(document.getElementById('hero-video'), window.matchMedia('(prefers-reduced-motion: reduce)'));
+  let storage;
+  try { storage = window.localStorage; } catch {}
+  initHeroVideo(document.getElementById('hero-video'), window.matchMedia('(prefers-reduced-motion: reduce)'), document.getElementById('hero-motion'), storage);
 }

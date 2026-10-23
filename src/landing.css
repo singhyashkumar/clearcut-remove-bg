@@ -20,3 +20,5 @@ header{height:72px;max-width:none;padding:0 32px;gap:32px;border-bottom:1px soli
 .hero-video-frame>img{display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:cover}.quality-comparison>img{object-fit:contain}.quality-comparison .quality-before{position:absolute;inset:0;background:linear-gradient(150deg,#ffffff60,transparent 65%),var(--preview-background,#dce8d8)}.quality-before>img{display:block;width:100%;height:100%;object-fit:contain}.inspiration-montage{margin:0}.inspiration-montage img{width:100%;height:auto;display:block;border-radius:20px}.inspiration-montage figcaption{font-size:13px;line-height:1.6;margin-top:16px;color:var(--muted)}
 
 .hero-video-frame video{object-fit:cover}
+
+.motion-setting{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);cursor:pointer}.motion-setting input{accent-color:var(--green)}

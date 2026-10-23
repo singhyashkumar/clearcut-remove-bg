@@ -99,3 +99,23 @@ test('hero video plays silently, respects reduced motion and handles autoplay re
   assert.equal(video.plays, 2);
   await new Promise(resolve => setImmediate(resolve));
 });
+
+
+test('explicit animation preference overrides reduced motion and is restored on later visits', () => {
+  const motion = new EventTarget(); motion.matches = true;
+  const preference = new EventTarget(); preference.checked = false;
+  const values = new Map();
+  const storage = { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value) };
+  const video = { muted: false, plays: 0, pauses: 0, play() { this.plays++; return Promise.resolve(); }, pause() { this.pauses++; } };
+  initHeroVideo(video, motion, preference, storage);
+  assert.equal(video.plays, 0);
+  preference.checked = true;
+  preference.dispatchEvent(new Event('change'));
+  assert.equal(video.plays, 1);
+  assert.equal(storage.getItem('clearcut-hero-motion'), 'on');
+  initHeroVideo(video, motion, new EventTarget(), storage);
+  assert.equal(video.plays, 2);
+  preference.checked = false;
+  preference.dispatchEvent(new Event('change'));
+  assert.equal(storage.getItem('clearcut-hero-motion'), 'off');
+});
