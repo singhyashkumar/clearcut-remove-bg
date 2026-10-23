@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "clearcut-payments",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-10-23",
+  "workers_dev": true,
+  "vars": {
+    "FIREBASE_PROJECT_ID": "clearcut-remove-bg",
+    "PAYMENT_MODE": "live",
+    "PLAN_AMOUNT_PAISE": "9000",
+    "ALLOWED_ORIGINS": "https://clearcutt.in,https://www.clearcutt.in,https://singhyashkumar.github.io,http://localhost:5173,http://127.0.0.1:5173"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "clearcut-payments",
+      "database_id": "4e0a230f-2698-4f5f-b721-e0473c40021f",
+      "migrations_dir": "worker/migrations"
+    }
+  ]
+}

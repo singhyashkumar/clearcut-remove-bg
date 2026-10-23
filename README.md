@@ -53,3 +53,16 @@ The Pages workflow tests, audits and builds on pushes to main. Configure Setting
 ## Original artwork update
 
 The live landing page now uses nine original AI-generated artwork assets under `public/artwork/`. The previous third-party reference image/video files were removed. The comparison slider demonstrates the same generated cutout on a CSS studio backdrop and on transparency; it does not claim to show a measured model result. The upload sample uses the original generated ceramic-artist photo. Original output resolution and PNG alpha are preserved. See `ARTWORK.md` for prompts and provenance.
+
+
+## Paid accounts and membership
+
+The payment backend is a Cloudflare Worker (`worker/index.js`) with D1. Razorpay orders are priced server-side at INR 90 for 30 days; renewal is a one-time manual payment, not an automatic subscription. Secrets stay in Worker secrets. Firebase Google sign-in remains on the free plan, and image processing stays in the browser.
+
+The `entitlements` table persists the account UID, plan, expiry and limits. The `accounts` table stores the verified Google email alongside that UID. The backend extracts the email only from a validated Firebase token with `email_verified: true`. A matching email alone does not grant or transfer access. Existing paid users are linked to their verified email on their next authenticated membership request. Signing out clears the visible badge, not the saved membership; signing back into the same Google account restores it.
+
+The frontend displays a Plus badge, membership email and expiry, and an explicit extension action. Server membership checks run after sign-in and when returning to the window. Quotas remain soft guidance because processing is local, and the current editor supports one photo at a time.
+
+Before deploying backend changes, run `npm test`, inspect pending D1 migrations and apply them to `clearcut-payments` using Wrangler, then deploy the Worker. Deploy the frontend through the existing GitHub Pages workflow. Never commit `.dev.vars`, `.env.local`, API secrets or D1 data.
+
+The hero uses the supplied `public/artwork/hero-demo.mp4` as muted, inline, looping autoplay video without player controls. Reduced-motion users see it paused. Browsers may block autoplay or evict cached assets.

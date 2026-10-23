@@ -74,12 +74,13 @@ $('download').onclick=async()=>{
 };
 window.addEventListener('pagehide',()=>{controller?.abort();release();});
 
+import {renderMembership} from './membership.js';
 import {watchGoogleAuth,signInWithGoogle,signOutGoogle,getGoogleAuthToken} from './firebase-auth.js';
 const signInButton=$('google-signin'),accountControl=$('account-control'),authStatus=$('auth-status');
-let refreshPaymentEntitlement=()=>{};
+let refreshPaymentEntitlement=()=>{},currentUser=null,authRevision=0;
 function googleAuthMessage(error){switch(error?.code){case'auth/unauthorized-domain':return'This site is not yet enabled for Google sign-in.';case'auth/operation-not-allowed':return'Google sign-in is disabled in Firebase settings.';case'auth/popup-blocked':return'Your browser blocked the sign-in window. Allow pop-ups for this site and try again.';case'auth/popup-closed-by-user':return'Sign-in was cancelled.';case'auth/network-request-failed':return'Google sign-in could not connect. Check your connection and try again.';default:return'Google sign-in failed ('+(error?.code||error?.name||'unknown error')+'). Refresh the page and try again.';}}
 signInButton.disabled=true;
-watchGoogleAuth(user=>{signInButton.hidden=Boolean(user);accountControl.hidden=!user;authStatus.textContent=user?'Google account connected. Photo processing still happens on this device.':'';if(user)refreshPaymentEntitlement();},error=>{authStatus.textContent=googleAuthMessage(error);}).then(()=>{signInButton.disabled=false;}).catch(()=>{});
+watchGoogleAuth(user=>{currentUser=user;authRevision++;renderMembership(document,user,null,paymentMode);signInButton.hidden=Boolean(user);accountControl.hidden=!user;authStatus.textContent=user?'Google account connected. Photo processing still happens on this device.':'';if(user)refreshPaymentEntitlement();},error=>{authStatus.textContent=googleAuthMessage(error);}).then(()=>{signInButton.disabled=false;}).catch(()=>{});
 signInButton.onclick=async()=>{signInButton.disabled=true;authStatus.textContent='Opening Google sign-in…';try{await signInWithGoogle();}catch(error){authStatus.textContent=googleAuthMessage(error);}finally{signInButton.disabled=false;}};
 $('google-signout').onclick=async()=>{try{await signOutGoogle();authStatus.textContent='Signed out.';}catch{authStatus.textContent='Could not sign out. Please try again.';}};
 
@@ -99,22 +100,23 @@ async function paymentRequest(endpoint,body,token,method='POST'){
  return result;
 }
 refreshPaymentEntitlement=async()=>{
- if(!paymentApiBase)return;
- try{const token=await getGoogleAuthToken();const {entitlement}=await paymentRequest('entitlement',null,token,'GET');if(entitlement){paymentStatus.textContent=`Clearcut Plus is active until ${new Date(entitlement.expires_at*1000).toLocaleDateString()}. Renew manually; no automatic payment.`;}}
- catch{}
+ if(!paymentApiBase||!currentUser)return;
+ const revision=authRevision,user=currentUser;
+ try{const token=await getGoogleAuthToken();const {entitlement}=await paymentRequest('entitlement',null,token,'GET');if(revision===authRevision)renderMembership(document,user,entitlement,paymentMode);}
+ catch{if(revision===authRevision)paymentStatus.textContent='Could not check membership. Your saved access is unchanged. Refresh to retry.';}
 };
+window.addEventListener('focus',()=>refreshPaymentEntitlement());
 checkoutButton.onclick=async()=>{
  checkoutButton.disabled=true;paymentStatus.textContent=paymentMode==='live'?'Opening secure checkout…':'Opening ₹90 sandbox checkout…';
  try{
-  const token=await getGoogleAuthToken();await loadRazorpay();
-  const order=await paymentRequest('createOrder',{plan:'plus-monthly'},token);
+  const revision=authRevision;const token=await getGoogleAuthToken();await loadRazorpay();
+  const order=await paymentRequest('createOrder',{plan:'plus-monthly'},token);if(revision!==authRevision)throw Error('Your account changed. Please start checkout again.');
   const checkout=new window.Razorpay({key:order.key_id,order_id:order.order_id,amount:order.amount,currency:order.currency,name:'Clearcut Remove BG',description:'Clearcut Plus · 30-day access · renew manually',modal:{ondismiss:()=>{paymentStatus.textContent="Checkout closed. If payment went through, we'll confirm it before activating access.";}},handler:async result=>{
    paymentStatus.textContent='Verifying payment securely…';
-   try{const verified=await paymentRequest('verifyPayment',result,await getGoogleAuthToken());const until=new Date(verified.entitlement.expires_at*1000).toLocaleDateString();paymentStatus.textContent=`Payment verified. Clearcut Plus is active until ${until}. Renew manually; no automatic payment.`;}
-   catch{paymentStatus.textContent='We could not verify this payment yet. Do not pay again; check your Razorpay payment status and contact support if it was charged.';}
+   try{const verified=await paymentRequest('verifyPayment',result,await getGoogleAuthToken());if(revision===authRevision)renderMembership(document,currentUser,verified.entitlement,paymentMode);}
+   catch{if(revision===authRevision)paymentStatus.textContent='We could not verify this payment yet. Do not pay again; check your Razorpay payment status and contact support if it was charged.';}
   }});
   checkout.on('payment.failed',()=>{paymentStatus.textContent='Payment failed. No plan was activated; you can retry.';});checkout.open();
  }catch(error){paymentStatus.textContent=error.message || 'Checkout could not continue. Please try again.';}
  finally{checkoutButton.disabled=false;}
 };
-
