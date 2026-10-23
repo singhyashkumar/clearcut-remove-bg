@@ -12,3 +12,6 @@ ONNX Runtime: https://github.com/microsoft/onnxruntime, MIT, copyright Microsoft
 The HEIC and iOS native runtimes are not distributed or loaded by this application.
 
 Sample photography: https://www.pexels.com/photo/green-leaf-plant-3097770/ under the Pexels license https://www.pexels.com/license/ .
+
+Landing-page cat photo: Pexels photo 1170986, https://www.pexels.com/photo/1170986/ under https://www.pexels.com/license/. Original and BG0 cutout reused from the Apache-2.0 BG0 example assets.
+Fonts: Poppins and Open Sans, SIL Open Font License; licenses in fonts/. Fonts are served locally.
