@@ -77,4 +77,17 @@ export function initLanding(doc) {
   });
 }
 
-if (typeof document !== 'undefined') initLanding(document);
+export function initHeroVideo(video, motion) {
+  if (!video) return;
+  const update = () => {
+    if (motion.matches) { video.pause(); video.currentTime = 0; }
+    else { video.muted = true; video.play().catch(() => {}); }
+  };
+  motion.addEventListener('change', update);
+  update();
+}
+
+if (typeof document !== 'undefined') {
+  initLanding(document);
+  initHeroVideo(document.getElementById('hero-video'), window.matchMedia('(prefers-reduced-motion: reduce)'));
+}

@@ -114,7 +114,7 @@ checkoutButton.onclick=async()=>{
    catch{paymentStatus.textContent='We could not verify this payment yet. Do not pay again; check your Razorpay payment status and contact support if it was charged.';}
   }});
   checkout.on('payment.failed',()=>{paymentStatus.textContent='Payment failed. No plan was activated; you can retry.';});checkout.open();
- }catch(error){paymentStatus.textContent=error.message==='Sign in with Google before using checkout.'?error.message:'Checkout is not ready yet. Confirm the payment API is deployed and configured for the selected mode.';}
+ }catch(error){paymentStatus.textContent=error.message || 'Checkout could not continue. Please try again.';}
  finally{checkoutButton.disabled=false;}
 };
 

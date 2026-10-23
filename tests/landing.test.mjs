@@ -7,7 +7,7 @@ import { createHash } from 'node:crypto';
 const source = readFileSync(new URL('../src/landing.js', import.meta.url), 'utf8')
   .replace("import useCases from './use-cases.json' with { type: 'json' };", `const useCases = ${readFileSync(new URL('../src/use-cases.json', import.meta.url), 'utf8')};`)
   .replaceAll('import.meta.env.BASE_URL', "'/test-base/'");
-const { initLanding } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
+const { initLanding, initHeroVideo } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
 
 class Element extends EventTarget {
   constructor(id, dataset = {}) {
@@ -67,14 +67,35 @@ test('use-case cards open their actual content and close returns keyboard focus'
 test('original artwork is not reused across sections and borrowed media is absent', () => {
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   assert.equal(html.includes('examples/'), false);
-  assert.equal(html.includes('<video'), false);
+  assert.match(html, /<video[^>]*autoplay[^>]*muted[^>]*loop[^>]*playsinline/);
+  assert.doesNotMatch(html.match(/<video[^>]*>/)[0], /\bcontrols(?:=|\s|>)/);
   const comparison = new Set(['products', 'people', 'animals', 'cars', 'graphics'].map(category => `%BASE_URL%artwork/${category}.png`));
   const outsideComparison = html.replace(/<div id="quality-panel"[\s\S]*?<\/section>/, '');
   const outsideImages = [...outsideComparison.matchAll(/<img[^>]+src="([^"]+)"/g)].map(match => match[1]);
   assert.equal(new Set(outsideImages).size, outsideImages.length, 'A display image was repeated in another section');
   for (const path of outsideImages) assert.equal(comparison.has(path), false, 'Comparison artwork must not reappear in other sections');
-  const paths = [...new Set([...outsideImages, ...comparison])];
+  const paths = [...new Set([...outsideImages, ...comparison, '%BASE_URL%artwork/hero.png'])];
   assert.equal(paths.length, 9, 'The nine original artwork assets must all be represented');
   const hashes = paths.map(path => createHash('sha256').update(readFileSync(new URL(`../public/${path.replace('%BASE_URL%', '')}`, import.meta.url))).digest('hex'));
   assert.equal(new Set(hashes).size, hashes.length, 'The same image was copied to a different filename');
+});
+
+
+test('hero video plays silently, respects reduced motion and handles autoplay rejection', async () => {
+  const motion = new EventTarget();
+  motion.matches = false;
+  const video = { muted: false, currentTime: 3, plays: 0, pauses: 0,
+    play() { this.plays++; return Promise.reject(new Error('Autoplay blocked')); },
+    pause() { this.pauses++; } };
+  initHeroVideo(video, motion);
+  assert.equal(video.muted, true);
+  assert.equal(video.plays, 1);
+  motion.matches = true;
+  motion.dispatchEvent(new Event('change'));
+  assert.equal(video.pauses, 1);
+  assert.equal(video.currentTime, 0);
+  motion.matches = false;
+  motion.dispatchEvent(new Event('change'));
+  assert.equal(video.plays, 2);
+  await new Promise(resolve => setImmediate(resolve));
 });
