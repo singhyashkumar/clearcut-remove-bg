@@ -28,8 +28,8 @@ jobs:
       - run: npm test
       - run: npm run build
         env:
-          PUBLIC_BASE_PATH: /clearcut-remove-bg/
-          PUBLIC_SITE_URL: https://singhyashkumar.github.io/clearcut-remove-bg/
+          PUBLIC_BASE_PATH: /
+          PUBLIC_SITE_URL: https://clearcutt.in/
           VITE_PAYMENT_API_BASE_URL: ${{ vars.VITE_PAYMENT_API_BASE_URL }}
           VITE_PAYMENT_MODE: ${{ vars.VITE_PAYMENT_MODE }}
       - uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
@@ -48,4 +48,3 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
-
