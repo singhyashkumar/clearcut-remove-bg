@@ -15,3 +15,5 @@ Sample photography: https://www.pexels.com/photo/green-leaf-plant-3097770/ under
 
 Landing-page cat photo: Pexels photo 1170986, https://www.pexels.com/photo/1170986/ under https://www.pexels.com/license/. Original and BG0 cutout reused from the Apache-2.0 BG0 example assets.
 Fonts: Poppins and Open Sans, SIL Open Font License; licenses in fonts/. Fonts are served locally.
+
+Reference presentation images and Canva Sans typeface: remove.bg public website. Sources and attribution in examples/SOURCES.md. Reference sample results are not Clearcut output.

@@ -1,0 +1,38 @@
+[
+  {
+    "title": "Magic Brush",
+    "copy": "Refine a cutout with Erase and Restore. Choose a brush size and correct the result before you download."
+  },
+  {
+    "title": "for Individuals",
+    "copy": "Make profile pictures, personal projects and creative cutouts with a transparent or colored background."
+  },
+  {
+    "title": "for Photographers",
+    "copy": "Isolate your subject, compare the original and result, and export a PNG for your next editing step."
+  },
+  {
+    "title": "for Marketing",
+    "copy": "Prepare clean image assets for social posts, presentations and campaign layouts."
+  },
+  {
+    "title": "for Developers",
+    "copy": "Download transparent assets for websites and interfaces. Clearcut does not currently offer a public API."
+  },
+  {
+    "title": "for Ecommerce",
+    "copy": "Give product photos a consistent white background and export them without a watermark."
+  },
+  {
+    "title": "for Media",
+    "copy": "Create image cutouts for editorial layouts and visual storytelling, using photos you have permission to edit."
+  },
+  {
+    "title": "for Car Dealerships",
+    "copy": "Try a clean background for vehicle photos. Complex reflections and fine edges may need manual refinement."
+  },
+  {
+    "title": "for Enterprise",
+    "copy": "Explore the browser-based workflow for your team. Enterprise administration and bulk processing are not available yet."
+  }
+]

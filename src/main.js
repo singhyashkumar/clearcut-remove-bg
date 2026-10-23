@@ -74,20 +74,6 @@ $('download').onclick=async()=>{
 };
 window.addEventListener('pagehide',()=>{controller?.abort();release();});
 
-const demoToggle = $('demo-toggle');
-demoToggle.addEventListener('click', () => {
- const removed = demoToggle.getAttribute('aria-pressed') !== 'true';
- demoToggle.setAttribute('aria-pressed', String(removed));
- demoToggle.setAttribute('aria-label', removed ? 'Show the original sample photo' : 'Show the sample with its background removed');
- $('hero-image').alt = removed ? '' : 'Original plant photo with its background';
- $('hero-image').setAttribute('aria-hidden', String(removed));
- $('hero-removed').alt = removed ? 'The same plant with its background removed' : '';
- $('hero-removed').setAttribute('aria-hidden', String(!removed));
- $('demo-state').textContent = removed ? '02 / BACKGROUND REMOVED' : '01 / ORIGINAL';
- $('demo-caption').textContent = removed ? 'Background removed · Click to see the original' : 'Original photo · Click to reveal the cutout';
- $('demo-label').replaceChildren(document.createTextNode(removed ? 'Click to see the original ↶' : 'Click to remove the background ↗'));
-});
-
 import {watchGoogleAuth,signInWithGoogle,signOutGoogle} from './firebase-auth.js';
 const signInButton=$('google-signin'),accountControl=$('account-control'),authStatus=$('auth-status');
 function googleAuthMessage(error){switch(error?.code){case'auth/unauthorized-domain':return'This site is not yet enabled for Google sign-in.';case'auth/operation-not-allowed':return'Google sign-in is disabled in Firebase settings.';case'auth/popup-blocked':return'Your browser blocked the sign-in window. Allow pop-ups for this site and try again.';case'auth/popup-closed-by-user':return'Sign-in was cancelled.';case'auth/network-request-failed':return'Google sign-in could not connect. Check your connection and try again.';default:return'Google sign-in failed ('+(error?.code||error?.name||'unknown error')+'). Refresh the page and try again.';}}
