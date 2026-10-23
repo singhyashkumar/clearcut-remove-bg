@@ -4,3 +4,5 @@ const clientPromise=Promise.all([import('https://www.gstatic.com/firebasejs/13.0
 export function watchGoogleAuth(onChange,onError){return clientPromise.then(({auth,onAuthStateChanged})=>onAuthStateChanged(auth,onChange,onError)).catch(error=>{onError(error);throw error;});}
 export function signInWithGoogle(){if(!client)throw new Error('Google sign-in is still loading.');return client.signInWithPopup(client.auth,new client.GoogleAuthProvider());}
 export function signOutGoogle(){return client.signOut(client.auth);}
+export async function getGoogleAuthToken(){await clientPromise;if(!client.auth.currentUser)throw new Error('Sign in with Google before using checkout.');return client.auth.currentUser.getIdToken();}
+

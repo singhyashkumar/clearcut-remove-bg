@@ -74,11 +74,47 @@ $('download').onclick=async()=>{
 };
 window.addEventListener('pagehide',()=>{controller?.abort();release();});
 
-import {watchGoogleAuth,signInWithGoogle,signOutGoogle} from './firebase-auth.js';
+import {watchGoogleAuth,signInWithGoogle,signOutGoogle,getGoogleAuthToken} from './firebase-auth.js';
 const signInButton=$('google-signin'),accountControl=$('account-control'),authStatus=$('auth-status');
+let refreshPaymentEntitlement=()=>{};
 function googleAuthMessage(error){switch(error?.code){case'auth/unauthorized-domain':return'This site is not yet enabled for Google sign-in.';case'auth/operation-not-allowed':return'Google sign-in is disabled in Firebase settings.';case'auth/popup-blocked':return'Your browser blocked the sign-in window. Allow pop-ups for this site and try again.';case'auth/popup-closed-by-user':return'Sign-in was cancelled.';case'auth/network-request-failed':return'Google sign-in could not connect. Check your connection and try again.';default:return'Google sign-in failed ('+(error?.code||error?.name||'unknown error')+'). Refresh the page and try again.';}}
 signInButton.disabled=true;
-watchGoogleAuth(user=>{signInButton.hidden=Boolean(user);accountControl.hidden=!user;authStatus.textContent=user?'Google account connected. Photo processing still happens on this device.':'';},error=>{authStatus.textContent=googleAuthMessage(error);}).then(()=>{signInButton.disabled=false;}).catch(()=>{});
+watchGoogleAuth(user=>{signInButton.hidden=Boolean(user);accountControl.hidden=!user;authStatus.textContent=user?'Google account connected. Photo processing still happens on this device.':'';if(user)refreshPaymentEntitlement();},error=>{authStatus.textContent=googleAuthMessage(error);}).then(()=>{signInButton.disabled=false;}).catch(()=>{});
 signInButton.onclick=async()=>{signInButton.disabled=true;authStatus.textContent='Opening Google sign-in…';try{await signInWithGoogle();}catch(error){authStatus.textContent=googleAuthMessage(error);}finally{signInButton.disabled=false;}};
 $('google-signout').onclick=async()=>{try{await signOutGoogle();authStatus.textContent='Signed out.';}catch{authStatus.textContent='Could not sign out. Please try again.';}};
+
+
+const checkoutButton=$('razorpay-checkout'),paymentStatus=$('payment-status'),paymentTestNote=$('payment-test-note');
+const paymentApiBase=import.meta.env.VITE_PAYMENT_API_BASE_URL;
+const paymentMode=import.meta.env.VITE_PAYMENT_MODE==='live'?'live':'test';
+if(paymentApiBase){checkoutButton.hidden=false;paymentTestNote.hidden=paymentMode==='live';checkoutButton.textContent=paymentMode==='live'?'Pay ₹90 with Razorpay':'Try ₹90 sandbox checkout';}
+function loadRazorpay(){
+ if(window.Razorpay)return Promise.resolve();
+ return new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='https://checkout.razorpay.com/v1/checkout.js';script.onload=resolve;script.onerror=()=>reject(Error('Checkout could not load.'));document.head.append(script);});
+}
+async function paymentRequest(endpoint,body,token,method='POST'){
+ const response=await fetch(`${paymentApiBase.replace(/\/$/,'')}/api/${endpoint}`,{method,headers:{...(token?{authorization:`Bearer ${token}`}:{ }),'content-type':'application/json'},...(method==='POST'?{body:JSON.stringify(body||{})}:{})});
+ const result=await response.json().catch(()=>({}));
+ if(!response.ok)throw Error(result.error||'Checkout could not continue.');
+ return result;
+}
+refreshPaymentEntitlement=async()=>{
+ if(!paymentApiBase)return;
+ try{const token=await getGoogleAuthToken();const {entitlement}=await paymentRequest('entitlement',null,token,'GET');if(entitlement){paymentStatus.textContent=`Clearcut Plus is active until ${new Date(entitlement.expires_at*1000).toLocaleDateString()}. Renew manually; no automatic payment.`;}}
+ catch{}
+};
+checkoutButton.onclick=async()=>{
+ checkoutButton.disabled=true;paymentStatus.textContent=paymentMode==='live'?'Opening secure checkout…':'Opening ₹90 sandbox checkout…';
+ try{
+  const token=await getGoogleAuthToken();await loadRazorpay();
+  const order=await paymentRequest('createOrder',{plan:'plus-monthly'},token);
+  const checkout=new window.Razorpay({key:order.key_id,order_id:order.order_id,amount:order.amount,currency:order.currency,name:'Clearcut Remove BG',description:'Clearcut Plus · 30-day access · renew manually',modal:{ondismiss:()=>{paymentStatus.textContent="Checkout closed. If payment went through, we'll confirm it before activating access.";}},handler:async result=>{
+   paymentStatus.textContent='Verifying payment securely…';
+   try{const verified=await paymentRequest('verifyPayment',result,await getGoogleAuthToken());const until=new Date(verified.entitlement.expires_at*1000).toLocaleDateString();paymentStatus.textContent=`Payment verified. Clearcut Plus is active until ${until}. Renew manually; no automatic payment.`;}
+   catch{paymentStatus.textContent='We could not verify this payment yet. Do not pay again; check your Razorpay payment status and contact support if it was charged.';}
+  }});
+  checkout.on('payment.failed',()=>{paymentStatus.textContent='Payment failed. No plan was activated; you can retry.';});checkout.open();
+ }catch(error){paymentStatus.textContent=error.message==='Sign in with Google before using checkout.'?error.message:'Checkout is not ready yet. Confirm the payment API is deployed and configured for the selected mode.';}
+ finally{checkoutButton.disabled=false;}
+};
 
