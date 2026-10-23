@@ -11,9 +11,9 @@ ONNX Runtime: https://github.com/microsoft/onnxruntime, MIT, copyright Microsoft
 
 The HEIC and iOS native runtimes are not distributed or loaded by this application.
 
-Sample photography: https://www.pexels.com/photo/green-leaf-plant-3097770/ under the Pexels license https://www.pexels.com/license/ .
 
-Landing-page cat photo: Pexels photo 1170986, https://www.pexels.com/photo/1170986/ under https://www.pexels.com/license/. Original and BG0 cutout reused from the Apache-2.0 BG0 example assets.
-Fonts: Poppins and Open Sans, SIL Open Font License; licenses in fonts/. Fonts are served locally.
 
-Reference presentation images and Canva Sans typeface: remove.bg public website. Sources and attribution in examples/SOURCES.md. Reference sample results are not Clearcut output.
+
+Current website artwork: original AI-generated imagery created for Clearcut on 2026-10-23 using the built-in image generation tool. Generation prompts and provenance are documented in ARTWORK.md in the source repository. Gallery cutouts are illustrative artwork, not measurements of Clearcut inference quality.
+
+Poppins and Open Sans: SIL Open Font License; license files in fonts/. Canva Sans typeface is recorded separately from the removed reference images: https://static.remove.bg/fonts/canva-sans-latin.woff2 . Font reuse permissions remain unverified.

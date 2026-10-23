@@ -7,13 +7,14 @@ export function initLanding(doc) {
   const slider = doc.getElementById('quality-slider');
   const panel = doc.getElementById('quality-panel');
   const comparison = doc.querySelector('.quality-comparison');
-  const categories = new Set(['products', 'people', 'animals', 'cars', 'graphics']);
+  const backdrops = { products: '#dce8d8', people: '#e9e2d8', animals: '#d8e4db', cars: '#dce4ea', graphics: '#efe0d9' };
+  const categories = new Set(Object.keys(backdrops));
 
   function updateSlider() {
     const value = Number(slider.value);
     const split = Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : 50;
     comparison.style.setProperty('--split', `${split}%`);
-    slider.setAttribute('aria-valuetext', `${split}% original photo visible`);
+    slider.setAttribute('aria-valuetext', `${split}% studio backdrop visible`);
   }
 
   function selectTab(tab) {
@@ -23,10 +24,11 @@ export function initLanding(doc) {
       item.setAttribute('aria-selected', String(item === tab));
       item.tabIndex = item === tab ? 0 : -1;
     }
-    before.src = `${import.meta.env.BASE_URL}examples/${category}-before.png`;
-    after.src = `${import.meta.env.BASE_URL}examples/${category}-after.png`;
-    before.alt = `Original ${category} reference photo`;
-    after.alt = `${category} reference photo with the background removed`;
+    comparison.style.setProperty('--preview-background', backdrops[category]);
+    before.src = `${import.meta.env.BASE_URL}artwork/${category}.png`;
+    after.src = `${import.meta.env.BASE_URL}artwork/${category}.png`;
+    before.alt = `Original ${category} Clearcut artwork on a studio backdrop`;
+    after.alt = `Original ${category} Clearcut artwork on transparency`;
     panel.setAttribute('aria-labelledby', tab.id);
     slider.value = '50';
     updateSlider();

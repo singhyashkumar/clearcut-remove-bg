@@ -1,0 +1,1 @@
+Original AI-generated Clearcut artwork, created 2026-10-23 using the built-in image generation tool. Full prompt specifications, hashes and provenance are in ARTWORK.md in the source repository. These gallery assets are illustrative artwork, not measured inference results.

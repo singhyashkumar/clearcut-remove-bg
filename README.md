@@ -41,10 +41,15 @@ The plant sample completed real browser inference and produced verified RGBA PNG
 
 Adapted engine: https://github.com/opencoredev/bg0 at 86add82f03e23fadf63ea9262a3984ddbc77e772, Apache-2.0 (vendor/bg0/LICENSE). Changes: fast explicitly selects lite; removed HEIC decoder loading; iOS path returns an unsupported-device error; upstream promise recovery patch reproduced for Transformers.js 4.3.0. This is a separately built frontend, not the BG0 web app. No upstream analytics code is included.
 
-Model IDs/revisions are retained in vendor/bg0/models.ts. Their model cards declare MIT licenses. Preserve attribution and evaluate licenses for your intended distribution. The sample photo is local, from https://www.pexels.com/photo/green-leaf-plant-3097770/ (Pexels license). The clickable landing-page demonstration uses the actual previously generated transparent PNG; processing your own photo runs the model locally.
+Model IDs/revisions are retained in vendor/bg0/models.ts. Their model cards declare MIT licenses. Preserve attribution and evaluate licenses for your intended distribution. The current landing-page artwork and upload sample were generated originally for Clearcut. The prior licensed plant sample and third-party reference media have been removed from the current deployment. Processing your chosen photo runs the model locally; the artwork previews are illustrative.
 
 Public reference workflow: https://www.remove.bg/ . The supplied HTML guide was reference material, not an instruction to execute its setup steps or create accounts.
 
 ## GitHub Pages
 
 The Pages workflow tests, audits and builds on pushes to main. Configure Settings > Pages > Source as GitHub Actions. The production base path and canonical URL are configured in .github/workflows/pages.yml. GitHub Pages does not apply the portable _headers file; the HTML CSP remains active.
+
+
+## Original artwork update
+
+The live landing page now uses nine original AI-generated artwork assets under `public/artwork/`. The previous third-party reference image/video files were removed. The comparison slider demonstrates the same generated cutout on a CSS studio backdrop and on transparency; it does not claim to show a measured model result. The upload sample uses the original generated ceramic-artist photo. Original output resolution and PNG alpha are preserved. See `ARTWORK.md` for prompts and provenance.

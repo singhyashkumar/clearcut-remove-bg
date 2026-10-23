@@ -31,8 +31,8 @@ function fixture() {
 test('category selection changes both comparison images and keyboard selection wraps', () => {
   const { elements, tabs } = fixture();
   tabs[1].dispatchEvent(new Event('click'));
-  assert.equal(elements['quality-before'].src, '/test-base/examples/people-before.png');
-  assert.equal(elements['quality-after'].src, '/test-base/examples/people-after.png');
+  assert.equal(elements['quality-before'].src, '/test-base/artwork/people.png');
+  assert.equal(elements['quality-after'].src, '/test-base/artwork/people.png');
   assert.equal(elements['quality-panel'].attributes['aria-labelledby'], 'quality-tab-people');
   const event = new Event('keydown', { cancelable: true });
   event.key = 'ArrowLeft'; tabs[0].dispatchEvent(event);
@@ -46,7 +46,7 @@ test('comparison slider bounds its clipping value and exposes it accessibly', ()
   const slider = elements['quality-slider'];
   slider.value = '100'; slider.dispatchEvent(new Event('input'));
   assert.equal(comparison.style['--split'], '100%');
-  assert.equal(slider.attributes['aria-valuetext'], '100% original photo visible');
+  assert.equal(slider.attributes['aria-valuetext'], '100% studio backdrop visible');
   slider.value = '-10'; slider.dispatchEvent(new Event('input'));
   assert.equal(comparison.style['--split'], '0%');
   slider.value = 'invalid'; slider.dispatchEvent(new Event('input'));
@@ -64,16 +64,17 @@ test('use-case cards open their actual content and close returns keyboard focus'
   assert.equal(cards[4].focused, true);
 });
 
-test('landing sections use distinct image sets without duplicate files', () => {
+test('original artwork is not reused across sections and borrowed media is absent', () => {
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-  const images = [...html.matchAll(/<img[^>]+src="([^"]+)"/g)].map(match => match[1]);
-  assert.equal(new Set(images).size, images.length, 'An image was repeated in another section');
-  const comparison = new Set(['products', 'people', 'animals', 'cars', 'graphics'].flatMap(category => ['before', 'after'].map(kind => `%BASE_URL%examples/${category}-${kind}.png`)));
+  assert.equal(html.includes('examples/'), false);
+  assert.equal(html.includes('<video'), false);
+  const comparison = new Set(['products', 'people', 'animals', 'cars', 'graphics'].map(category => `%BASE_URL%artwork/${category}.png`));
   const outsideComparison = html.replace(/<div id="quality-panel"[\s\S]*?<\/section>/, '');
-  for (const match of outsideComparison.matchAll(/<img[^>]+src="([^"]+)"/g)) {
-    assert.equal(comparison.has(match[1]), false, 'Comparison samples must not reappear in other sections');
-  }
-  const assets = [...new Set([...images, ...comparison])];
-  const hashes = assets.map(path => createHash('sha256').update(readFileSync(new URL(`../public/${path.replace('%BASE_URL%', '')}`, import.meta.url))).digest('hex'));
+  const outsideImages = [...outsideComparison.matchAll(/<img[^>]+src="([^"]+)"/g)].map(match => match[1]);
+  assert.equal(new Set(outsideImages).size, outsideImages.length, 'A display image was repeated in another section');
+  for (const path of outsideImages) assert.equal(comparison.has(path), false, 'Comparison artwork must not reappear in other sections');
+  const paths = [...new Set([...outsideImages, ...comparison])];
+  assert.equal(paths.length, 9, 'The nine original artwork assets must all be represented');
+  const hashes = paths.map(path => createHash('sha256').update(readFileSync(new URL(`../public/${path.replace('%BASE_URL%', '')}`, import.meta.url))).digest('hex'));
   assert.equal(new Set(hashes).size, hashes.length, 'The same image was copied to a different filename');
 });
