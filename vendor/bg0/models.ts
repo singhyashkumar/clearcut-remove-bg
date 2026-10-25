@@ -1,3 +1,4 @@
+import { needsMemoryBudget } from '../../src/memory-policy.js'
 import { canUseOnnxWebGpu, shouldUseSingleThreadedWasm } from './runtime'
 
 export type RemovalModel = 'birefnet' | 'birefnet-lite'
@@ -73,7 +74,7 @@ function requestAdapterWithin(
   ]).finally(() => clearTimeout(timer))
 }
 
-/** Missing RAM hints are common; only a reported low-memory device opts out. */
+/** Mobile tabs and devices with <=4 GB RAM use the smaller model. */
 export async function detectEngineChoices(
   hardware: HardwareNavigator | undefined = typeof navigator === 'undefined'
     ? undefined
@@ -81,8 +82,7 @@ export async function detectEngineChoices(
   options: { adapterTimeoutMs?: number } = {},
 ): Promise<EngineChoice[]> {
   const choices: EngineChoice[] = []
-  const memory = hardware?.deviceMemory
-  const lowMemory = Boolean(memory && memory < 4)
+  const lowMemory = needsMemoryBudget(hardware)
   if (hardware && canUseOnnxWebGpu(hardware.userAgent, Boolean(hardware.gpu))) {
     try {
       const adapter = hardware.gpu
