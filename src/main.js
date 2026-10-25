@@ -3,6 +3,10 @@ import {needsMemoryBudget,useMobileProcessing,prepareProcessingPhoto} from './me
 import {validateFile,MAX_PIXELS,alphaBounds,brushAlpha} from './image-utils.js';
 const $=id=>document.getElementById(id);
 let engineFamily=null;
+const lowMemoryRequested=new URL(location.href).searchParams.get('mode')==='low-memory';
+const lowMemoryOption=$('quality').querySelector('option[value="compatible"]');
+if(lowMemoryRequested){lowMemoryOption.hidden=false;lowMemoryOption.disabled=false;$('quality').value='compatible';}
+$('try-low-memory').onclick=()=>{const url=new URL(location.href);url.searchParams.set('mode','low-memory');location.assign(url.href);};
 if(needsMemoryBudget()){
  $('quality').options[0].textContent='Standard · original model (98 MB)';
  $('quality').options[1].textContent='Detailed edges · original model (98 MB)';
@@ -16,7 +20,7 @@ function panels(mode){$('showcase').hidden=mode!=='upload';$('upload-panel').hid
 function setTool(value){tool=value;for(const id of ['move','erase','restore'])$(id).classList.toggle('active',(id==='move'?'view':id)===value);canvas.style.cursor='default';if(value==='view')canvasWrap.classList.remove('brush-visible');else if(canvas.matches(':hover'))canvasWrap.classList.add('brush-visible');if(value!=='view')showResult();}
 function showResult(){canvas.hidden=false;$('original').hidden=true;$('result-view').classList.add('active');$('original-view').classList.remove('active');}
 function release(){cancelAnimationFrame(frame);frame=0;drawing=false;lastPoint=null;source?.close();source=null;bg?.close();bg=null;basePixels=alpha=initialAlpha=sourceAlpha=undo=null;if(sourceUrl)URL.revokeObjectURL(sourceUrl);sourceUrl=null;$('original').removeAttribute('src');canvas.width=canvas.height=cutout.width=cutout.height=1;$('undo').disabled=true;$('file').value='';$('bg-file').value='';$('edit-status').textContent='';}
-function reset(){++runId;controller?.abort();controller=null;busy=false;release();panels('upload');$('error').hidden=true;}
+function reset(){++runId;controller?.abort();controller=null;busy=false;release();panels('upload');$('error').hidden=true;$('low-memory-fallback').hidden=true;}
 function render(){
  if(!basePixels)return;
  const pixels=new ImageData(new Uint8ClampedArray(basePixels.data),canvas.width,canvas.height);
@@ -30,7 +34,7 @@ function queueRender(){if(!frame)frame=requestAnimationFrame(()=>{frame=0;render
 async function processFile(file){
  if(busy)return;
  busy=true;const thisRun=++runId;
- $('error').hidden=true;
+ $('error').hidden=true;$('low-memory-fallback').hidden=true;
  try{await validateFile(file);}catch(e){if(thisRun===runId){busy=false;fail(e.message);}return;}
  let bitmap,processingStage='preparing',processingProvider='unknown';
  try{bitmap=await createImageBitmap(file);if(bitmap.width*bitmap.height>MAX_PIXELS)throw new Error('Choose a photo up to 25 megapixels. Resize this photo and try again.');}
@@ -57,7 +61,7 @@ async function processFile(file){
   alpha=new Uint8Array(canvas.width*canvas.height);for(let i=0;i<alpha.length;i++)alpha[i]=resultPixels.data[i*4+3];initialAlpha=alpha.slice();sourceAlpha=new Uint8Array(alpha.length);for(let i=0;i<alpha.length;i++)sourceAlpha[i]=basePixels.data[i*4+3];
   sourceUrl=URL.createObjectURL(result.sourceBlob??photo.file);$('original').src=sourceUrl;background='transparent';$('crop').checked=false;setTool('view');showResult();selectSwatch('transparent');
   $('dimensions').textContent=`${canvas.width} × ${canvas.height} px`;render();panels('editor');$('edit-status').textContent=photo.resized?'Background removed. Photo resized to fit this device’s memory.':'Background removed. Ready for your next idea.';
- }catch(e){if(thisRun!==runId)return;release();panels('upload');if(e?.code!=='cancelled'&&e?.name!=='AbortError')fail(processingFailure(e,processingStage,processingProvider));}
+ }catch(e){if(thisRun!==runId)return;release();panels('upload');if(e?.code!=='cancelled'&&e?.name!=='AbortError'){fail(processingFailure(e,processingStage,processingProvider));$('low-memory-fallback').hidden=useMobileProcessing($('quality').value);}}
  finally{bitmap?.close();if(thisRun===runId){busy=false;controller=null;}}
 }
 function selectSwatch(value){document.querySelectorAll('[data-color]').forEach(b=>b.classList.toggle('selected',b.dataset.color===value));}
