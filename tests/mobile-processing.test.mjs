@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import {mobileInput,mobileMask} from '../src/mobile-tensors.js';
 import {processingFailure} from '../src/processing-diagnostics.js';
 import {useMobileProcessing} from '../src/memory-policy.js';
-test('mobile route is selected for Android Fast and Detailed, and desktop opt-in',()=>{
+test('original model remains default on Android and desktop; small model requires opt-in',()=>{
  const phone={userAgent:'Mozilla/5.0 (Linux; Android 13) Chrome/140.0 Mobile',deviceMemory:8};
  const desktop={userAgent:'Mozilla/5.0 (X11) Chrome/140.0',deviceMemory:8};
- for(const mode of ['fast','quality'])assert.equal(useMobileProcessing(mode,phone),true);
+ for(const hardware of [phone,desktop])for(const mode of ['fast','quality'])assert.equal(useMobileProcessing(mode,hardware),false);
  assert.equal(useMobileProcessing('compatible',desktop),true);
  assert.equal(useMobileProcessing('fast',desktop),false);
 });

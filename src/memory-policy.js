@@ -24,6 +24,7 @@ export async function prepareProcessingPhoto(file, bitmap, hardware = globalThis
  } finally {canvas.width = canvas.height = 0;}
 }
 
-export function useMobileProcessing(mode, hardware = globalThis.navigator) {
- return mode === 'compatible' || needsMemoryBudget(hardware);
+// The small model is an explicit choice; device type must not silently reduce quality.
+export function useMobileProcessing(mode) {
+ return mode === 'compatible';
 }

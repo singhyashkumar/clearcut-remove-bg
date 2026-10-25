@@ -4,8 +4,8 @@ import {validateFile,MAX_PIXELS,alphaBounds,brushAlpha} from './image-utils.js';
 const $=id=>document.getElementById(id);
 let engineFamily=null;
 if(needsMemoryBudget()){
- $('quality').options[0].textContent='Fast · mobile model (4.6 MB)';
- $('quality').options[1].textContent='Detailed edges · mobile model';
+ $('quality').options[0].textContent='Standard · original model (98 MB)';
+ $('quality').options[1].textContent='Detailed edges · original model (98 MB)';
 }
 const canvas=$('canvas'),ctx=canvas.getContext('2d',{willReadFrequently:true});
 const canvasWrap=$('canvas-wrap'),brushCursor=$('brush-cursor');
@@ -40,7 +40,7 @@ async function processFile(file){
  try{
   const mobile=useMobileProcessing($('quality').value);
   const family=mobile?'mobile':'desktop';
-  if(engineFamily&&engineFamily!==family)throw new Error('Reload this page before switching between desktop and mobile models.');
+  if(engineFamily&&engineFamily!==family)throw new Error('Reload this page before switching between the original and low-memory models.');
   engineFamily=family;
   const photo=await prepareProcessingPhoto(file,bitmap,mobile?{userAgent:'Mobile'}:navigator);
   bitmap.close();bitmap=null;
