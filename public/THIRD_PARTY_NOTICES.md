@@ -17,3 +17,5 @@ The HEIC and iOS native runtimes are not distributed or loaded by this applicati
 Current website artwork: original AI-generated imagery created for Clearcut on 2026-10-23 using the built-in image generation tool. Generation prompts and provenance are documented in ARTWORK.md in the source repository. Gallery cutouts are illustrative artwork, not measurements of Clearcut inference quality.
 
 Poppins and Open Sans: SIL Open Font License; license files in fonts/. Canva Sans typeface is recorded separately from the removed reference images: https://static.remove.bg/fonts/canva-sans-latin.woff2 . Font reuse permissions remain unverified.
+
+Mobile/low-memory model: U²-NetP by Xuebin Qin et al., Apache-2.0 (https://github.com/xuebinqin/U-2-Net). RemBG ONNX export mirrored at https://huggingface.co/edgetools/u2netp, pinned revision 25dee37ab19c5b6ad64ba6578eba63f1ae07720c. SHA-256: 309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8. Uses the 320×320 RGB normalization and fused saliency output described by rembg. Weights download at runtime; no photo is uploaded.

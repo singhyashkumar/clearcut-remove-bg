@@ -33,3 +33,15 @@ The source, unit checks, successful inference and exports are real; no claim of 
 ## Clickable showcase update
 
 The landing-page sample now toggles in place between the original JPEG and the actual previously generated transparent PNG. This demonstration uses precomputed local assets and does not start AI inference. The same photo, aspect ratio and framing are retained. The toggle is a native button with keyboard activation, descriptive labels and pressed state. Browser click and Enter activation were exercised. No upload, inference or server behavior was changed.
+
+## Mobile failure follow-up — 2026-10-25
+
+The initial mobile mitigation did not resolve the user's Android Chrome failure. The screenshot showed the deployed page and a caught generic processing error, not a closed tab. No physical Android device was available; do not claim physical-phone verification.
+
+Actual single-threaded ONNX Runtime Web CPU tests on this host found that BiRefNet Lite fp16 at 512px could complete but reached about 2,704 MB process peak RSS with the JSEP runtime. Disabling CPU arena/memory-pattern reuse did not fix the footprint (about 2,847 MB). A U2NetP test through the standard CPU-only WASM build completed at about 351 MB; the actual hero-photo run with production RGB preprocessing and alpha normalization completed with 370 MB process peak RSS. These are host process observations, not measurements of Chrome's Android tab budget.
+
+Mobile/low-memory devices now use a separate U2NetP 320px CPU path with a 4,574,861-byte model, immutable source revision and verified SHA-256. It loads a smaller CPU-only WASM binary, uses one thread, serializes cancelled/retried inference and disposes all input and output tensors. Desktop BiRefNet behavior is retained. An explicit Mobile selector allows exercising the same mobile path in a desktop browser; reload before switching runtime families. Large mobile working photos retain the earlier 2 MP / 2048px bounds. U2NetP can lose fine-edge detail; the upload note states this tradeoff.
+
+The local hero inference returned alpha range 0–1, 75,076 nearly transparent mask pixels and 24,424 nearly opaque pixels out of 102,400. A composited result was rendered and visually inspected: subject retained, background removed, some residual edge fragments. No quality-parity claim. Error messages now retain stage, execution provider and sanitized underlying causes instead of replacing all failures with the same generic message.
+
+Validation before deployment: clean npm ci; 31 passing Node tests; successful production build. New regression tests cover mobile routing in both quality modes, RGB/NCHW normalization, finite black-image preprocessing, mask normalization and sanitized failure context. Live browser inference and the user's physical-phone retest remain pending at commit time.

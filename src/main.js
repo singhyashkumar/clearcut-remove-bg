@@ -1,6 +1,12 @@
-import {prepareProcessingPhoto} from './memory-policy.js';
+import {processingFailure} from './processing-diagnostics.js';
+import {needsMemoryBudget,useMobileProcessing,prepareProcessingPhoto} from './memory-policy.js';
 import {validateFile,MAX_PIXELS,alphaBounds,brushAlpha} from './image-utils.js';
 const $=id=>document.getElementById(id);
+let engineFamily=null;
+if(needsMemoryBudget()){
+ $('quality').options[0].textContent='Fast · mobile model (4.6 MB)';
+ $('quality').options[1].textContent='Detailed edges · mobile model';
+}
 const canvas=$('canvas'),ctx=canvas.getContext('2d',{willReadFrequently:true});
 const canvasWrap=$('canvas-wrap'),brushCursor=$('brush-cursor');
 let controller=null,busy=false,source=null,basePixels=null,alpha=null,initialAlpha=null,sourceAlpha=null,undo=null,bg=null,background='transparent',tool='view',sourceUrl=null,drawing=false,lastPoint=null,frame=0,runId=0,bgRevision=0;
@@ -26,18 +32,22 @@ async function processFile(file){
  busy=true;const thisRun=++runId;
  $('error').hidden=true;
  try{await validateFile(file);}catch(e){if(thisRun===runId){busy=false;fail(e.message);}return;}
- let bitmap;
+ let bitmap,processingStage='preparing',processingProvider='unknown';
  try{bitmap=await createImageBitmap(file);if(bitmap.width*bitmap.height>MAX_PIXELS)throw new Error('Choose a photo up to 25 megapixels. Resize this photo and try again.');}
  catch(e){bitmap?.close();if(thisRun!==runId)return;busy=false;fail(e.message.includes('25 megapixels')?e.message:'This image could not be decoded. Please try another JPG, PNG or WebP.');return;}
  if(thisRun!==runId){bitmap.close();return;}
  release();controller=new AbortController();const localController=controller;panels('processing');$('status').textContent='Preparing the AI engine…';$('progress').value=0;
  try{
-  const photo=await prepareProcessingPhoto(file,bitmap);
+  const mobile=useMobileProcessing($('quality').value);
+  const family=mobile?'mobile':'desktop';
+  if(engineFamily&&engineFamily!==family)throw new Error('Reload this page before switching between desktop and mobile models.');
+  engineFamily=family;
+  const photo=await prepareProcessingPhoto(file,bitmap,mobile?{userAgent:'Mobile'}:navigator);
   bitmap.close();bitmap=null;
   if(thisRun!==runId)return;
-  const {removeBackground}=await import('../vendor/bg0/index.ts');
+  const {removeBackground}=mobile?await import('../vendor/bg0/mobile.ts'):await import('../vendor/bg0/index.ts');
   if(thisRun!==runId)return;
-  const result=await removeBackground(photo.file,{quality:$('quality').value,signal:localController.signal,onProgress:p=>{if(thisRun!==runId)return;$('progress').value=p.progress;$('status').textContent=p.message+(p.download?` · ${Math.round(p.download.loadedBytes/1e6)} / ${Math.round(p.download.totalBytes/1e6)} MB`:'');}});
+  const result=await removeBackground(photo.file,{quality:$('quality').value==='quality'?'quality':'fast',signal:localController.signal,onProgress:p=>{if(thisRun!==runId)return;processingStage=p.stage;processingProvider=p.provider??processingProvider;$('progress').value=p.progress;$('status').textContent=p.message+(p.download?` · ${Math.round(p.download.loadedBytes/1e6)} / ${Math.round(p.download.totalBytes/1e6)} MB`:'');}});
   if(thisRun!==runId)return;
   const original=await createImageBitmap(result.sourceBlob??photo.file);if(thisRun!==runId){original.close();return;}source=original;
   const output=await createImageBitmap(result.blob);if(thisRun!==runId){output.close();return;}
@@ -47,7 +57,7 @@ async function processFile(file){
   alpha=new Uint8Array(canvas.width*canvas.height);for(let i=0;i<alpha.length;i++)alpha[i]=resultPixels.data[i*4+3];initialAlpha=alpha.slice();sourceAlpha=new Uint8Array(alpha.length);for(let i=0;i<alpha.length;i++)sourceAlpha[i]=basePixels.data[i*4+3];
   sourceUrl=URL.createObjectURL(result.sourceBlob??photo.file);$('original').src=sourceUrl;background='transparent';$('crop').checked=false;setTool('view');showResult();selectSwatch('transparent');
   $('dimensions').textContent=`${canvas.width} × ${canvas.height} px`;render();panels('editor');$('edit-status').textContent=photo.resized?'Background removed. Photo resized to fit this device’s memory.':'Background removed. Ready for your next idea.';
- }catch(e){if(thisRun!==runId)return;release();panels('upload');if(e?.code!=='cancelled'&&e?.name!=='AbortError')fail('Processing could not finish. Check your connection and available memory, then retry. A current desktop Chrome or Edge browser is recommended.');}
+ }catch(e){if(thisRun!==runId)return;release();panels('upload');if(e?.code!=='cancelled'&&e?.name!=='AbortError')fail(processingFailure(e,processingStage,processingProvider));}
  finally{bitmap?.close();if(thisRun===runId){busy=false;controller=null;}}
 }
 function selectSwatch(value){document.querySelectorAll('[data-color]').forEach(b=>b.classList.toggle('selected',b.dataset.color===value));}

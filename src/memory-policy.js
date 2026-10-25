@@ -23,3 +23,7 @@ export async function prepareProcessingPhoto(file, bitmap, hardware = globalThis
   return {file: blob, resized: true};
  } finally {canvas.width = canvas.height = 0;}
 }
+
+export function useMobileProcessing(mode, hardware = globalThis.navigator) {
+ return mode === 'compatible' || needsMemoryBudget(hardware);
+}
