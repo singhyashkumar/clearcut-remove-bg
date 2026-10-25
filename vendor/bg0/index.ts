@@ -1,4 +1,3 @@
-import { needsMemoryBudget } from '../../src/memory-policy.js'
 import {
   clearIndexedDbCache,
   createIndexedDbCache,
@@ -975,9 +974,6 @@ async function loadEngine(
   const { AutoModel, AutoProcessor, env } = await import(
     '@huggingface/transformers'
   )
-  if (needsMemoryBudget() && env.backends.onnx.wasm) {
-    env.backends.onnx.wasm.numThreads = 1
-  }
   const transformersEnv = env as unknown as TransformersEnv
   configureModelCache(transformersEnv)
   const watch = createLoadWatch(superviseFetch(transformersEnv), {

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mobileInput,mobileMask} from '../src/mobile-tensors.js';
 import {processingFailure} from '../src/processing-diagnostics.js';
-import {useMobileProcessing} from '../src/memory-policy.js';
+import {useMobileProcessing,prepareSelectedPhoto} from '../src/memory-policy.js';
 test('original model remains default on Android and desktop; small model requires opt-in',()=>{
  const phone={userAgent:'Mozilla/5.0 (Linux; Android 13) Chrome/140.0 Mobile',deviceMemory:8};
  const desktop={userAgent:'Mozilla/5.0 (X11) Chrome/140.0',deviceMemory:8};
@@ -27,4 +27,12 @@ test('failure report retains stage, provider and underlying reason without asset
  assert.match(message,/model-load-failed; preparing; wasm/);
  assert.match(message,/allocation failure/);
  assert.ok(!message.includes('secret'));
+});
+
+test('original modes preserve the exact original file without canvas downscaling',async()=>{
+ const file=new Blob(['original compressed bytes']);
+ for(const mode of ['fast','quality']){
+  const result=await prepareSelectedPhoto(file,{width:6000,height:4000},mode);
+  assert.equal(result.file,file);assert.equal(result.resized,false);
+ }
 });

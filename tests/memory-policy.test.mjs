@@ -11,16 +11,14 @@ const models = stripTypeScriptTypes(readFileSync(new URL('../vendor/bg0/models.t
 const {detectEngineChoices} = await import(dataModule(models));
 const android = {userAgent:'Mozilla/5.0 (Linux; Android 13) Chrome/140.0 Mobile', deviceMemory:8, hardwareConcurrency:8};
 const desktop = {userAgent:'Mozilla/5.0 (X11; Linux x86_64) Chrome/140.0', deviceMemory:8, hardwareConcurrency:8};
-test('phones and low-memory desktops avoid full weights even with many CPU cores', async()=>{
- for(const hardware of [android,{...desktop,deviceMemory:4},{userAgent:'Mozilla/5.0 (Macintosh)',maxTouchPoints:5,hardwareConcurrency:8}]) {
-  assert.equal(needsMemoryBudget(hardware),true);
-  assert.deepEqual((await detectEngineChoices(hardware)).map(c=>c.definition.name),['birefnet-lite']);
- }
+test('original model admission permits Detailed on capable Android and desktop hardware', async()=>{
+ assert.equal((await detectEngineChoices(android))[0].definition.name,'birefnet');
+ assert.equal((await detectEngineChoices({...desktop,deviceMemory:2}))[0].definition.name,'birefnet-lite');
  assert.equal((await detectEngineChoices(desktop))[0].definition.name,'birefnet');
 });
-test('a capable mobile GPU still uses only lite, retaining GPU and CPU fallback',async()=>{
+test('original GPU model ordering is restored on capable mobile hardware',async()=>{
  const gpu={requestAdapter:async()=>({features:{has:()=>true},limits:{maxBufferSize:2**30,maxStorageBufferBindingSize:2**28}})};
- assert.deepEqual((await detectEngineChoices({...android,gpu})).map(c=>[c.definition.name,c.provider]),[['birefnet-lite','webgpu'],['birefnet-lite','wasm']]);
+ assert.deepEqual((await detectEngineChoices({...android,gpu})).map(c=>[c.definition.name,c.provider]),[['birefnet','webgpu'],['birefnet-lite','webgpu'],['birefnet-lite','wasm']]);
 });
 test('large portrait, landscape and panorama photos fit the mobile pixel budget',()=>{
  for(const [w,h] of [[6000,4000],[4000,6000],[25000,1000],[1536,1024]]) {

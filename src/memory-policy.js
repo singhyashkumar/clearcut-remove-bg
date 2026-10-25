@@ -28,3 +28,9 @@ export async function prepareProcessingPhoto(file, bitmap, hardware = globalThis
 export function useMobileProcessing(mode) {
  return mode === 'compatible';
 }
+
+// Original-quality runs retain the original compressed photo and resolution.
+export async function prepareSelectedPhoto(file, bitmap, mode) {
+ if (!useMobileProcessing(mode)) return {file, resized: false};
+ return prepareProcessingPhoto(file, bitmap, {userAgent: 'Mobile'});
+}

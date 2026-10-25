@@ -1,5 +1,5 @@
 import {processingFailure} from './processing-diagnostics.js';
-import {needsMemoryBudget,useMobileProcessing,prepareProcessingPhoto} from './memory-policy.js';
+import {useMobileProcessing,prepareSelectedPhoto} from './memory-policy.js';
 import {validateFile,MAX_PIXELS,alphaBounds,brushAlpha} from './image-utils.js';
 const $=id=>document.getElementById(id);
 let engineFamily=null;
@@ -7,10 +7,6 @@ const lowMemoryRequested=new URL(location.href).searchParams.get('mode')==='low-
 const lowMemoryOption=$('quality').querySelector('option[value="compatible"]');
 if(lowMemoryRequested){lowMemoryOption.hidden=false;lowMemoryOption.disabled=false;$('quality').value='compatible';}
 $('try-low-memory').onclick=()=>{const url=new URL(location.href);url.searchParams.set('mode','low-memory');location.assign(url.href);};
-if(needsMemoryBudget()){
- $('quality').options[0].textContent='Standard · original model (98 MB)';
- $('quality').options[1].textContent='Detailed edges · original model (98 MB)';
-}
 const canvas=$('canvas'),ctx=canvas.getContext('2d',{willReadFrequently:true});
 const canvasWrap=$('canvas-wrap'),brushCursor=$('brush-cursor');
 let controller=null,busy=false,source=null,basePixels=null,alpha=null,initialAlpha=null,sourceAlpha=null,undo=null,bg=null,background='transparent',tool='view',sourceUrl=null,drawing=false,lastPoint=null,frame=0,runId=0,bgRevision=0;
@@ -46,7 +42,7 @@ async function processFile(file){
   const family=mobile?'mobile':'desktop';
   if(engineFamily&&engineFamily!==family)throw new Error('Reload this page before switching between the original and low-memory models.');
   engineFamily=family;
-  const photo=await prepareProcessingPhoto(file,bitmap,mobile?{userAgent:'Mobile'}:navigator);
+  const photo=await prepareSelectedPhoto(file,bitmap,$('quality').value);
   bitmap.close();bitmap=null;
   if(thisRun!==runId)return;
   const {removeBackground}=mobile?await import('../vendor/bg0/mobile.ts'):await import('../vendor/bg0/index.ts');
@@ -60,7 +56,7 @@ async function processFile(file){
   ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(source,0,0,canvas.width,canvas.height);basePixels=ctx.getImageData(0,0,canvas.width,canvas.height);
   alpha=new Uint8Array(canvas.width*canvas.height);for(let i=0;i<alpha.length;i++)alpha[i]=resultPixels.data[i*4+3];initialAlpha=alpha.slice();sourceAlpha=new Uint8Array(alpha.length);for(let i=0;i<alpha.length;i++)sourceAlpha[i]=basePixels.data[i*4+3];
   sourceUrl=URL.createObjectURL(result.sourceBlob??photo.file);$('original').src=sourceUrl;background='transparent';$('crop').checked=false;setTool('view');showResult();selectSwatch('transparent');
-  $('dimensions').textContent=`${canvas.width} × ${canvas.height} px`;render();panels('editor');$('edit-status').textContent=photo.resized?'Background removed. Photo resized to fit this device’s memory.':'Background removed. Ready for your next idea.';
+  $('dimensions').textContent=`${canvas.width} × ${canvas.height} px`;render();panels('editor');$('edit-status').textContent=`Background removed with ${result.model==='birefnet-lite'?'BiRefNet Lite (98 MB)':result.model==='birefnet'?'BiRefNet Detailed (473 MB)':'U²-NetP low-memory model (4.6 MB)'}.${photo.resized?' Photo resized for low-memory mode.':''}`;
  }catch(e){if(thisRun!==runId)return;release();panels('upload');if(e?.code!=='cancelled'&&e?.name!=='AbortError'){fail(processingFailure(e,processingStage,processingProvider));$('low-memory-fallback').hidden=useMobileProcessing($('quality').value);}}
  finally{bitmap?.close();if(thisRun===runId){busy=false;controller=null;}}
 }
