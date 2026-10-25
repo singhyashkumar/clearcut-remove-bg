@@ -1,6 +1,6 @@
 import { canUseOnnxWebGpu, shouldUseSingleThreadedWasm } from './runtime'
 
-export type RemovalModel = 'birefnet' | 'birefnet-lite' | 'u2netp'
+export type RemovalModel = 'birefnet' | 'birefnet-lite'
 export type ExecutionProvider = 'webgpu' | 'wasm'
 
 export interface ModelDefinition {

@@ -1,12 +1,6 @@
 import {processingFailure} from './processing-diagnostics.js';
-import {useMobileProcessing,prepareSelectedPhoto} from './memory-policy.js';
 import {validateFile,MAX_PIXELS,alphaBounds,brushAlpha} from './image-utils.js';
 const $=id=>document.getElementById(id);
-let engineFamily=null;
-const lowMemoryRequested=new URL(location.href).searchParams.get('mode')==='low-memory';
-const lowMemoryOption=$('quality').querySelector('option[value="compatible"]');
-if(lowMemoryRequested){lowMemoryOption.hidden=false;lowMemoryOption.disabled=false;$('quality').value='compatible';}
-$('try-low-memory').onclick=()=>{const url=new URL(location.href);url.searchParams.set('mode','low-memory');location.assign(url.href);};
 const canvas=$('canvas'),ctx=canvas.getContext('2d',{willReadFrequently:true});
 const canvasWrap=$('canvas-wrap'),brushCursor=$('brush-cursor');
 let controller=null,busy=false,source=null,basePixels=null,alpha=null,initialAlpha=null,sourceAlpha=null,undo=null,bg=null,background='transparent',tool='view',sourceUrl=null,drawing=false,lastPoint=null,frame=0,runId=0,bgRevision=0;
@@ -16,7 +10,7 @@ function panels(mode){$('showcase').hidden=mode!=='upload';$('upload-panel').hid
 function setTool(value){tool=value;for(const id of ['move','erase','restore'])$(id).classList.toggle('active',(id==='move'?'view':id)===value);canvas.style.cursor='default';if(value==='view')canvasWrap.classList.remove('brush-visible');else if(canvas.matches(':hover'))canvasWrap.classList.add('brush-visible');if(value!=='view')showResult();}
 function showResult(){canvas.hidden=false;$('original').hidden=true;$('result-view').classList.add('active');$('original-view').classList.remove('active');}
 function release(){cancelAnimationFrame(frame);frame=0;drawing=false;lastPoint=null;source?.close();source=null;bg?.close();bg=null;basePixels=alpha=initialAlpha=sourceAlpha=undo=null;if(sourceUrl)URL.revokeObjectURL(sourceUrl);sourceUrl=null;$('original').removeAttribute('src');canvas.width=canvas.height=cutout.width=cutout.height=1;$('undo').disabled=true;$('file').value='';$('bg-file').value='';$('edit-status').textContent='';}
-function reset(){++runId;controller?.abort();controller=null;busy=false;release();panels('upload');$('error').hidden=true;$('low-memory-fallback').hidden=true;}
+function reset(){++runId;controller?.abort();controller=null;busy=false;release();panels('upload');$('error').hidden=true;}
 function render(){
  if(!basePixels)return;
  const pixels=new ImageData(new Uint8ClampedArray(basePixels.data),canvas.width,canvas.height);
@@ -30,7 +24,7 @@ function queueRender(){if(!frame)frame=requestAnimationFrame(()=>{frame=0;render
 async function processFile(file){
  if(busy)return;
  busy=true;const thisRun=++runId;
- $('error').hidden=true;$('low-memory-fallback').hidden=true;
+ $('error').hidden=true;
  try{await validateFile(file);}catch(e){if(thisRun===runId){busy=false;fail(e.message);}return;}
  let bitmap,processingStage='preparing',processingProvider='unknown';
  try{bitmap=await createImageBitmap(file);if(bitmap.width*bitmap.height>MAX_PIXELS)throw new Error('Choose a photo up to 25 megapixels. Resize this photo and try again.');}
@@ -38,26 +32,21 @@ async function processFile(file){
  if(thisRun!==runId){bitmap.close();return;}
  release();controller=new AbortController();const localController=controller;panels('processing');$('status').textContent='Preparing the AI engine…';$('progress').value=0;
  try{
-  const mobile=useMobileProcessing($('quality').value);
-  const family=mobile?'mobile':'desktop';
-  if(engineFamily&&engineFamily!==family)throw new Error('Reload this page before switching between the original and low-memory models.');
-  engineFamily=family;
-  const photo=await prepareSelectedPhoto(file,bitmap,$('quality').value);
   bitmap.close();bitmap=null;
   if(thisRun!==runId)return;
-  const {removeBackground}=mobile?await import('../vendor/bg0/mobile.ts'):await import('../vendor/bg0/index.ts');
+  const {removeBackground}=await import('../vendor/bg0/index.ts');
   if(thisRun!==runId)return;
-  const result=await removeBackground(photo.file,{quality:$('quality').value==='quality'?'quality':'fast',signal:localController.signal,onProgress:p=>{if(thisRun!==runId)return;processingStage=p.stage;processingProvider=p.provider??processingProvider;$('progress').value=p.progress;$('status').textContent=p.message+(p.download?` · ${Math.round(p.download.loadedBytes/1e6)} / ${Math.round(p.download.totalBytes/1e6)} MB`:'');}});
+  const result=await removeBackground(file,{quality:$('quality').value==='quality'?'quality':'fast',signal:localController.signal,onProgress:p=>{if(thisRun!==runId)return;processingStage=p.stage;processingProvider=p.provider??processingProvider;$('progress').value=p.progress;$('status').textContent=p.message+(p.download?` · ${Math.round(p.download.loadedBytes/1e6)} / ${Math.round(p.download.totalBytes/1e6)} MB`:'');}});
   if(thisRun!==runId)return;
-  const original=await createImageBitmap(result.sourceBlob??photo.file);if(thisRun!==runId){original.close();return;}source=original;
+  const original=await createImageBitmap(result.sourceBlob??file);if(thisRun!==runId){original.close();return;}source=original;
   const output=await createImageBitmap(result.blob);if(thisRun!==runId){output.close();return;}
   canvas.width=cutout.width=output.width;canvas.height=cutout.height=output.height;
   ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(output,0,0);const resultPixels=ctx.getImageData(0,0,canvas.width,canvas.height);output.close();
   ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(source,0,0,canvas.width,canvas.height);basePixels=ctx.getImageData(0,0,canvas.width,canvas.height);
   alpha=new Uint8Array(canvas.width*canvas.height);for(let i=0;i<alpha.length;i++)alpha[i]=resultPixels.data[i*4+3];initialAlpha=alpha.slice();sourceAlpha=new Uint8Array(alpha.length);for(let i=0;i<alpha.length;i++)sourceAlpha[i]=basePixels.data[i*4+3];
-  sourceUrl=URL.createObjectURL(result.sourceBlob??photo.file);$('original').src=sourceUrl;background='transparent';$('crop').checked=false;setTool('view');showResult();selectSwatch('transparent');
-  $('dimensions').textContent=`${canvas.width} × ${canvas.height} px`;render();panels('editor');$('edit-status').textContent=`Background removed with ${result.model==='birefnet-lite'?'BiRefNet Lite (98 MB)':result.model==='birefnet'?'BiRefNet Detailed (473 MB)':'U²-NetP low-memory model (4.6 MB)'}.${photo.resized?' Photo resized for low-memory mode.':''}`;
- }catch(e){if(thisRun!==runId)return;release();panels('upload');if(e?.code!=='cancelled'&&e?.name!=='AbortError'){fail(processingFailure(e,processingStage,processingProvider));$('low-memory-fallback').hidden=useMobileProcessing($('quality').value);}}
+  sourceUrl=URL.createObjectURL(result.sourceBlob??file);$('original').src=sourceUrl;background='transparent';$('crop').checked=false;setTool('view');showResult();selectSwatch('transparent');
+  $('dimensions').textContent=`${canvas.width} × ${canvas.height} px`;render();panels('editor');$('edit-status').textContent=`Background removed with ${result.model==='birefnet-lite'?'BiRefNet Lite (98 MB)':'BiRefNet Detailed (473 MB)'}.`;
+ }catch(e){if(thisRun!==runId)return;release();panels('upload');if(e?.code!=='cancelled'&&e?.name!=='AbortError'){fail(processingFailure(e,processingStage,processingProvider));}}
  finally{bitmap?.close();if(thisRun===runId){busy=false;controller=null;}}
 }
 function selectSwatch(value){document.querySelectorAll('[data-color]').forEach(b=>b.classList.toggle('selected',b.dataset.color===value));}
