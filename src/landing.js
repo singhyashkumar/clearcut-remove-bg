@@ -77,6 +77,16 @@ export function initLanding(doc) {
   });
 }
 
+export function initMobileMenu(menu) {
+  if (!menu) return;
+  for (const link of menu.querySelectorAll('a')) link.addEventListener('click', () => { menu.open = false; });
+  menu.addEventListener('keydown', event => {
+    if (event.key !== 'Escape' || !menu.open) return;
+    menu.open = false;
+    menu.querySelector('summary').focus();
+  });
+}
+
 export function initHeroAnimation(image, motion, preference, storage) {
   if (!image) return;
   let saved = null;
@@ -97,6 +107,7 @@ export function initHeroAnimation(image, motion, preference, storage) {
 
 if (typeof document !== 'undefined') {
   initLanding(document);
+  initMobileMenu(document.querySelector('.mobile-menu'));
   let storage;
   try { storage = window.localStorage; } catch {}
   initHeroAnimation(document.getElementById('hero-animation'), window.matchMedia('(prefers-reduced-motion: reduce)'), document.getElementById('hero-motion'), storage);

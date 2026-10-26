@@ -7,7 +7,7 @@ import { createHash } from 'node:crypto';
 const source = readFileSync(new URL('../src/landing.js', import.meta.url), 'utf8')
   .replace("import useCases from './use-cases.json' with { type: 'json' };", `const useCases = ${readFileSync(new URL('../src/use-cases.json', import.meta.url), 'utf8')};`)
   .replaceAll('import.meta.env.BASE_URL', "'/test-base/'");
-const { initLanding, initHeroAnimation } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
+const { initLanding, initHeroAnimation, initMobileMenu } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
 
 class Element extends EventTarget {
   constructor(id, dataset = {}) {
@@ -19,6 +19,20 @@ class Element extends EventTarget {
   focus() { this.focused = true; }
   scrollIntoView() { this.scrolled = true; }
 }
+test('mobile menu closes on navigation and Escape restores focus to its summary', () => {
+  const menu = new Element('menu'), link = new Element('link'), summary = new Element('summary');
+  menu.querySelectorAll = () => [link];
+  menu.querySelector = () => summary;
+  initMobileMenu(menu);
+  menu.open = true;
+  link.dispatchEvent(new Event('click'));
+  assert.equal(menu.open, false);
+  menu.open = true;
+  const escape = new Event('keydown'); escape.key = 'Escape';
+  menu.dispatchEvent(escape);
+  assert.equal(menu.open, false);
+  assert.equal(summary.focused, true);
+});
 function fixture() {
   const ids = ['quality-before', 'quality-after', 'quality-slider', 'quality-panel', 'use-case-detail', 'use-case-title', 'use-case-copy', 'close-use-case'];
   const elements = Object.fromEntries(ids.map(id => [id, new Element(id)]));
