@@ -86,3 +86,23 @@ The comparison uses one generated cutout on a CSS studio backdrop and on a trans
 The hero, category examples, feature collage, efficiency collage and inspiration banner have distinct subjects. No image set is repeated in another section. The sample-upload button loads the original generated ceramic-artist photograph.
 
 The prior reference image/video files and the old licensed stock-photo samples were removed from the deployable tree. This document records artwork provenance, not a legal guarantee about the website or generated outputs. Existing font licensing is a separate unresolved issue.
+
+## Interactive feature and motion previews — 2026-10-27
+
+### finish-sneaker.webp
+
+Generated with the built-in image_gen tool, transparent background enabled. Prompt: One original photorealistic unbranded low-top running sneaker in warm ivory suede and cream mesh, rust-orange heel accent and forest-green outsole trim; believable cream laces and sharp stitching. Three-quarter view, toe pointing left, entire shoe visible on genuine transparent alpha. Soft studio light, no floor or cast shadow, no person, no typography, no logo or watermark. Leave breathing room for a 4:3 website frame and do not bake a checkerboard into the pixels.
+
+Original: exec-99627e6c-b797-45e9-85cf-35b14082c352.png, 1448x1086 RGBA, archived locally as outputs/media/finish-sneaker-source.png in the task workspace. Web derivative: public/artwork/finish-sneaker.webp, native dimensions, quality 88, 249140 bytes. Alpha bytes verified identical to the generated source. The source and derivative were visually inspected; this subject is used only in the interactive background-choice feature, replacing the older lamp collage.
+
+### loop-fern.gif and loop-pet.gif
+
+Original videos were generated in the user's Gemini account and supplied by the user as gemini_generated_video_3d5c45a0.mp4 (fern) and gemini_generated_video_2efcb598.mp4 (border collie). Both sources are 720x1280 portrait H.264, 24fps, duration about 10.01 seconds. Source MP4s remain in the task's local outputs/media/ archive; they are not added to the deployable site.
+
+Fern prompt: One maidenhair fern in a terracotta pot, locked camera, soft daylight, fine leaves; a softly blurred home background changes to white, then blush and back. Stable plant geometry, no people, text, logos or camera movement. Portrait 9:16, ten seconds or supported native duration, calm loop-friendly pacing.
+
+Pet prompt: One seated black-and-white border collie with whole body and tail visible, locked camera, soft daylight, crisp fur, subtle blinking and breathing; a blurred garden background changes to cream and returns. Stable anatomy, no text, logos, speech or music. Portrait 9:16, ten seconds or supported native duration.
+
+GIF conversion preserves the full portrait frame and provider marks, with no cropping. Both derivatives are 252x448, 8fps, 80 frames, infinite loop, approximately 10.01 seconds. Fern uses 160 colours and Bayer dithering (scale 4) to avoid visible gradient banding: 2854333 bytes. Pet uses 80 colours without dithering: 1996050 bytes. Initial 360px/10fps GIFs were about 6 MB each and rejected for size; a smaller undithered fern had visible banding and was refined. Still JPEG posters are 360x640. Audio is absent from GIF output.
+
+Sampled contact sheets at one-second intervals and optimized frames were visually inspected; this is not exhaustive every-frame visual certification. Both source clips and every GIF frame are decoded during file validation. The website labels these as original AI-generated background ideas, not results of running Clearcut's removal model. The clips are unique to the inspiration frame and are not reused elsewhere. No Indian-person video is included; the failed earlier portrait request is excluded.

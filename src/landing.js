@@ -77,6 +77,21 @@ export function initLanding(doc) {
   });
 }
 
+export function initFinishPreview(preview) {
+  if (!preview) return;
+  const backgrounds = { transparent: 'transparent', white: '#ffffff', sage: '#e4eddf', blush: '#f6e4dd' };
+  const buttons = [...preview.querySelectorAll('[data-finish-color]')];
+  const status = preview.querySelector('.finish-status');
+  for (const button of buttons) button.addEventListener('click', () => {
+    const name = button.dataset.finishColor;
+    if (!Object.hasOwn(backgrounds, name)) return;
+    preview.dataset.finish = name;
+    preview.style.setProperty('--finish-background', backgrounds[name]);
+    for (const item of buttons) item.setAttribute('aria-pressed', String(item === button));
+    status.textContent = button.getAttribute('aria-label');
+  });
+}
+
 export function initMobileMenu(menu) {
   if (!menu) return;
   for (const link of menu.querySelectorAll('a')) link.addEventListener('click', () => { menu.open = false; });
@@ -89,6 +104,9 @@ export function initMobileMenu(menu) {
 
 export function initHeroAnimation(image, motion, preference, storage) {
   if (!image) return;
+  image.onerror = () => {
+    if (image.getAttribute('src') === image.dataset.animationSrc) image.src = image.dataset.posterSrc;
+  };
   let saved = null;
   try { saved = storage?.getItem('clearcut-hero-motion'); } catch {}
   const update = () => {
@@ -107,8 +125,11 @@ export function initHeroAnimation(image, motion, preference, storage) {
 
 if (typeof document !== 'undefined') {
   initLanding(document);
+  initFinishPreview(document.querySelector('.finish-preview'));
   initMobileMenu(document.querySelector('.mobile-menu'));
   let storage;
   try { storage = window.localStorage; } catch {}
-  initHeroAnimation(document.getElementById('hero-animation'), window.matchMedia('(prefers-reduced-motion: reduce)'), document.getElementById('hero-motion'), storage);
+  const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const preference = document.getElementById('hero-motion');
+  for (const image of document.querySelectorAll('[data-animation-src]')) initHeroAnimation(image, motion, preference, storage);
 }

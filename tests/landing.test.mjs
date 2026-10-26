@@ -7,7 +7,7 @@ import { createHash } from 'node:crypto';
 const source = readFileSync(new URL('../src/landing.js', import.meta.url), 'utf8')
   .replace("import useCases from './use-cases.json' with { type: 'json' };", `const useCases = ${readFileSync(new URL('../src/use-cases.json', import.meta.url), 'utf8')};`)
   .replaceAll('import.meta.env.BASE_URL', "'/test-base/'");
-const { initLanding, initHeroAnimation, initMobileMenu } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
+const { initLanding, initHeroAnimation, initMobileMenu, initFinishPreview } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
 
 class Element extends EventTarget {
   constructor(id, dataset = {}) {
@@ -16,9 +16,33 @@ class Element extends EventTarget {
     this.value = '50'; this.hidden = true;
   }
   setAttribute(name, value) { this.attributes[name] = value; }
+  getAttribute(name) { return this.attributes[name] ?? null; }
   focus() { this.focused = true; }
   scrollIntoView() { this.scrolled = true; }
 }
+test('finish preview changes only its background, updates selection and rejects unknown colours', () => {
+  const preview = new Element('preview'), status = new Element('status');
+  const buttons = ['transparent', 'white', 'sage', 'blush'].map(name => {
+    const button = new Element(name, { finishColor: name });
+    button.setAttribute('aria-label', `${name} background`);
+    return button;
+  });
+  preview.querySelectorAll = () => buttons;
+  preview.querySelector = () => status;
+  initFinishPreview(preview);
+  buttons[2].dispatchEvent(new Event('click'));
+  assert.equal(preview.style['--finish-background'], '#e4eddf');
+  assert.equal(preview.dataset.finish, 'sage');
+  assert.equal(status.textContent, 'sage background');
+  assert.deepEqual(buttons.map(button => button.getAttribute('aria-pressed')), ['false', 'false', 'true', 'false']);
+  buttons[0].dispatchEvent(new Event('click'));
+  assert.equal(preview.style['--finish-background'], 'transparent');
+  assert.equal(preview.dataset.finish, 'transparent');
+  buttons[1].dataset.finishColor = 'unknown';
+  buttons[1].dispatchEvent(new Event('click'));
+  assert.equal(preview.dataset.finish, 'transparent');
+});
+
 test('mobile menu closes on navigation and Escape restores focus to its summary', () => {
   const menu = new Element('menu'), link = new Element('link'), summary = new Element('summary');
   menu.querySelectorAll = () => [link];
@@ -90,7 +114,7 @@ test('original artwork is not reused across sections and borrowed media is absen
   assert.equal(new Set(outsideImages).size, outsideImages.length, 'A display image was repeated in another section');
   for (const path of outsideImages) assert.equal(comparison.has(path), false, 'Comparison artwork must not reappear in other sections');
   const paths = [...new Set([...outsideImages, ...comparison])];
-  assert.equal(paths.length, 9, 'The nine original artwork assets must all be represented');
+  assert.equal(paths.length, 10, 'Category artwork, hero, feature and two distinct motion posters must be represented');
   const hashes = paths.map(path => createHash('sha256').update(readFileSync(new URL(`../public/${path.replace('%BASE_URL%', '')}`, import.meta.url))).digest('hex'));
   assert.equal(new Set(hashes).size, hashes.length, 'The same image was copied to a different filename');
 });
@@ -104,6 +128,28 @@ test('hero GIF animates by default and uses its still frame for reduced motion',
   motion.matches = true;
   motion.dispatchEvent(new Event('change'));
   assert.equal(image.src, '/hero.jpg');
+});
+
+test('one motion preference controls the hero and both catalogue loops', () => {
+  const motion = new EventTarget(); motion.matches = false;
+  const preference = new EventTarget(); preference.checked = true;
+  const images = ['hero', 'fern', 'pet'].map(name => ({ dataset: { animationSrc: `/${name}.gif`, posterSrc: `/${name}.jpg` } }));
+  for (const image of images) initHeroAnimation(image, motion, preference);
+  assert.deepEqual(images.map(image => image.src), ['/hero.gif', '/fern.gif', '/pet.gif']);
+  preference.checked = false; preference.dispatchEvent(new Event('change'));
+  assert.deepEqual(images.map(image => image.src), ['/hero.jpg', '/fern.jpg', '/pet.jpg']);
+  preference.checked = true; preference.dispatchEvent(new Event('change'));
+  assert.deepEqual(images.map(image => image.src), ['/hero.gif', '/fern.gif', '/pet.gif']);
+});
+
+test('an animation that fails to load falls back to its poster without an error loop', () => {
+  const motion = new EventTarget(); motion.matches = false;
+  const image = { dataset: { animationSrc: '/loop.gif', posterSrc: '/poster.jpg' }, getAttribute() { return this.src; } };
+  initHeroAnimation(image, motion);
+  image.onerror();
+  assert.equal(image.src, '/poster.jpg');
+  image.onerror();
+  assert.equal(image.src, '/poster.jpg');
 });
 
 test('explicit GIF preference overrides reduced motion and is restored on later visits', () => {
