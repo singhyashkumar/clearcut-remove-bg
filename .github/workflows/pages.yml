@@ -30,6 +30,7 @@ jobs:
         env:
           PUBLIC_BASE_PATH: /
           PUBLIC_SITE_URL: https://clearcutt.in/
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL || vars.VITE_PAYMENT_API_BASE_URL }}
           VITE_PAYMENT_API_BASE_URL: ${{ vars.VITE_PAYMENT_API_BASE_URL }}
           VITE_PAYMENT_MODE: ${{ vars.VITE_PAYMENT_MODE }}
       - run: npm run verify:dist

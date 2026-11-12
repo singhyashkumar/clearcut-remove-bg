@@ -3,6 +3,7 @@ const RAZORPAY_API = 'https://api.razorpay.com/v1';
 const ACCESS_SECONDS = 30 * 24 * 60 * 60;
 const DAILY_LIMIT = 20;
 const BATCH_LIMIT = 5;
+const REVIEW_UPDATE_SECONDS = 60 * 60;
 
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), {
   status,
@@ -80,6 +81,114 @@ async function readJson(request) {
     if (text.length > 16384) return null;
     return JSON.parse(text);
   } catch { return null; }
+}
+
+function responseWithHeaders(response, headers) {
+  const responseHeaders = new Headers(response.headers);
+  for (const [name, value] of Object.entries(headers || {})) responseHeaders.set(name, value);
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers: responseHeaders });
+}
+
+function adminUids(env) {
+  return new Set((env.REVIEW_ADMIN_UIDS || '').split(',').map(value => value.trim()).filter(Boolean));
+}
+
+function reviewInput(body) {
+  const displayName = typeof body?.display_name === 'string' ? body.display_name.trim() : '';
+  const reviewBody = typeof body?.body === 'string' ? body.body.trim() : '';
+  const rating = body?.rating;
+  const controls = /[\u0000-\u001f\u007f]/u;
+  if (Array.from(displayName).length < 2 || Array.from(displayName).length > 50 || controls.test(displayName)) return null;
+  if (Array.from(reviewBody).length < 20 || Array.from(reviewBody).length > 1000 || controls.test(reviewBody)) return null;
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) return null;
+  return { displayName, reviewBody, rating };
+}
+
+async function publicReviews(env) {
+  if (!env.DB) return json({ error: 'Reviews are temporarily unavailable.' }, 503);
+  try {
+    const [list, aggregate] = await Promise.all([
+      env.DB.prepare(`SELECT id, display_name, rating, body, published_at
+        FROM reviews WHERE status = 'approved' ORDER BY published_at DESC LIMIT 50`).all(),
+      env.DB.prepare("SELECT COUNT(*) AS count, ROUND(AVG(rating), 1) AS average FROM reviews WHERE status = 'approved'").first()
+    ]);
+    return json({ reviews: list?.results || [], count: Number(aggregate?.count || 0), average: aggregate?.average == null ? null : Number(aggregate.average) }, 200, {
+      'cache-control': 'public, max-age=60, stale-while-revalidate=300'
+    });
+  } catch { return json({ error: 'Reviews are temporarily unavailable.' }, 503); }
+}
+
+async function ownReview(env, uid) {
+  try {
+    const review = await env.DB.prepare(`SELECT id, display_name, rating, body, status, created_at, updated_at
+      FROM reviews WHERE uid = ?`).bind(uid).first();
+    return json({ review: review || null, is_admin: adminUids(env).has(uid) });
+  } catch { return json({ error: 'Could not load your review.' }, 503); }
+}
+
+async function saveReview(request, env, uid) {
+  const input = reviewInput(await readJson(request));
+  if (!input) return json({ error: 'Use a display name of 2–50 characters, a rating from 1–5, and a review of 20–1000 characters.' }, 400);
+  try {
+    const existing = await env.DB.prepare('SELECT id, updated_at FROM reviews WHERE uid = ?').bind(uid).first();
+    const now = Math.floor(Date.now() / 1000);
+    if (existing && Number(existing.updated_at) > now - REVIEW_UPDATE_SECONDS) {
+      return json({ error: 'Please wait an hour before editing and resubmitting your review.' }, 429);
+    }
+    if (existing) {
+      await env.DB.prepare(`UPDATE reviews SET display_name = ?, rating = ?, body = ?, status = 'pending',
+        updated_at = unixepoch(), published_at = NULL, moderated_at = NULL, moderated_by = NULL WHERE uid = ?`)
+        .bind(input.displayName, input.rating, input.reviewBody, uid).run();
+    } else {
+      await env.DB.prepare(`INSERT INTO reviews
+        (id, uid, display_name, rating, body, status, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, 'pending', unixepoch(), unixepoch())`)
+        .bind(crypto.randomUUID(), uid, input.displayName, input.rating, input.reviewBody).run();
+    }
+    return json({ submitted: true, status: 'pending' }, existing ? 200 : 201);
+  } catch { return json({ error: 'Could not save your review. Please retry.' }, 503); }
+}
+
+async function deleteReview(env, uid) {
+  try {
+    await env.DB.prepare('DELETE FROM reviews WHERE uid = ?').bind(uid).run();
+    return json({ deleted: true });
+  } catch { return json({ error: 'Could not delete your review. Please retry.' }, 503); }
+}
+
+async function reviewQueue(env, uid, status) {
+  if (!adminUids(env).has(uid)) return json({ error: 'Administrator access required.' }, 403);
+  if (!['pending', 'approved', 'rejected'].includes(status)) return json({ error: 'Unknown review status.' }, 400);
+  try {
+    const result = await env.DB.prepare(`SELECT id, display_name, rating, body, status, created_at, updated_at,
+      published_at, moderated_at FROM reviews WHERE status = ? ORDER BY updated_at ASC LIMIT 100`).bind(status).all();
+    return json({ reviews: result?.results || [] });
+  } catch { return json({ error: 'Could not load the moderation queue.' }, 503); }
+}
+
+async function moderateReview(request, env, uid) {
+  if (!adminUids(env).has(uid)) return json({ error: 'Administrator access required.' }, 403);
+  const body = await readJson(request);
+  const reviewId = typeof body?.review_id === 'string' ? body.review_id : '';
+  const action = body?.action;
+  const reason = typeof body?.reason === 'string' ? body.reason.trim() : '';
+  if (!/^[a-f\d]{8}-[a-f\d]{4}-[1-5][a-f\d]{3}-[89ab][a-f\d]{3}-[a-f\d]{12}$/i.test(reviewId)
+    || !['approve', 'reject'].includes(action) || Array.from(reason).length > 300
+    || /[\u0000-\u001f\u007f]/u.test(reason)) return json({ error: 'Moderation request is invalid.' }, 400);
+  try {
+    const review = await env.DB.prepare('SELECT id FROM reviews WHERE id = ?').bind(reviewId).first();
+    if (!review) return json({ error: 'Review not found.' }, 404);
+    const approved = action === 'approve';
+    await env.DB.batch([
+      env.DB.prepare(`UPDATE reviews SET status = ?, updated_at = unixepoch(), moderated_at = unixepoch(),
+        moderated_by = ?, published_at = ${approved ? 'unixepoch()' : 'NULL'} WHERE id = ?`)
+        .bind(approved ? 'approved' : 'rejected', uid, reviewId),
+      env.DB.prepare(`INSERT INTO review_moderation_audit
+        (id, review_id, moderator_uid, action, reason, created_at) VALUES (?, ?, ?, ?, ?, unixepoch())`)
+        .bind(crypto.randomUUID(), reviewId, uid, approved ? 'approved' : 'rejected', reason || null)
+    ]);
+    return json({ moderated: true, status: approved ? 'approved' : 'rejected' });
+  } catch { return json({ error: 'Could not moderate this review.' }, 503); }
 }
 
 async function createOrder(request, env, uid, fetchImpl = fetch) {
@@ -193,13 +302,15 @@ export default {
     const origin = request.headers.get('origin');
     const headers = corsHeaders(origin, env);
     if (url.pathname === '/api/webhook') return request.method === 'POST' ? webhook(request, env) : json({ error: 'Method not allowed.' }, 405);
+    if (url.pathname === '/api/reviews' && request.method === 'GET') return responseWithHeaders(await publicReviews(env), headers);
     if (!headers) return json({ error: 'Origin is not allowed.' }, 403);
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
-    if (request.method !== (url.pathname === '/api/entitlement' ? 'GET' : 'POST')) return json({ error: 'Method not allowed.' }, 405, headers);
+    const getRoutes = ['/api/entitlement', '/api/reviews/mine', '/api/admin/reviews'];
+    if (request.method !== (getRoutes.includes(url.pathname) ? 'GET' : 'POST')) return json({ error: 'Method not allowed.' }, 405, headers);
     const response = await (async () => {
       const fetchImpl = env.__testFetch || fetch;
       const user = await requireUser(request, env, fetchImpl);
-      if (!user) return json({ error: 'Sign in with Google before using checkout.' }, 401);
+      if (!user) return json({ error: 'Sign in with Google to continue.' }, 401);
       if (user.email && ['/api/createOrder', '/api/verifyPayment', '/api/entitlement'].includes(url.pathname)) {
         try {
           await env.DB.prepare(`INSERT INTO accounts (uid, email, updated_at) VALUES (?, ?, unixepoch())
@@ -210,10 +321,13 @@ export default {
       if (url.pathname === '/api/createOrder') return createOrder(request, env, user.uid, fetchImpl);
       if (url.pathname === '/api/verifyPayment') return verifyPayment(request, env, user.uid, fetchImpl);
       if (url.pathname === '/api/entitlement') return getEntitlement(env, user.uid);
+      if (url.pathname === '/api/reviews/mine') return ownReview(env, user.uid);
+      if (url.pathname === '/api/reviews') return saveReview(request, env, user.uid);
+      if (url.pathname === '/api/reviews/delete') return deleteReview(env, user.uid);
+      if (url.pathname === '/api/admin/reviews') return reviewQueue(env, user.uid, url.searchParams.get('status') || 'pending');
+      if (url.pathname === '/api/admin/reviews/moderate') return moderateReview(request, env, user.uid);
       return json({ error: 'Not found.' }, 404);
     })();
-    const responseHeaders = new Headers(response.headers);
-    for (const [name, value] of Object.entries(headers)) responseHeaders.set(name, value);
-    return new Response(response.body, { status: response.status, statusText: response.statusText, headers: responseHeaders });
+    return responseWithHeaders(response, headers);
   }
 };

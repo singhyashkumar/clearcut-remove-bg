@@ -1,6 +1,6 @@
 # Clearcut Remove BG
 
-A free-first background-removal site with an original interface and an adapted BG0 browser engine. No pricing, account, backend inference, or storage service is implemented.
+A free-first background-removal site with an original interface and an adapted BG0 browser engine. Image inference stays in the browser. Firebase sign-in, Cloudflare Worker/D1 membership, payment, and moderated-review services are separate from photo processing and never receive the selected image.
 
 ## Run locally
 
@@ -25,7 +25,9 @@ Open the Local URL printed by Vite. `npm test` runs the image safety/editor util
 
 ## Privacy/security design
 
-There is no image ingestion endpoint, image storage, API key, authentication system, billing, analytics, or third-party font/script tag. Uploaded images are decoded locally; filenames are not displayed or inserted as HTML. Exports are generated locally with canvas. Object URLs are revoked on clear. No selected image or mask is intentionally written to browser persistence. Model files may be cached. Closing a tab is not a forensic secure-memory erasure guarantee.
+There is no image ingestion endpoint or image storage service. Uploaded images are decoded locally; filenames are not displayed or inserted as HTML. Exports are generated locally with canvas. Object URLs are revoked on clear. No selected image or mask is intentionally written to browser persistence. Model files may be cached. Closing a tab is not a forensic secure-memory erasure guarantee.
+
+Google sign-in is used for optional membership and one-review-per-account controls. D1 stores verified account, payment and review records, but not photos. Public review responses omit account IDs and email addresses; review text is rendered with `textContent`. New and edited reviews require human approval before publication. Administrator access is based on exact verified Firebase UIDs configured in the Worker environment.
 
 External model/config GET requests use fixed repository revision IDs on Hugging Face and its CDN. The pinned ONNX WASM runtime downloads from jsDelivr. These providers and the static host receive ordinary network request metadata. Model transfer/caching is not an image upload. The initial download is about 98 MB (fast), up to 473 MB plus a lite fallback (detailed). A restrictive CSP limits script, image and network sources. `_headers` supplies additional headers on hosts that support this format; confirm actual headers on your deployment. Never expose a Vite dev server publicly as the production host.
 
@@ -33,7 +35,7 @@ Inputs: real PNG/JPEG/WebP magic bytes, non-empty, maximum 20 MB and 25 MP. Rast
 
 ## Explicit limits
 
-This recreates the core user workflow, not remove.bg's proprietary model, branding or service infrastructure. Exact quality/speed parity is not established. Model inference uses 512px input; large output dimensions do not mean native-resolution segmentation. Hair, glass and complex scenes need assessment. Current release targets desktop Chrome/Edge; iOS and HEIC are explicitly unsupported. No paid API, remote-image-URL intake, crop positioning, accounts, billing, API credits, or server inference is provided.
+This recreates the core user workflow, not remove.bg's proprietary model, branding or service infrastructure. Exact quality/speed parity is not established. Model inference uses 512px input; large output dimensions do not mean native-resolution segmentation. Hair, glass and complex scenes need assessment. Current release targets desktop Chrome/Edge; iOS and HEIC are explicitly unsupported. No paid image-processing API, remote-image-URL intake, API credits, or server inference is provided.
 
 The plant sample completed real browser inference and produced verified RGBA PNG downloads. Comparison, background replacement, brushes, trim, invalid-file rejection, cancellation and responsive layouts were exercised. The first run took several minutes in this environment. The detailed/full model, broad quality corpus, physical mobile compatibility, complete network trace, hosted-origin processing and independent security testing remain outside the validated coverage. See VERIFICATION.md for exact evidence and limits.
 
@@ -64,5 +66,13 @@ The `entitlements` table persists the account UID, plan, expiry and limits. The 
 The frontend displays a Plus badge, membership email and expiry, and an explicit extension action. Server membership checks run after sign-in and when returning to the window. Quotas remain soft guidance because processing is local, and the current editor supports one photo at a time.
 
 Before deploying backend changes, run `npm test`, inspect pending D1 migrations and apply them to `clearcut-payments` using Wrangler, then deploy the Worker. Deploy the frontend through the existing GitHub Pages workflow. Never commit `.dev.vars`, `.env.local`, API secrets or D1 data.
+
+## Moderated public reviews
+
+The homepage review form uses the same Firebase sign-in and Cloudflare Worker/D1 service. Reading approved reviews is public. Creating, editing and deleting a review requires a valid Firebase token and an allowed site origin. Each Firebase UID can own one review; edits are limited to once per hour and return an approved review to `pending`. The public API never returns Firebase UIDs or account emails.
+
+Apply `worker/migrations/0003_reviews.sql` before enabling the form. Configure `REVIEW_ADMIN_UIDS` in the Worker as a comma-separated list of exact Firebase UIDs for trusted moderators. The protected moderation panel becomes visible only when the backend confirms that the signed-in UID is an administrator. Every approval or rejection is recorded in `review_moderation_audit`.
+
+Use `VITE_API_BASE_URL` for the review API. During migration it falls back to `VITE_PAYMENT_API_BASE_URL`, so the current Worker can serve both features. Do not publish seeded testimonials or copy third-party ratings into the API. The site deliberately omits `AggregateRating` and `Review` structured data until real approved reviews exist and current search-engine eligibility has been reassessed.
 
 The hero uses `public/artwork/hero-demo.gif`, converted from the supplied video to a 360px-wide, 10 fps, 64-color continuously looping GIF (about 2 MB). There are no player controls. Reduced-motion users see `hero-demo.jpg` unless they enable Animated preview; that explicit preference is saved in the browser. The original MP4 remains available as a source asset.
