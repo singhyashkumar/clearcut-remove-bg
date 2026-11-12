@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <pattern id="checker" width="32" height="32" patternUnits="userSpaceOnUse">
+      <rect width="32" height="32" fill="#ffffff"/>
+      <path d="M0 0h16v16H0zM16 16h16v16H16z" fill="#e7ebe4"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="630" rx="32" fill="#f4f6f0"/>
+  <circle cx="1110" cy="-36" r="230" fill="#dfe8cc"/>
+  <circle cx="1040" cy="610" r="180" fill="#efdce2" opacity=".72"/>
+  <g transform="translate(72 66)">
+    <rect width="44" height="44" rx="12" fill="#1d705b"/>
+    <path d="M12 13h20v18H12z" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="9 4"/>
+    <text x="58" y="34" font-family="Arial, Helvetica, sans-serif" font-size="32" font-weight="800" letter-spacing="-1.5" fill="#253b33">clearcut<tspan fill="#1d705b">.</tspan></text>
+  </g>
+  <g transform="translate(72 178)">
+    <text font-family="Arial, Helvetica, sans-serif" font-size="64" font-weight="700" letter-spacing="-2" fill="#454545"><tspan x="0" y="0">Remove image</tspan><tspan x="0" y="76">backgrounds.</tspan></text>
+    <text x="0" y="198" font-family="Arial, Helvetica, sans-serif" font-size="26" fill="#626b70">Private, on-device AI with full-size PNG export.</text>
+    <g transform="translate(0 246)">
+      <rect width="230" height="48" rx="24" fill="#1d705b"/>
+      <text x="115" y="31" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#fff">FREE · NO WATERMARK</text>
+      <text x="256" y="31" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#1d705b">clearcutt.in</text>
+    </g>
+  </g>
+  <g transform="translate(800 112)">
+    <rect width="310" height="406" rx="28" fill="#fff"/>
+    <rect x="24" y="24" width="262" height="272" rx="18" fill="url(#checker)"/>
+    <path d="M158 72c52 21 84 69 73 121-10 47-49 80-95 80-42 0-80-27-93-68-14-45 5-93 46-118 18-11 45-20 69-15Z" fill="#dfe8cc" stroke="#1d705b" stroke-width="6"/>
+    <path d="M158 77c-8 51-34 98-75 131M111 133c22 2 42 11 59 26M92 177c24 2 42 10 59 26" fill="none" stroke="#1d705b" stroke-width="6" stroke-linecap="round"/>
+    <rect x="54" y="326" width="202" height="52" rx="26" fill="#1d705b"/>
+    <text x="155" y="359" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#fff">Upload image ↑</text>
+  </g>
+</svg>
