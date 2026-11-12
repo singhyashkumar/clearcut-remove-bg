@@ -240,7 +240,7 @@ test('public reviews expose only approved display data and accurate aggregate va
     const response = await reviewRequest('/api/reviews', { auth: false, origin: false, workerEnv: env(keyFetch, db) });
     const result = await response.json();
     assert.equal(response.status, 200);
-    assert.match(response.headers.get('cache-control'), /max-age=60/);
+    assert.equal(response.headers.get('cache-control'), 'no-store');
     assert.equal(result.count, 2);
     assert.equal(result.average, 4);
     assert.equal(result.reviews.length, 2);
@@ -262,13 +262,13 @@ test('review submission requires an allowed origin and valid constrained content
     assert.equal(invalid.status, 400);
     const created = await reviewRequest('/api/reviews', { method: 'POST', body: validReview, workerEnv });
     assert.equal(created.status, 201);
-    assert.deepEqual(await created.json(), { submitted: true, status: 'pending' });
-    const stored = db.sqlite.prepare('SELECT uid, display_name, rating, body, status FROM reviews').get();
-    assert.deepEqual({ ...stored }, { uid: 'clearcut-user', display_name: validReview.display_name, rating: 5, body: validReview.body, status: 'pending' });
+    assert.deepEqual(await created.json(), { submitted: true, status: 'approved' });
+    const stored = db.sqlite.prepare('SELECT uid, display_name, rating, body, status, published_at FROM reviews').get();
+    assert.deepEqual({ ...stored, published_at: Number(stored.published_at > 0) }, { uid: 'clearcut-user', display_name: validReview.display_name, rating: 5, body: validReview.body, status: 'approved', published_at: 1 });
   } finally { db.sqlite.close(); }
 });
 
-test('one review per account is throttled and an edit returns an approved review to moderation', async () => {
+test('one review per account is throttled and an edit remains published', async () => {
   const db = reviewDb();
   try {
     const workerEnv = env(keyFetch, db);
@@ -276,14 +276,14 @@ test('one review per account is throttled and an edit returns an approved review
     assert.equal(first.status, 201);
     const throttled = await reviewRequest('/api/reviews', { method: 'POST', body: { ...validReview, rating: 4 }, workerEnv });
     assert.equal(throttled.status, 429);
-    db.sqlite.prepare("UPDATE reviews SET status = 'approved', published_at = ?, updated_at = ?").run(now - 4000, now - 7200);
+    db.sqlite.prepare('UPDATE reviews SET updated_at = ?').run(now - 7200);
     const edited = await reviewRequest('/api/reviews', { method: 'POST', body: { ...validReview, rating: 4, body: 'I updated this genuine review after using the editor again.' }, workerEnv });
     assert.equal(edited.status, 200);
     const rows = db.sqlite.prepare('SELECT rating, status, published_at, COUNT(*) OVER () AS total FROM reviews').all();
     assert.equal(rows.length, 1);
     assert.equal(rows[0].rating, 4);
-    assert.equal(rows[0].status, 'pending');
-    assert.equal(rows[0].published_at, null);
+    assert.equal(rows[0].status, 'approved');
+    assert.ok(rows[0].published_at > 0);
   } finally { db.sqlite.close(); }
 });
 

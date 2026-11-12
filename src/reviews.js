@@ -92,7 +92,7 @@ export function initReviews(section, { apiBase = configuredApiBase, doc = docume
       updateCounter();
       remove.hidden = true;
       submit.textContent = 'Submit review';
-      setStatus('Your review will appear publicly only after moderation.');
+      setStatus('Your review will be published immediately.');
       return;
     }
     name.value = review.display_name;
@@ -101,11 +101,11 @@ export function initReviews(section, { apiBase = configuredApiBase, doc = docume
     if (rating) rating.checked = true;
     updateCounter();
     remove.hidden = false;
-    submit.textContent = review.status === 'approved' ? 'Submit edited review' : 'Update review';
+    submit.textContent = review.status === 'approved' ? 'Update published review' : 'Publish review';
     setStatus(review.status === 'approved'
-      ? 'This review is published. Editing it sends it back for moderation.'
+      ? 'This review is published. Saved edits appear immediately.'
       : review.status === 'rejected'
-        ? 'This review was not published. You can edit and resubmit it.'
+        ? 'This review was removed by moderation. A genuine edit can be published again.'
         : 'Your review is awaiting moderation.');
   }
 
@@ -206,7 +206,7 @@ export function initReviews(section, { apiBase = configuredApiBase, doc = docume
         display_name: name.value.trim(), rating: Number(data.get('rating')), body: body.value.trim()
       } });
       await loadMine(authRevision);
-      setStatus('Thank you. Your review is saved and awaiting moderation.');
+      setStatus('Thank you. Your review is published.');
       await loadPublic();
     } catch (error) { setStatus(error.message); }
     finally { submit.disabled = false; remove.disabled = false; }

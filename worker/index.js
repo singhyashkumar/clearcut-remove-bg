@@ -112,9 +112,7 @@ async function publicReviews(env) {
         FROM reviews WHERE status = 'approved' ORDER BY published_at DESC LIMIT 50`).all(),
       env.DB.prepare("SELECT COUNT(*) AS count, ROUND(AVG(rating), 1) AS average FROM reviews WHERE status = 'approved'").first()
     ]);
-    return json({ reviews: list?.results || [], count: Number(aggregate?.count || 0), average: aggregate?.average == null ? null : Number(aggregate.average) }, 200, {
-      'cache-control': 'public, max-age=60, stale-while-revalidate=300'
-    });
+    return json({ reviews: list?.results || [], count: Number(aggregate?.count || 0), average: aggregate?.average == null ? null : Number(aggregate.average) });
   } catch { return json({ error: 'Reviews are temporarily unavailable.' }, 503); }
 }
 
@@ -136,16 +134,16 @@ async function saveReview(request, env, uid) {
       return json({ error: 'Please wait an hour before editing and resubmitting your review.' }, 429);
     }
     if (existing) {
-      await env.DB.prepare(`UPDATE reviews SET display_name = ?, rating = ?, body = ?, status = 'pending',
-        updated_at = unixepoch(), published_at = NULL, moderated_at = NULL, moderated_by = NULL WHERE uid = ?`)
+      await env.DB.prepare(`UPDATE reviews SET display_name = ?, rating = ?, body = ?, status = 'approved',
+        updated_at = unixepoch(), published_at = unixepoch(), moderated_at = NULL, moderated_by = NULL WHERE uid = ?`)
         .bind(input.displayName, input.rating, input.reviewBody, uid).run();
     } else {
       await env.DB.prepare(`INSERT INTO reviews
-        (id, uid, display_name, rating, body, status, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, 'pending', unixepoch(), unixepoch())`)
+        (id, uid, display_name, rating, body, status, created_at, updated_at, published_at)
+        VALUES (?, ?, ?, ?, ?, 'approved', unixepoch(), unixepoch(), unixepoch())`)
         .bind(crypto.randomUUID(), uid, input.displayName, input.rating, input.reviewBody).run();
     }
-    return json({ submitted: true, status: 'pending' }, existing ? 200 : 201);
+    return json({ submitted: true, status: 'approved' }, existing ? 200 : 201);
   } catch { return json({ error: 'Could not save your review. Please retry.' }, 503); }
 }
 
