@@ -159,6 +159,7 @@ export function initHeroAnimation(image, motion, preference, storage) {
 }
 
 if (typeof document !== 'undefined') {
+  import('./reviews.js').then(({ initReviews }) => initReviews(document.querySelector('#reviews'))).catch(() => {});
   initLanding(document);
   initFinishPreview(document.querySelector('.finish-preview'));
   initMobileMenu(document.querySelector('.mobile-menu'));

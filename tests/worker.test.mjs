@@ -188,3 +188,144 @@ test('unverified email and forged tokens cannot overwrite the stored verified ac
     assert.equal(db.sqlite.prepare('SELECT email FROM accounts').get().email, 'member@example.com');
   } finally { db.sqlite.close(); }
 });
+
+function reviewDb() {
+  const sqlite = new DatabaseSync(':memory:');
+  sqlite.exec('PRAGMA foreign_keys = ON');
+  for (const name of ['0001_payments.sql', '0002_accounts.sql', '0003_reviews.sql']) {
+    sqlite.exec(readFileSync(new URL(`../worker/migrations/${name}`, import.meta.url), 'utf8'));
+  }
+  const statement = (sql, args = []) => ({
+    sql, args,
+    async run() { sqlite.prepare(sql).run(...args); return { success: true }; },
+    async first() { return sqlite.prepare(sql).get(...args) || null; },
+    async all() { return { results: sqlite.prepare(sql).all(...args).map(row => ({ ...row })) }; }
+  });
+  return {
+    sqlite,
+    prepare(sql) {
+      return { ...statement(sql), bind(...args) { return statement(sql, args); } };
+    },
+    async batch(statements) {
+      sqlite.exec('BEGIN');
+      try {
+        for (const item of statements) sqlite.prepare(item.sql).run(...item.args);
+        sqlite.exec('COMMIT');
+      } catch (error) {
+        sqlite.exec('ROLLBACK');
+        throw error;
+      }
+      return [];
+    }
+  };
+}
+
+const validReview = { display_name: 'Clearcut user', rating: 5, body: 'The cutout was quick and the editor was easy to refine.' };
+const reviewRequest = (path, options = {}) => worker.fetch(new Request(`https://api.example${path}`, {
+  method: options.method || 'GET',
+  headers: options.auth === false ? { ...(options.origin === false ? {} : { origin: 'https://clearcutt.in' }), 'content-type': 'application/json' }
+    : { ...authHeaders(options.claims), ...(options.origin === false ? { origin: undefined } : {}) },
+  ...(options.body ? { body: JSON.stringify(options.body) } : {})
+}), options.workerEnv);
+
+test('public reviews expose only approved display data and accurate aggregate values', async () => {
+  const db = reviewDb();
+  try {
+    const insert = db.sqlite.prepare(`INSERT INTO reviews
+      (id, uid, display_name, rating, body, status, created_at, updated_at, published_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+    insert.run('11111111-1111-4111-8111-111111111111', 'private-user-1', 'Asha', 5, '<script>alert(1)</script> worked safely in this review.', 'approved', now - 100, now - 100, now - 50);
+    insert.run('22222222-2222-4222-8222-222222222222', 'private-user-2', 'Ravi', 3, 'This approved review provides a second rating for the average.', 'approved', now - 90, now - 90, now - 40);
+    insert.run('33333333-3333-4333-8333-333333333333', 'private-user-3', 'Pending', 1, 'This pending review must never be returned to public visitors.', 'pending', now, now, null);
+    const response = await reviewRequest('/api/reviews', { auth: false, origin: false, workerEnv: env(keyFetch, db) });
+    const result = await response.json();
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get('cache-control'), /max-age=60/);
+    assert.equal(result.count, 2);
+    assert.equal(result.average, 4);
+    assert.equal(result.reviews.length, 2);
+    assert.equal(result.reviews.some(review => review.display_name === 'Pending'), false);
+    assert.equal(JSON.stringify(result).includes('private-user'), false);
+    assert.equal(JSON.stringify(result).includes('<script>alert(1)</script>'), true);
+  } finally { db.sqlite.close(); }
+});
+
+test('review submission requires an allowed origin and valid constrained content', async () => {
+  const db = reviewDb();
+  try {
+    const workerEnv = env(keyFetch, db);
+    const wrongOrigin = await worker.fetch(new Request('https://api.example/api/reviews', {
+      method: 'POST', headers: { ...authHeaders(), origin: 'https://attacker.example' }, body: JSON.stringify(validReview)
+    }), workerEnv);
+    assert.equal(wrongOrigin.status, 403);
+    const invalid = await reviewRequest('/api/reviews', { method: 'POST', body: { display_name: 'X', rating: 6, body: 'too short' }, workerEnv });
+    assert.equal(invalid.status, 400);
+    const created = await reviewRequest('/api/reviews', { method: 'POST', body: validReview, workerEnv });
+    assert.equal(created.status, 201);
+    assert.deepEqual(await created.json(), { submitted: true, status: 'pending' });
+    const stored = db.sqlite.prepare('SELECT uid, display_name, rating, body, status FROM reviews').get();
+    assert.deepEqual({ ...stored }, { uid: 'clearcut-user', display_name: validReview.display_name, rating: 5, body: validReview.body, status: 'pending' });
+  } finally { db.sqlite.close(); }
+});
+
+test('one review per account is throttled and an edit returns an approved review to moderation', async () => {
+  const db = reviewDb();
+  try {
+    const workerEnv = env(keyFetch, db);
+    const first = await reviewRequest('/api/reviews', { method: 'POST', body: validReview, workerEnv });
+    assert.equal(first.status, 201);
+    const throttled = await reviewRequest('/api/reviews', { method: 'POST', body: { ...validReview, rating: 4 }, workerEnv });
+    assert.equal(throttled.status, 429);
+    db.sqlite.prepare("UPDATE reviews SET status = 'approved', published_at = ?, updated_at = ?").run(now - 4000, now - 7200);
+    const edited = await reviewRequest('/api/reviews', { method: 'POST', body: { ...validReview, rating: 4, body: 'I updated this genuine review after using the editor again.' }, workerEnv });
+    assert.equal(edited.status, 200);
+    const rows = db.sqlite.prepare('SELECT rating, status, published_at, COUNT(*) OVER () AS total FROM reviews').all();
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].rating, 4);
+    assert.equal(rows[0].status, 'pending');
+    assert.equal(rows[0].published_at, null);
+  } finally { db.sqlite.close(); }
+});
+
+test('signed-in users can inspect and delete only their own review', async () => {
+  const db = reviewDb();
+  try {
+    db.sqlite.prepare(`INSERT INTO reviews (id, uid, display_name, rating, body, status, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, 'pending', ?, ?)`).run('44444444-4444-4444-8444-444444444444', 'clearcut-user', 'Owner', 4, 'This review belongs to the currently authenticated account.', now, now);
+    const workerEnv = { ...env(keyFetch, db), REVIEW_ADMIN_UIDS: 'clearcut-user' };
+    const mine = await reviewRequest('/api/reviews/mine', { workerEnv });
+    const result = await mine.json();
+    assert.equal(result.review.body, 'This review belongs to the currently authenticated account.');
+    assert.equal(result.is_admin, true);
+    assert.equal(JSON.stringify(result).includes('clearcut-user'), false);
+    const deleted = await reviewRequest('/api/reviews/delete', { method: 'POST', body: {}, workerEnv });
+    assert.equal(deleted.status, 200);
+    assert.equal(db.sqlite.prepare('SELECT COUNT(*) AS count FROM reviews').get().count, 0);
+  } finally { db.sqlite.close(); }
+});
+
+test('only configured administrators can moderate reviews and every decision is audited', async () => {
+  const db = reviewDb();
+  try {
+    const reviewId = '55555555-5555-4555-8555-555555555555';
+    db.sqlite.prepare(`INSERT INTO reviews (id, uid, display_name, rating, body, status, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, 'pending', ?, ?)`).run(reviewId, 'reviewer-user', 'Reviewer', 5, 'A pending review that needs a human moderation decision.', now, now);
+    const ordinaryEnv = env(keyFetch, db);
+    const forbidden = await reviewRequest('/api/admin/reviews?status=pending', { workerEnv: ordinaryEnv });
+    assert.equal(forbidden.status, 403);
+    const adminEnv = { ...ordinaryEnv, REVIEW_ADMIN_UIDS: 'clearcut-user' };
+    const queue = await reviewRequest('/api/admin/reviews?status=pending', { workerEnv: adminEnv });
+    assert.equal((await queue.json()).reviews.length, 1);
+    const approved = await reviewRequest('/api/admin/reviews/moderate', {
+      method: 'POST', body: { review_id: reviewId, action: 'approve', reason: 'Relevant first-hand product feedback.' }, workerEnv: adminEnv
+    });
+    assert.equal(approved.status, 200);
+    assert.equal((await approved.json()).status, 'approved');
+    const review = db.sqlite.prepare('SELECT status, moderated_by, published_at FROM reviews WHERE id = ?').get(reviewId);
+    assert.equal(review.status, 'approved');
+    assert.equal(review.moderated_by, 'clearcut-user');
+    assert.ok(review.published_at > 0);
+    const audit = db.sqlite.prepare('SELECT review_id, moderator_uid, action, reason FROM review_moderation_audit').get();
+    assert.deepEqual({ ...audit }, { review_id: reviewId, moderator_uid: 'clearcut-user', action: 'approved', reason: 'Relevant first-hand product feedback.' });
+  } finally { db.sqlite.close(); }
+});

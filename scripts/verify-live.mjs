@@ -21,7 +21,8 @@ assert.match(html, new RegExp(`<link rel="canonical" href="${site.href.replaceAl
 assert.doesNotMatch(html, /chatgpt\.site/);
 assert.match(html, /<meta property="og:image" content="https:\/\/clearcutt\.in\/artwork\/clearcut-social-card\.png">/);
 assert.match(html, /<meta name="twitter:card" content="summary_large_image">/);
-assert.match(html, /id="feedback"/);
+assert.match(html, /id="reviews"/);
+assert.match(html, /id="review-form"/);
 
 const assets = [...html.matchAll(/<(?:script|link)[^>]+(?:src|href)="([^"]+\.(?:js|css))"/g)]
   .map(match => new URL(match[1], site));

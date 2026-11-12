@@ -13,7 +13,8 @@ assert.match(html, /<meta property="og:image" content="https:\/\/clearcutt\.in\/
 assert.match(html, /<meta name="twitter:card" content="summary_large_image">/);
 assert.match(html, /<meta name="twitter:description" content="[^"]+">/);
 assert.match(html, /<meta name="twitter:image" content="https:\/\/clearcutt\.in\/artwork\/clearcut-social-card\.png">/);
-assert.match(html, /id="feedback"/);
+assert.match(html, /id="reviews"/);
+assert.match(html, /id="review-form"/);
 assert.doesNotMatch(html, /AggregateRating|"@type":"Review"/);
 assert.match(robots, /Sitemap: https:\/\/clearcutt\.in\/sitemap\.xml/);
 
