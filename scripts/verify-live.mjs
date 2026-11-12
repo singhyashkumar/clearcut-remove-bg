@@ -7,7 +7,7 @@ async function request(url, attempts = 4) {
   let last;
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
-      const response = await fetch(url, { redirect: 'follow', headers: { 'cache-control': 'no-cache' } });
+      const response = await fetch(url, { redirect: 'follow', headers: { 'cache-control': 'no-cache' }, signal: AbortSignal.timeout(15000) });
       if (response.ok) return response;
       last = new Error(`${response.status} ${response.statusText} for ${url}`);
     } catch (error) { last = error; }
@@ -21,6 +21,7 @@ assert.match(html, new RegExp(`<link rel="canonical" href="${site.href.replaceAl
 assert.doesNotMatch(html, /chatgpt\.site/);
 assert.match(html, /<meta property="og:image" content="https:\/\/clearcutt\.in\/artwork\/clearcut-social-card\.png">/);
 assert.match(html, /<meta name="twitter:card" content="summary_large_image">/);
+assert.match(html, /id="feedback"/);
 
 const assets = [...html.matchAll(/<(?:script|link)[^>]+(?:src|href)="([^"]+\.(?:js|css))"/g)]
   .map(match => new URL(match[1], site));
