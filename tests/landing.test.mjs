@@ -7,7 +7,7 @@ import { createHash } from 'node:crypto';
 const source = readFileSync(new URL('../src/landing.js', import.meta.url), 'utf8')
   .replace("import useCases from './use-cases.json' with { type: 'json' };", `const useCases = ${readFileSync(new URL('../src/use-cases.json', import.meta.url), 'utf8')};`)
   .replaceAll('import.meta.env.BASE_URL', "'/test-base/'");
-const { initLanding, initHeroVideo, initHeroAnimation, initMobileMenu, initFinishPreview } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
+const { initLanding, initHeroAnimation, initMobileMenu, initFinishPreview } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
 
 class Element extends EventTarget {
   constructor(id, dataset = {}) {
@@ -105,8 +105,8 @@ test('use-case cards open their actual content and close returns keyboard focus'
 test('original artwork is not reused across sections and borrowed media is absent', () => {
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   assert.equal(html.includes('examples/'), false);
-  assert.match(html, /<video id="hero-animation" autoplay muted loop playsinline/);
-  assert.ok(html.includes('src="%BASE_URL%artwork/hero-demo.mp4"'));
+  assert.equal(html.includes('<video id="hero-animation"'), false);
+  assert.match(html, /<img id="hero-animation" src="%BASE_URL%artwork\/hero-demo\.gif"/);
   const comparison = new Set(['products', 'people', 'animals', 'cars', 'graphics'].map(category => `%BASE_URL%artwork/gallery/${category}.webp`));
   const outsideComparison = html.replace(/<div id="quality-panel"[\s\S]*?<\/section>/, '');
   const outsideImages = [...outsideComparison.matchAll(/<img[^>]+src="([^"]+)"/g), ...outsideComparison.matchAll(/<video[^>]+poster="([^"]+)"/g)].map(match => match[1]);
@@ -201,27 +201,12 @@ test('gallery warms all categories and stale loads cannot replace the newest sel
  assert.equal(images.length,6,'decoded previews are reused');
 });
 
-test('hero video loops, resumes on return and respects an explicit pause', async () => {
- const video=new EventTarget(),button=new EventTarget(),doc=new EventTarget();
- doc.defaultView=new EventTarget();doc.hidden=false;let plays=0;
- video.paused=true;video.play=()=>{plays++;video.paused=false;return Promise.resolve();};
- video.pause=()=>{video.paused=true;};
- initHeroVideo(video,button,doc);
- assert.equal(plays,1);assert.equal(video.muted,true);assert.equal(video.loop,true);assert.equal(video.playsInline,true);
- video.currentTime=10;video.dispatchEvent(new Event('ended'));
- assert.equal(video.currentTime,0);assert.equal(plays,2);
- video.pause();doc.dispatchEvent(new Event('visibilitychange'));assert.equal(plays,3);
- button.dispatchEvent(new Event('click'));assert.equal(video.paused,true);
- doc.dispatchEvent(new Event('visibilitychange'));assert.equal(plays,3);
- button.dispatchEvent(new Event('click'));assert.equal(plays,4);
-});
-test('blocked autoplay exposes a working play action without an unhandled rejection', async () => {
- const video=new EventTarget(),button=new EventTarget(),doc=new EventTarget();
- doc.defaultView=new EventTarget();let allowed=false;
- video.paused=true;video.play=()=>allowed?Promise.resolve():Promise.reject(Error('blocked'));
- video.pause=()=>{};
- initHeroVideo(video,button,doc);await Promise.resolve();
- assert.equal(button.textContent,'Play animation');
- allowed=true;button.dispatchEvent(new Event('click'));
- video.dispatchEvent(new Event('playing'));assert.equal(button.textContent,'Pause animation');
+test('primary GIF loops forever and has no pause control or gallery preference binding', () => {
+ const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+ const hero=html.match(/<img id="hero-animation"[^>]+>/)[0];
+ assert.equal(hero.includes('data-animation-src'),false);
+ assert.equal(html.includes('id="hero-play"'),false);
+ assert.ok(hero.includes('loading="eager"'));assert.ok(hero.includes('fetchpriority="high"'));
+ const gif=readFileSync(new URL('../public/artwork/hero-demo.gif',import.meta.url));
+ assert.ok(gif.includes(Buffer.from([78,69,84,83,67,65,80,69,50,46,48,3,1,0,0])),'GIF must contain NETSCAPE infinite-loop extension');
 });
