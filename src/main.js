@@ -1,5 +1,6 @@
 import {processingFailure} from './processing-diagnostics.js';
 import {yieldToBrowser,readAlphaChannels} from './ui-scheduling.js';
+import {setupLoginReports} from './login-reports.js';
 import {validateFile,MAX_PIXELS,alphaBounds,brushAlpha} from './image-utils.js';
 const $=id=>document.getElementById(id);
 const canvas=$('canvas'),ctx=canvas.getContext('2d',{willReadFrequently:true});
@@ -86,10 +87,10 @@ window.addEventListener('pagehide',()=>{controller?.abort();release();});
 import {renderMembership} from './membership.js';
 import {watchGoogleAuth,signInWithGoogle,signOutGoogle,getGoogleAuthToken} from './firebase-auth.js';
 const signInButton=$('google-signin'),accountControl=$('account-control'),authStatus=$('auth-status');
-let refreshPaymentEntitlement=()=>{},currentUser=null,authRevision=0;
+let refreshPaymentEntitlement=()=>{},updateLoginReports=()=>{},currentUser=null,authRevision=0;
 function googleAuthMessage(error){switch(error?.code){case'auth/unauthorized-domain':return'This site is not yet enabled for Google sign-in.';case'auth/operation-not-allowed':return'Google sign-in is disabled in Firebase settings.';case'auth/popup-blocked':return'Your browser blocked the sign-in window. Allow pop-ups for this site and try again.';case'auth/popup-closed-by-user':return'Sign-in was cancelled.';case'auth/network-request-failed':return'Google sign-in could not connect. Check your connection and try again.';default:return'Google sign-in failed ('+(error?.code||error?.name||'unknown error')+'). Refresh the page and try again.';}}
 signInButton.disabled=true;
-watchGoogleAuth(user=>{currentUser=user;authRevision++;renderMembership(document,user,null,paymentMode);signInButton.hidden=Boolean(user);accountControl.hidden=!user;authStatus.textContent=user?'Google account connected. Photo processing still happens on this device.':'';if(user)refreshPaymentEntitlement();},error=>{authStatus.textContent=googleAuthMessage(error);}).then(()=>{signInButton.disabled=false;}).catch(()=>{});
+watchGoogleAuth(user=>{currentUser=user;authRevision++;updateLoginReports(user);renderMembership(document,user,null,paymentMode);signInButton.hidden=Boolean(user);accountControl.hidden=!user;authStatus.textContent=user?'Google account connected. Photo processing still happens on this device.':'';if(user)refreshPaymentEntitlement();},error=>{authStatus.textContent=googleAuthMessage(error);}).then(()=>{signInButton.disabled=false;}).catch(()=>{});
 signInButton.onclick=async()=>{signInButton.disabled=true;authStatus.textContent='Opening Google sign-in…';try{await signInWithGoogle();}catch(error){authStatus.textContent=googleAuthMessage(error);}finally{signInButton.disabled=false;}};
 $('google-signout').onclick=async()=>{try{await signOutGoogle();authStatus.textContent='Signed out.';}catch{authStatus.textContent='Could not sign out. Please try again.';}};
 
@@ -97,6 +98,7 @@ $('google-signout').onclick=async()=>{try{await signOutGoogle();authStatus.textC
 const checkoutButton=$('razorpay-checkout'),paymentStatus=$('payment-status'),paymentTestNote=$('payment-test-note');
 const paymentApiBase=import.meta.env.VITE_PAYMENT_API_BASE_URL;
 const paymentMode=import.meta.env.VITE_PAYMENT_MODE==='live'?'live':'test';
+updateLoginReports=setupLoginReports({doc:document,apiBase:paymentApiBase,getUser:()=>currentUser,getToken:getGoogleAuthToken});
 if(paymentApiBase){checkoutButton.hidden=false;paymentTestNote.hidden=paymentMode==='live';checkoutButton.textContent=paymentMode==='live'?'Pay ₹90 with Razorpay':'Try ₹90 sandbox checkout';}
 function loadRazorpay(){
  if(window.Razorpay)return Promise.resolve();
@@ -108,10 +110,11 @@ async function paymentRequest(endpoint,body,token,method='POST'){
  if(!response.ok)throw Error(result.error||'Checkout could not continue.');
  return result;
 }
+let recordedAuthRevision=-1;
 refreshPaymentEntitlement=async()=>{
  if(!paymentApiBase||!currentUser)return;
  const revision=authRevision,user=currentUser;
- try{const token=await getGoogleAuthToken();const {entitlement}=await paymentRequest('entitlement',null,token,'GET');if(revision===authRevision)renderMembership(document,user,entitlement,paymentMode);}
+ try{const token=await getGoogleAuthToken();if(revision===authRevision&&recordedAuthRevision!==revision){recordedAuthRevision=revision;void paymentRequest('session',null,token).catch(()=>{if(revision===authRevision)recordedAuthRevision=-1;});}const {entitlement}=await paymentRequest('entitlement',null,token,'GET');if(revision===authRevision)renderMembership(document,user,entitlement,paymentMode);}
  catch{if(revision===authRevision)paymentStatus.textContent='Could not check membership. Your saved access is unchanged. Refresh to retry.';}
 };
 window.addEventListener('focus',()=>refreshPaymentEntitlement());
@@ -129,3 +132,4 @@ checkoutButton.onclick=async()=>{
  }catch(error){paymentStatus.textContent=error.message || 'Checkout could not continue. Please try again.';}
  finally{checkoutButton.disabled=false;}
 };
+

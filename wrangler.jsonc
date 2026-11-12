@@ -4,6 +4,8 @@
   "main": "worker/index.js",
   "compatibility_date": "2026-10-23",
   "workers_dev": true,
+  "observability": {"enabled": true, "logs": {"enabled": true, "invocation_logs": false}},
+  "triggers": {"crons": ["15 3 * * *"]},
   "vars": {
     "FIREBASE_PROJECT_ID": "clearcut-remove-bg",
     "PAYMENT_MODE": "live",
@@ -19,3 +21,4 @@
     }
   ]
 }
+

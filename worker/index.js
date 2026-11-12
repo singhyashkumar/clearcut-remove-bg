@@ -1,3 +1,4 @@
+import {logSecurityRequest,recordVerifiedSession,sessionReport,adminSessionReport,pruneSessions,readLimitedText} from './security.js';
 const FIREBASE_JWKS_URL = 'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com';
 const RAZORPAY_API = 'https://api.razorpay.com/v1';
 const ACCESS_SECONDS = 30 * 24 * 60 * 60;
@@ -12,7 +13,7 @@ const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(b
 function corsHeaders(origin, env) {
   const allowed = (env.ALLOWED_ORIGINS || '').split(',').map(value => value.trim()).filter(Boolean);
   if (!origin || !allowed.includes(origin)) return null;
-  return { 'access-control-allow-origin': origin, 'access-control-allow-methods': 'GET, POST, OPTIONS', 'access-control-allow-headers': 'Authorization, Content-Type', 'vary': 'Origin' };
+  return { 'access-control-allow-origin': origin, 'access-control-allow-methods': 'GET, POST, OPTIONS', 'access-control-allow-headers': 'Authorization, Content-Type', 'access-control-expose-headers':'X-Request-ID', 'vary': 'Origin' };
 }
 
 function b64urlBytes(value) {
@@ -34,7 +35,7 @@ export async function verifyFirebaseIdToken(token, projectId, fetchImpl = fetch,
   if (header.alg !== 'RS256' || typeof header.kid !== 'string' || claims.iss !== `https://securetoken.google.com/${projectId}`
     || claims.aud !== projectId || typeof claims.sub !== 'string' || !claims.sub || claims.sub.length > 128
     || !Number.isInteger(claims.exp) || claims.exp <= now || !Number.isInteger(claims.iat) || claims.iat > now + 60
-    || !Number.isInteger(claims.auth_time) || claims.auth_time > now + 60) return null;
+    || !Number.isInteger(claims.auth_time) || claims.auth_time < 0 || claims.auth_time > now + 60) return null;
   try {
     const keySet = await fetchImpl(FIREBASE_JWKS_URL, { signal: AbortSignal.timeout(10000) }).then(response => response.ok ? response.json() : null);
     const jwk = keySet?.keys?.find(key => key.kid === header.kid && key.kty === 'RSA');
@@ -44,7 +45,7 @@ export async function verifyFirebaseIdToken(token, projectId, fetchImpl = fetch,
     if (!valid) return null;
     const email = claims.email_verified === true && typeof claims.email === 'string' && claims.email.length <= 254
       && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(claims.email) ? claims.email : null;
-    return { uid: claims.sub, email };
+    return { uid: claims.sub, email, authTime: claims.auth_time };
   } catch { return null; }
 }
 
@@ -76,8 +77,8 @@ async function requireUser(request, env, fetchImpl = fetch) {
 
 async function readJson(request) {
   try {
-    const text = await request.text();
-    if (text.length > 16384) return null;
+    const text = await readLimitedText(request, 16384);
+    if (text === null) return null;
     return JSON.parse(text);
   } catch { return null; }
 }
@@ -160,8 +161,8 @@ async function webhook(request, env) {
   if (!env.RAZORPAY_WEBHOOK_SECRET || !env.DB) return json({ error: 'Webhook is not configured.' }, 503);
   const signature = request.headers.get('x-razorpay-signature') || '';
   const eventId = request.headers.get('x-razorpay-event-id') || '';
-  const raw = await request.text();
-  if (raw.length > 65536 || !eventId || eventId.length > 128 || !await hmacValid(env.RAZORPAY_WEBHOOK_SECRET, raw, signature)) return json({ error: 'Invalid webhook.' }, 400);
+  const raw = await readLimitedText(request, 65536);
+  if (raw === null || !eventId || eventId.length > 128 || !await hmacValid(env.RAZORPAY_WEBHOOK_SECRET, raw, signature)) return json({ error: 'Invalid webhook.' }, 400);
   let event;
   try { event = JSON.parse(raw); } catch { return json({ error: 'Invalid webhook.' }, 400); }
   if (!['payment.captured', 'order.paid'].includes(event?.event)) return json({ received: true });
@@ -187,19 +188,30 @@ async function webhook(request, env) {
   } catch { return json({ error: 'Could not process webhook.' }, 503); }
 }
 
-export default {
-  async fetch(request, env) {
+async function handleRequest(request, env) {
     const url = new URL(request.url);
     const origin = request.headers.get('origin');
     const headers = corsHeaders(origin, env);
     if (url.pathname === '/api/webhook') return request.method === 'POST' ? webhook(request, env) : json({ error: 'Method not allowed.' }, 405);
     if (!headers) return json({ error: 'Origin is not allowed.' }, 403);
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
-    if (request.method !== (url.pathname === '/api/entitlement' ? 'GET' : 'POST')) return json({ error: 'Method not allowed.' }, 405, headers);
+    if (request.method !== (['/api/entitlement','/api/security-report','/api/admin/security-report'].includes(url.pathname) ? 'GET' : 'POST')) return json({ error: 'Method not allowed.' }, 405, headers);
     const response = await (async () => {
       const fetchImpl = env.__testFetch || fetch;
       const user = await requireUser(request, env, fetchImpl);
       if (!user) return json({ error: 'Sign in with Google before using checkout.' }, 401);
+      if (url.pathname === '/api/session') {
+        try { await recordVerifiedSession(env.DB,user); return json({recorded:true}); }
+        catch { return json({error:'Login report is temporarily unavailable.'},503); }
+      }
+      if (url.pathname === '/api/security-report') {
+        return json({sessions:await sessionReport(env.DB,user.uid),retention_days:30});
+      }
+      if (url.pathname === '/api/admin/security-report') {
+        const admins=(env.SECURITY_ADMIN_UIDS || '').split(',').map(uid=>uid.trim()).filter(Boolean);
+        if (!user.email || !admins.includes(user.uid) || Math.floor(Date.now()/1000)-user.authTime>600) return json({error:'Access denied. A recent administrator sign-in is required.'},403);
+        return json({sessions:await adminSessionReport(env.DB),retention_days:30});
+      }
       if (user.email && ['/api/createOrder', '/api/verifyPayment', '/api/entitlement'].includes(url.pathname)) {
         try {
           await env.DB.prepare(`INSERT INTO accounts (uid, email, updated_at) VALUES (?, ?, unixepoch())
@@ -215,5 +227,24 @@ export default {
     const responseHeaders = new Headers(response.headers);
     for (const [name, value] of Object.entries(headers)) responseHeaders.set(name, value);
     return new Response(response.body, { status: response.status, statusText: response.statusText, headers: responseHeaders });
+}
+
+export default {
+  async fetch(request,env) {
+    const requestId=crypto.randomUUID(),route=new URL(request.url).pathname;
+    let response;
+    try { response=await handleRequest(request,env); }
+    catch { response=json({error:'Service temporarily unavailable.'},503,corsHeaders(request.headers.get('origin'),env)||{}); }
+    if(request.method!=='OPTIONS') logSecurityRequest({requestId,route,status:response.status,outcome:response.ok?'accepted':'rejected'});
+    const headers=new Headers(response.headers);
+    headers.set('x-request-id',requestId);
+    return new Response(response.body,{status:response.status,headers});
+  },
+  async scheduled(_event,env,ctx) {
+    ctx.waitUntil(pruneSessions(env.DB).catch(()=>{
+      console.error(JSON.stringify({type:'security_maintenance',outcome:'retention_failed'}));
+      throw new Error('Security log retention failed');
+    }));
   }
 };
+
