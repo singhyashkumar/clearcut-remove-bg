@@ -57,20 +57,20 @@ test('mobile menu closes on navigation and Escape restores focus to its summary'
   assert.equal(menu.open, false);
   assert.equal(summary.focused, true);
 });
-function fixture() {
+function fixture(ImageClass) {
   const ids = ['quality-before', 'quality-after', 'quality-slider', 'quality-panel', 'use-case-detail', 'use-case-title', 'use-case-copy', 'close-use-case'];
   const elements = Object.fromEntries(ids.map(id => [id, new Element(id)]));
   const tabs = ['products', 'people', 'animals', 'cars', 'graphics'].map(key => new Element(`quality-tab-${key}`, { example: key }));
   const cards = Array.from({ length: 9 }, (_, i) => new Element(`card-${i}`, { useCase: String(i) }));
   const comparison = new Element('comparison');
-  initLanding({ getElementById: id => elements[id], querySelector: () => comparison, querySelectorAll: selector => selector === '[data-example]' ? tabs : cards });
+  initLanding({ defaultView: { Image: ImageClass }, getElementById: id => elements[id], querySelector: () => comparison, querySelectorAll: selector => selector === '[data-example]' ? tabs : cards });
   return { elements, tabs, cards, comparison };
 }
 test('category selection changes both comparison images and keyboard selection wraps', () => {
   const { elements, tabs } = fixture();
   tabs[1].dispatchEvent(new Event('click'));
-  assert.equal(elements['quality-before'].src, '/test-base/artwork/people.webp');
-  assert.equal(elements['quality-after'].src, '/test-base/artwork/people.webp');
+  assert.equal(elements['quality-before'].src, '/test-base/artwork/gallery/people.webp');
+  assert.equal(elements['quality-after'].src, '/test-base/artwork/gallery/people.webp');
   assert.equal(elements['quality-panel'].attributes['aria-labelledby'], 'quality-tab-people');
   const event = new Event('keydown', { cancelable: true });
   event.key = 'ArrowLeft'; tabs[0].dispatchEvent(event);
@@ -108,7 +108,7 @@ test('original artwork is not reused across sections and borrowed media is absen
   assert.equal(html.includes('<video'), false);
   assert.match(html, /id="hero-animation"[^>]+data-animation-src="%BASE_URL%artwork\/hero-demo\.gif"/);
   assert.equal(readFileSync(new URL('../public/artwork/hero-demo.gif', import.meta.url)).subarray(0, 6).toString(), 'GIF89a');
-  const comparison = new Set(['products', 'people', 'animals', 'cars', 'graphics'].map(category => `%BASE_URL%artwork/${category}.webp`));
+  const comparison = new Set(['products', 'people', 'animals', 'cars', 'graphics'].map(category => `%BASE_URL%artwork/gallery/${category}.webp`));
   const outsideComparison = html.replace(/<div id="quality-panel"[\s\S]*?<\/section>/, '');
   const outsideImages = [...outsideComparison.matchAll(/<img[^>]+src="([^"]+)"/g)].map(match => match[1]);
   assert.equal(new Set(outsideImages).size, outsideImages.length, 'A display image was repeated in another section');
@@ -171,4 +171,33 @@ test('explicit GIF preference overrides reduced motion and is restored on later 
   preference.dispatchEvent(new Event('change'));
   assert.equal(image.src, '/hero.jpg');
   assert.equal(storage.getItem('clearcut-hero-motion'), 'off');
+});
+
+
+
+test('gallery warms all categories and stale loads cannot replace the newest selection', async () => {
+ const images=[];
+ class Preview {constructor(){images.push(this);} async decode(){} }
+ const {elements,tabs}=fixture(Preview);
+ assert.equal(images.length,5);
+ assert.ok(images.every(image=>image.fetchPriority==='low'));
+ tabs[1].dispatchEvent(new Event('click'));
+ tabs[2].dispatchEvent(new Event('click'));
+ await images[1].onload();
+ await new Promise(setImmediate);
+ assert.equal(elements['quality-before'].src,undefined);
+ await images[2].onload();
+ await new Promise(setImmediate);
+ assert.equal(elements['quality-before'].src,'/test-base/artwork/gallery/animals.webp');
+ assert.equal(elements['quality-after'].src,elements['quality-before'].src);
+ assert.equal(elements['quality-panel'].attributes['aria-busy'],'false');
+ tabs[3].dispatchEvent(new Event('click'));
+ images[3].onerror();await new Promise(setImmediate);
+ assert.equal(elements['quality-before'].src,'/test-base/artwork/gallery/animals.webp');
+ tabs[3].dispatchEvent(new Event('click'));
+ assert.equal(images.length,6);
+ await images[5].onload();await new Promise(setImmediate);
+ assert.equal(elements['quality-before'].src,'/test-base/artwork/gallery/cars.webp');
+ tabs[2].dispatchEvent(new Event('click'));await new Promise(setImmediate);
+ assert.equal(images.length,6,'decoded previews are reused');
 });
