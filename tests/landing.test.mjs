@@ -7,7 +7,7 @@ import { createHash } from 'node:crypto';
 const source = readFileSync(new URL('../src/landing.js', import.meta.url), 'utf8')
   .replace("import useCases from './use-cases.json' with { type: 'json' };", `const useCases = ${readFileSync(new URL('../src/use-cases.json', import.meta.url), 'utf8')};`)
   .replaceAll('import.meta.env.BASE_URL', "'/test-base/'");
-const { initLanding, initHeroAnimation, initMobileMenu, initFinishPreview } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
+const { initLanding, initHeroVideo, initHeroAnimation, initMobileMenu, initFinishPreview } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
 
 class Element extends EventTarget {
   constructor(id, dataset = {}) {
@@ -105,12 +105,11 @@ test('use-case cards open their actual content and close returns keyboard focus'
 test('original artwork is not reused across sections and borrowed media is absent', () => {
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   assert.equal(html.includes('examples/'), false);
-  assert.equal(html.includes('<video'), false);
-  assert.match(html, /id="hero-animation"[^>]+data-animation-src="%BASE_URL%artwork\/hero-demo\.gif"/);
-  assert.equal(readFileSync(new URL('../public/artwork/hero-demo.gif', import.meta.url)).subarray(0, 6).toString(), 'GIF89a');
+  assert.match(html, /<video id="hero-animation" autoplay muted loop playsinline/);
+  assert.ok(html.includes('src="%BASE_URL%artwork/hero-demo.mp4"'));
   const comparison = new Set(['products', 'people', 'animals', 'cars', 'graphics'].map(category => `%BASE_URL%artwork/gallery/${category}.webp`));
   const outsideComparison = html.replace(/<div id="quality-panel"[\s\S]*?<\/section>/, '');
-  const outsideImages = [...outsideComparison.matchAll(/<img[^>]+src="([^"]+)"/g)].map(match => match[1]);
+  const outsideImages = [...outsideComparison.matchAll(/<img[^>]+src="([^"]+)"/g), ...outsideComparison.matchAll(/<video[^>]+poster="([^"]+)"/g)].map(match => match[1]);
   assert.equal(new Set(outsideImages).size, outsideImages.length, 'A display image was repeated in another section');
   for (const path of outsideImages) assert.equal(comparison.has(path), false, 'Comparison artwork must not reappear in other sections');
   const paths = [...new Set([...outsideImages, ...comparison])];
@@ -120,7 +119,7 @@ test('original artwork is not reused across sections and borrowed media is absen
 });
 
 
-test('hero GIF animates by default and uses its still frame for reduced motion', () => {
+test('GIF previews animate by default and use still frames for reduced motion', () => {
   const motion = new EventTarget(); motion.matches = false;
   const image = { dataset: { animationSrc: '/hero.gif', posterSrc: '/hero.jpg' } };
   initHeroAnimation(image, motion);
@@ -130,7 +129,7 @@ test('hero GIF animates by default and uses its still frame for reduced motion',
   assert.equal(image.src, '/hero.jpg');
 });
 
-test('one motion preference controls the hero and both catalogue loops', () => {
+test('one gallery motion preference controls the GIF previews', () => {
   const motion = new EventTarget(); motion.matches = false;
   const preference = new EventTarget(); preference.checked = true;
   const images = ['hero', 'fern', 'pet'].map(name => ({ dataset: { animationSrc: `/${name}.gif`, posterSrc: `/${name}.jpg` } }));
@@ -200,4 +199,29 @@ test('gallery warms all categories and stale loads cannot replace the newest sel
  assert.equal(elements['quality-before'].src,'/test-base/artwork/gallery/cars.webp');
  tabs[2].dispatchEvent(new Event('click'));await new Promise(setImmediate);
  assert.equal(images.length,6,'decoded previews are reused');
+});
+
+test('hero video loops, resumes on return and respects an explicit pause', async () => {
+ const video=new EventTarget(),button=new EventTarget(),doc=new EventTarget();
+ doc.defaultView=new EventTarget();doc.hidden=false;let plays=0;
+ video.paused=true;video.play=()=>{plays++;video.paused=false;return Promise.resolve();};
+ video.pause=()=>{video.paused=true;};
+ initHeroVideo(video,button,doc);
+ assert.equal(plays,1);assert.equal(video.muted,true);assert.equal(video.loop,true);assert.equal(video.playsInline,true);
+ video.currentTime=10;video.dispatchEvent(new Event('ended'));
+ assert.equal(video.currentTime,0);assert.equal(plays,2);
+ video.pause();doc.dispatchEvent(new Event('visibilitychange'));assert.equal(plays,3);
+ button.dispatchEvent(new Event('click'));assert.equal(video.paused,true);
+ doc.dispatchEvent(new Event('visibilitychange'));assert.equal(plays,3);
+ button.dispatchEvent(new Event('click'));assert.equal(plays,4);
+});
+test('blocked autoplay exposes a working play action without an unhandled rejection', async () => {
+ const video=new EventTarget(),button=new EventTarget(),doc=new EventTarget();
+ doc.defaultView=new EventTarget();let allowed=false;
+ video.paused=true;video.play=()=>allowed?Promise.resolve():Promise.reject(Error('blocked'));
+ video.pause=()=>{};
+ initHeroVideo(video,button,doc);await Promise.resolve();
+ assert.equal(button.textContent,'Play animation');
+ allowed=true;button.dispatchEvent(new Event('click'));
+ video.dispatchEvent(new Event('playing'));assert.equal(button.textContent,'Pause animation');
 });

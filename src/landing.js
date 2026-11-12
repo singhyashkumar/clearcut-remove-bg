@@ -137,6 +137,36 @@ export function initMobileMenu(menu) {
   });
 }
 
+export function initHeroVideo(video, button, doc) {
+  if (!video) return;
+  let userPaused = false;
+  video.muted = true;
+  video.defaultMuted = true;
+  video.loop = true;
+  video.playsInline = true;
+  const play = () => {
+    if (userPaused || doc.hidden) return;
+    const pending = video.play();
+    pending?.catch(() => { if (button && !userPaused) button.textContent = 'Play animation'; });
+  };
+  button?.addEventListener('click', () => {
+    if (!video.paused) {
+      userPaused = true;
+      video.pause();
+      button.textContent = 'Play animation';
+    } else {
+      userPaused = false;
+      play();
+    }
+  });
+  video.addEventListener('playing', () => { if (button) button.textContent = 'Pause animation'; });
+  video.addEventListener('canplay', play);
+  video.addEventListener('ended', () => { video.currentTime = 0; play(); });
+  doc.addEventListener('visibilitychange', play);
+  doc.defaultView?.addEventListener('pageshow', play);
+  play();
+}
+
 export function initHeroAnimation(image, motion, preference, storage) {
   if (!image) return;
   image.onerror = () => {
@@ -159,6 +189,8 @@ export function initHeroAnimation(image, motion, preference, storage) {
 }
 
 if (typeof document !== 'undefined') {
+  // Start the primary demo before the gallery's low-priority preloads.
+  initHeroVideo(document.getElementById('hero-animation'), document.getElementById('hero-play'), document);
   initLanding(document);
   initFinishPreview(document.querySelector('.finish-preview'));
   initMobileMenu(document.querySelector('.mobile-menu'));
