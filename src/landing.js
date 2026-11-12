@@ -9,6 +9,29 @@ export function initLanding(doc) {
   const comparison = doc.querySelector('.quality-comparison');
   const backdrops = { products: '#dce8d8', people: '#e9e2d8', animals: '#d8e4db', cars: '#dce4ea', graphics: '#efe0d9' };
   const categories = new Set(Object.keys(backdrops));
+  const ImageClass = doc.defaultView?.Image;
+  const previews = new Map();
+  let selection = 0;
+  const previewUrl = category => `${import.meta.env.BASE_URL}artwork/gallery/${category}.webp`;
+  function warmPreview(category) {
+    if (!ImageClass) return null;
+    if (previews.has(category)) return previews.get(category);
+    const image = new ImageClass();
+    image.decoding = 'async';
+    image.fetchPriority = 'low';
+    const ready = new Promise((resolve, reject) => {
+      image.onload = async () => {
+        try { await image.decode?.(); } catch { /* Loaded image can still render. */ }
+        resolve(image);
+      };
+      image.onerror = () => { previews.delete(category); reject(new Error('Preview unavailable')); };
+    });
+    previews.set(category, ready);
+    image.src = previewUrl(category);
+    return ready;
+  }
+  // Small display-sized previews are fetched once before the visitor clicks.
+  for (const category of categories) warmPreview(category)?.catch(() => {});
 
   function updateSlider() {
     const value = Number(slider.value);
@@ -17,16 +40,28 @@ export function initLanding(doc) {
     slider.setAttribute('aria-valuetext', `${split}% studio backdrop visible`);
   }
 
-  function selectTab(tab) {
+  async function selectTab(tab) {
     const category = tab.dataset.example;
     if (!categories.has(category)) return;
+    const ticket = ++selection;
+    const ready = warmPreview(category);
+    if (ready) {
+      panel.setAttribute('aria-busy', 'true');
+      try { await ready; } catch {
+        if (ticket === selection) panel.setAttribute('aria-busy', 'false');
+        return; // Keep the previous pair visible on a failed download.
+      }
+      if (ticket !== selection) return;
+    }
+    panel.setAttribute('aria-busy', 'false');
     for (const item of tabs) {
       item.setAttribute('aria-selected', String(item === tab));
       item.tabIndex = item === tab ? 0 : -1;
     }
     comparison.style.setProperty('--preview-background', backdrops[category]);
-    before.src = `${import.meta.env.BASE_URL}artwork/${category}.webp`;
-    after.src = `${import.meta.env.BASE_URL}artwork/${category}.webp`;
+    before.loading = after.loading = 'eager';
+    before.src = previewUrl(category);
+    after.src = previewUrl(category);
     before.alt = `Original ${category} Clearcut artwork on a studio backdrop`;
     after.alt = `Original ${category} Clearcut artwork on transparency`;
     panel.setAttribute('aria-labelledby', tab.id);
@@ -133,3 +168,4 @@ if (typeof document !== 'undefined') {
   const preference = document.getElementById('hero-motion');
   for (const image of document.querySelectorAll('[data-animation-src]')) initHeroAnimation(image, motion, preference, storage);
 }
+
