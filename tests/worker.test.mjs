@@ -188,3 +188,73 @@ test('unverified email and forged tokens cannot overwrite the stored verified ac
     assert.equal(db.sqlite.prepare('SELECT email FROM accounts').get().email, 'member@example.com');
   } finally { db.sqlite.close(); }
 });
+
+
+function securityDb() {
+ const sqlite=new DatabaseSync(':memory:');
+ sqlite.exec(readFileSync(new URL('../worker/migrations/0003_login_sessions.sql',import.meta.url),'utf8'));
+ return {sqlite,prepare(sql){return {bind(...args){return {
+  async run(){return {success:true,...sqlite.prepare(sql).run(...args)};},
+  async all(){return {results:sqlite.prepare(sql).all(...args)};}
+ };}};}};
+}
+const securityRequest=(path,claims={},method='GET')=>new Request(`https://api.example${path}`,{method,headers:authHeaders(claims)});
+
+test('login reports deduplicate signed sessions and isolate accounts',async()=>{
+ const db=securityDb(),settings=env(keyFetch,db);
+ try {
+  const post=claims=>worker.fetch(securityRequest('/api/session',claims,'POST'),settings);
+  assert.equal((await post({})).status,200);
+  assert.equal((await post({})).status,200);
+  assert.equal((await post({sub:'other-user'})).status,200);
+  assert.equal(db.sqlite.prepare('SELECT COUNT(*) AS n FROM login_sessions').get().n,2);
+  const response=await worker.fetch(securityRequest('/api/security-report?uid=other-user'),settings);
+  assert.equal(response.headers.get('cache-control'),'no-store');
+  const data=await response.json();
+  assert.equal(data.sessions.length,1);
+  assert.equal(data.sessions[0].uid,undefined);
+  assert.equal(data.sessions[0].auth_time,now);
+  assert.equal((await worker.fetch(new Request('https://api.example/api/security-report',{headers:{origin:'https://clearcutt.in'}}),settings)).status,401);
+ } finally {db.sqlite.close();}
+});
+
+test('administrator reports deny by default and require verified recent identity',async()=>{
+ const db=securityDb(),settings=env(keyFetch,db);
+ try {
+  const report=claims=>worker.fetch(securityRequest('/api/admin/security-report',claims),settings);
+  assert.equal((await report({email:'owner@example.com',email_verified:true})).status,403);
+  settings.SECURITY_ADMIN_UIDS='clearcut-user';
+  assert.equal((await report({email:'owner@example.com',email_verified:false})).status,403);
+  assert.equal((await report({email:'owner@example.com',email_verified:true,auth_time:now-601})).status,403);
+  assert.equal((await report({email:'owner@example.com',email_verified:true})).status,200);
+ } finally {db.sqlite.close();}
+});
+
+test('security events do not include request secrets, identities or injected paths',async t=>{
+ const messages=[];t.mock.method(console,'info',message=>messages.push(message));
+ const request=new Request('https://api.example/api/secret-INJECTED?token=hidden',{method:'POST',headers:{origin:'https://attacker.example',authorization:'Bearer SECRET','x-request-id':'CLIENTVALUE'},body:'PRIVATEPHOTO'});
+ const response=await worker.fetch(request,env(keyFetch));
+ assert.equal(response.status,403);
+ assert.notEqual(response.headers.get('x-request-id'),'CLIENTVALUE');
+ const event=JSON.parse(messages[0]);
+ assert.equal(event.route,'unknown');assert.equal(event.status,403);
+ for(const secret of ['INJECTED','hidden','SECRET','CLIENTVALUE','PRIVATEPHOTO','attacker.example'])assert.equal(messages.join('').includes(secret),false);
+});
+
+test('chunked bodies are bounded by bytes, not only Content-Length',async()=>{
+ const {readLimitedText}=await import('../worker/security.js');
+ const stream=new ReadableStream({start(c){c.enqueue(new TextEncoder().encode('é'.repeat(9000)));c.close();}});
+ assert.equal(await readLimitedText(new Request('https://api.example',{method:'POST',body:stream,duplex:'half'}),16384),null);
+ const stream2=new ReadableStream({start(c){c.enqueue(new Uint8Array([0xc3]));c.enqueue(new Uint8Array([0xa9]));c.close();}});
+ assert.equal(await readLimitedText(new Request('https://api.example',{method:'POST',body:stream2,duplex:'half'}),2),'é');
+});
+
+test('retention removes old sessions but preserves current records',async()=>{
+ const {pruneSessions}=await import('../worker/security.js');const db=securityDb();
+ try {
+  db.sqlite.prepare('INSERT INTO login_sessions VALUES (?,?,?)').run('old',now-3000000,now-3000000);
+  db.sqlite.prepare('INSERT INTO login_sessions VALUES (?,?,?)').run('new',now,now);
+  await pruneSessions(db);
+  assert.deepEqual(db.sqlite.prepare('SELECT uid FROM login_sessions').all().map(r=>r.uid),['new']);
+ } finally {db.sqlite.close();}
+});

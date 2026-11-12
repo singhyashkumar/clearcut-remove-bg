@@ -44,6 +44,8 @@ import {
 } from './models'
 import { createMaskRefinement, type InferenceMask } from './refinement'
 import { canUseOnnxWebGpu, shouldUseSingleThreadedWasm } from './runtime'
+import { configureCpuProxy } from './responsiveness.js'
+import { yieldToBrowser } from '../../src/ui-scheduling.js'
 
 function useIosModel() {
   return (
@@ -297,6 +299,8 @@ export async function removeBackground(
     while (true) {
       throwIfCancelled(options.signal)
       try {
+        await yieldToBrowser()
+        throwIfCancelled(options.signal)
         inference = await inferMask(engine, modelInput)
         if (
           !inference.inspection.valid ||
@@ -974,6 +978,10 @@ async function loadEngine(
   const { AutoModel, AutoProcessor, env } = await import(
     '@huggingface/transformers'
   )
+  // Use a proxy worker on CPU-only devices. Keep this choice tied to the
+  // complete detected queue, rather than flipping a global flag on fallback.
+  configureCpuProxy(env.backends.onnx, await (detectedChoices ??= detectEngineChoices()), typeof Worker !== 'undefined')
+  await yieldToBrowser()
   const transformersEnv = env as unknown as TransformersEnv
   configureModelCache(transformersEnv)
   const watch = createLoadWatch(superviseFetch(transformersEnv), {
@@ -1060,4 +1068,5 @@ function throwIfCancelled(signal?: AbortSignal): void {
     throw new BackgroundRemovalError('cancelled', 'Processing was cancelled.')
   }
 }
+
 
