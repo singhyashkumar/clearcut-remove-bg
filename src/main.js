@@ -1,4 +1,5 @@
 import {processingFailure} from './processing-diagnostics.js';
+import {yieldToBrowser,readAlphaChannels} from './ui-scheduling.js';
 import {validateFile,MAX_PIXELS,alphaBounds,brushAlpha} from './image-utils.js';
 const $=id=>document.getElementById(id);
 const canvas=$('canvas'),ctx=canvas.getContext('2d',{willReadFrequently:true});
@@ -34,6 +35,8 @@ async function processFile(file){
  try{
   bitmap.close();bitmap=null;
   if(thisRun!==runId)return;
+  await yieldToBrowser();
+  if(thisRun!==runId)return;
   const {removeBackground}=await import('../vendor/bg0/index.ts');
   if(thisRun!==runId)return;
   const result=await removeBackground(file,{quality:$('quality').value==='quality'?'quality':'fast',signal:localController.signal,onProgress:p=>{if(thisRun!==runId)return;processingStage=p.stage;processingProvider=p.provider??processingProvider;$('progress').value=p.progress;$('status').textContent=p.message+(p.download?` · ${Math.round(p.download.loadedBytes/1e6)} / ${Math.round(p.download.totalBytes/1e6)} MB`:'');}});
@@ -43,7 +46,9 @@ async function processFile(file){
   canvas.width=cutout.width=output.width;canvas.height=cutout.height=output.height;
   ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(output,0,0);const resultPixels=ctx.getImageData(0,0,canvas.width,canvas.height);output.close();
   ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(source,0,0,canvas.width,canvas.height);basePixels=ctx.getImageData(0,0,canvas.width,canvas.height);
-  alpha=new Uint8Array(canvas.width*canvas.height);for(let i=0;i<alpha.length;i++)alpha[i]=resultPixels.data[i*4+3];initialAlpha=alpha.slice();sourceAlpha=new Uint8Array(alpha.length);for(let i=0;i<alpha.length;i++)sourceAlpha[i]=basePixels.data[i*4+3];
+  const channels=await readAlphaChannels(resultPixels.data,basePixels.data,localController.signal);
+  if(thisRun!==runId)return;
+  alpha=channels.alpha;sourceAlpha=channels.sourceAlpha;initialAlpha=alpha.slice();
   sourceUrl=URL.createObjectURL(result.sourceBlob??file);$('original').src=sourceUrl;background='transparent';$('crop').checked=false;setTool('view');showResult();selectSwatch('transparent');
   $('dimensions').textContent=`${canvas.width} × ${canvas.height} px`;render();panels('editor');$('edit-status').textContent=`Background removed with ${result.model==='birefnet-lite'?'BiRefNet Lite (98 MB)':'BiRefNet Detailed (473 MB)'}.`;
  }catch(e){if(thisRun!==runId)return;release();panels('upload');if(e?.code!=='cancelled'&&e?.name!=='AbortError'){fail(processingFailure(e,processingStage,processingProvider));}}
