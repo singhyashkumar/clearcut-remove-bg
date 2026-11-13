@@ -6,6 +6,7 @@ const root = resolve('dist');
 const html = readFileSync(resolve(root, 'index.html'), 'utf8');
 const sitemap = readFileSync(resolve(root, 'sitemap.xml'), 'utf8');
 const robots = readFileSync(resolve(root, 'robots.txt'), 'utf8');
+const llms = readFileSync(resolve(root, 'llms.txt'), 'utf8');
 
 assert.match(html, /<link rel="canonical" href="https:\/\/clearcutt\.in\/">/);
 assert.doesNotMatch(html, /chatgpt\.site/);
@@ -16,7 +17,12 @@ assert.match(html, /<meta name="twitter:image" content="https:\/\/clearcutt\.in\
 assert.match(html, /id="reviews"/);
 assert.match(html, /id="review-form"/);
 assert.doesNotMatch(html, /AggregateRating|"@type":"Review"/);
+assert.match(html, /"@type":"FAQPage"/);
 assert.match(robots, /Sitemap: https:\/\/clearcutt\.in\/sitemap\.xml/);
+assert.match(llms, /https:\/\/clearcutt\.in\/how-to-remove-background\//);
+for (const icon of ['favicon.ico', 'favicon-48.png', 'favicon-512.png', 'favicon.svg', 'apple-touch-icon.png']) {
+  assert.ok(existsSync(resolve(root, icon)), `Missing identity asset: ${icon}`);
+}
 
 const urls = [...sitemap.matchAll(/<loc>(https:\/\/clearcutt\.in\/[^<]*)<\/loc>/g)].map(match => new URL(match[1]));
 assert.equal(urls.length, 10, 'Sitemap must include the homepage and nine generated pages');
