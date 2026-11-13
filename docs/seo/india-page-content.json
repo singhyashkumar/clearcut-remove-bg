@@ -1,0 +1,671 @@
+{
+  "schemaVersion": "1.0.0",
+  "repository": "singhyashkumar/clearcut-remove-bg",
+  "baseCommit": "bef5689b8d79e722f89341ea1b8b9ed6a487c7fc",
+  "verifiedDate": "2026-11-13",
+  "siteOrigin": "https://clearcutt.in/",
+  "titleTemplate": "{title} | Clearcut",
+  "editorialNotes": {
+    "metadataLengths": "Title (<60 characters including ' | Clearcut') and meta description (<155 characters) targets are editorial guidance to reduce display truncation, not ranking guarantees or protection against search-engine title/snippet rewriting.",
+    "faqSchemaEligibility": "Visible FAQs and 1:1 FAQPage JSON-LD must be generated from the same faqs array for structured-data consistency, but Google Search restricts FAQ rich results to well-known, authoritative government and health websites (SRC-GOOGLE-FAQPAGE). Clearcut is not eligible for Google FAQ rich results.",
+    "searchConsoleIndexing": "After Z.ai builds and deploys the HTML routes, resubmit https://clearcutt.in/sitemap.xml and inspect/request indexing only for canonical HTML URLs. Do not submit /llms.txt for Request Indexing; verify /llms.txt only with an HTTP 200 content check.",
+    "evidencePolicy": "Do not publish AI-generated or retouched mockups as Clearcut processing outputs. Any evidence images added during template integration must be genuine unedited Clearcut exports with recorded source dimensions, model name, date, and brush/trim settings, and scripts/seo.mjs must add img-src 'self' to the generated-page CSP.",
+    "sharedInfraBoundary": "Content-only handoff. Shared template code (scripts/seo.mjs), CSS (public/seo.css), sitemap/dist verification scripts, and existing pages remain untouched for Z.ai integration."
+  },
+  "pages": [
+    {
+      "slug": "photo-ka-background-kaise-hataye",
+      "canonicalUrl": "https://clearcutt.in/photo-ka-background-kaise-hataye/",
+      "lang": "hi-Latn",
+      "title": "Photo Ka Background Kaise Hataye Free Mein",
+      "renderedTitle": "Photo Ka Background Kaise Hataye Free Mein | Clearcut",
+      "description": "Photo ka background kaise hataye: Clearcut se browser mein free transparent ya white background PNG banayein. No watermark, no photo upload.",
+      "h1": "Photo Ka Background Kaise Hataye (Free Browser Step-by-Step Guide)",
+      "lead": "Clearcut (clearcutt.in) se aap bina sign-in aur bina watermark ke apni JPG, PNG ya WebP photo ka background browser mein hi hata sakte hain. Aapki chuni hui photo kisi server par upload nahi hoti, aur aap transparent, safed (#ffffff), naya colour ya apni pasand ki background photo lagakar full-size PNG download kar sakte hain.",
+      "uniqueIntent": "Romanized-Hindi (Hinglish) procedural intent for Indian users searching 'photo ka background kaise hataye' who want a free, private, step-by-step browser workflow with clear expectations about first-run AI model data download (~98 MB or ~473 MB), Android vs desktop reliability, and iOS/HEIC limits.",
+      "cannibalizationBoundary": {
+        "versusHomepage": "Homepage (/) owns broad English commercial queries ('background remover', 'remove bg'); this page serves Romanized-Hindi procedural queries ('photo ka background kaise hataye') in hi-Latn.",
+        "versusExistingGuides": "Separates by language and Indian mobile-data/device context from English /how-to-remove-background/, while delegating government form rules to /passport-exam-form-white-background/ and marketplace rules to /amazon-flipkart-meesho-product-white-background/."
+      },
+      "sections": [
+        {
+          "id": "step-by-step-workflow",
+          "heading": "3 aasaan steps mein photo ka background kaise hataye",
+          "paragraphs": [
+            "Clearcut ek single-photo browser editor hai jismein account banana zaroori nahi hai. Shuru karne ke liye saaf roshni wali aisi photo chunein jismein subject (insaan, product ya object) ke kinare background se alag dikh rahe hon.",
+            "Har English button ka naam neeche waise hi likha gaya hai jaisa aapko Clearcut editor mein dikhega, taaki step follow karne mein koi confusion na ho."
+          ],
+          "bullets": [
+            "1. Photo chunein (Upload): Editor kholkar 'Upload Image' dabayein, file drag-and-drop karein, ya keyboard se Ctrl + V dabayein. Sirf asli JPG, PNG ya WebP file (20 MB aur 25 megapixel tak) accept hoti hai.",
+            "2. Processing mode chunein: 'Standard · original model (98 MB)' aam photos aur kam memory wale devices ke liye default hai. 'Detailed · larger model' (473 MB tak) chhote subjects par ek extra focused pass chala sakta hai jab device support kare.",
+            "3. Check aur save karein: 'Result' aur 'Original' toggle karke cutout dekhein, background chunein, aur tab band karne se pehle 'Download PNG' par click karke apni file save karein."
+          ],
+          "sourceIds": [
+            "REPO-INPUT-LIMITS",
+            "REPO-MODELS-RUNTIME",
+            "REPO-EDITOR-EXPORT"
+          ]
+        },
+        {
+          "id": "privacy-aur-model-download",
+          "heading": "Pehli baar data kitna lagta hai aur photo kahan rehti hai?",
+          "paragraphs": [
+            "Clearcut aapki photo ko kisi cloud image server ya payment backend par bhejkar edit nahi karta. Aapki photo, AI mask aur brush edits sirf aapke browser ki memory mein rehte hain. Jab aap 'New photo ↗' dabate hain ya browser tab band karte hain, toh editing session khatam ho jata hai—isliye PNG download karne se pehle tab na band karein.",
+            "Pehli baar background hatate waqt browser Hugging Face aur jsDelivr se AI model aur ONNX runtime files download karta hai—Standard mode mein lagbhag 98 MB aur Detailed mode mein lagbhag 473 MB tak (agar bada model fail ho toh browser 98 MB model par fallback kar sakta hai). Browser in model files ko cache kar sakta hai jisse agli baar jaldi kaam ho, lekin pehli run ke liye Wi-Fi ya stable data connection rakhein aur tab khula chhod dein."
+          ],
+          "sourceIds": [
+            "REPO-MODELS-RUNTIME",
+            "REPO-PRIVACY-NETWORK"
+          ]
+        },
+        {
+          "id": "background-change-aur-brush-tools",
+          "heading": "Safed background, naya photo backdrop aur kinare (edges) kaise theek karein",
+          "paragraphs": [
+            "AI models andar se 512×512 pixel mask par kaam karte hain, isliye baal, chashme, sheeshe ya halka contrast hone par kinaron ko halka sa sudharna pad sakta hai. Clearcut mein iske liye manual brush aur background controls diye gaye hain:"
+          ],
+          "bullets": [
+            "Background badlein: Transparent rakhne ke liye checkerboard swatch chunein (checkerboard sirf preview hai, PNG mein save nahi hota). Safed background ke liye White (#ffffff) dabayein, '+' button se koi bhi custom colour chunein, ya 'Add background photo' se apni JPG/PNG/WebP image (20 MB / 25 MP tak) lagayein.",
+            "Erase aur Restore brush: Brush size slider ko 5 se 150 pixel ke beech set karein. Bacha hua background hatane ke liye 'Erase' aur galti se kate hue hisse wapas laane ke liye 'Restore' chunein.",
+            "Undo aur Reset cutout: 'Undo' button sirf aakhiri ek brush stroke (ya aakhiri reset) ko wapas karta hai—yeh multi-step undo nahi hai. Shuruati AI cutout par lautne ke liye 'Reset cutout' dabayein.",
+            "Trim empty edges: Ise tick karne par Clearcut photo ke charon taraf ki khali jagah kaatkar seedha subject ke kinaron tak tight crop kar deta hai—chahe aapne safed ya rangin background hi kyun na chuna ho. Agar aapko subject ke aas-paas margin chahiye toh ise unticked chhod dein."
+          ],
+          "sourceIds": [
+            "REPO-MODELS-RUNTIME",
+            "REPO-EDITOR-EXPORT"
+          ]
+        },
+        {
+          "id": "mobile-desktop-aur-format-seemayein",
+          "heading": "Android phone, iPhone aur sarkari/ecommerce formats ki zaroori jankari",
+          "paragraphs": [
+            "Clearcut sabse achha Windows, macOS ya Linux ke current desktop Chrome aur Edge browsers par chalta hai. Android Chrome par bhi 98 MB wala Standard model default roop se chalu hai aur real Android users ke phones par test mein chala hai, lekin har Android phone par iski guarantee nahi hai—kyunki browser RAM kam hone ya network rukne par processing error aa sakta hai. iPhone, iPad (iOS/iPadOS) aur HEIC/HEIF photos abhi bilkul supported nahi hain.",
+            "Dhyan rahe ki Clearcut hamesha full-resolution PNG file ('clearcut.png') download karta hai aur ek baar mein ek hi photo process karta hai. Agar kisi sarkari exam form ya Meesho/Flipkart listing ke liye aapko 10–50 KB ki JPG file, DPI setting, ya fixed centimetre/pixel size chahiye, toh Clearcut se PNG lene ke baad kisi alag resize/JPG tool ka upyog karein—aur pehle us portal ke official niyam zaroor padhein."
+          ],
+          "sourceIds": [
+            "REPO-PLATFORM-LIMITS",
+            "REPO-EDITOR-EXPORT"
+          ]
+        }
+      ],
+      "faqs": [
+        {
+          "question": "Clearcut se photo ka background free mein kaise hataye?",
+          "answer": "Clearcut kholkar Upload Image dabayein aur 20 MB va 25 megapixel tak ki JPG, PNG ya WebP photo chunein. AI aapke browser mein background hata deta hai. Zaroorat ho toh Erase ya Restore brush se kinare saaf karein, transparent ya White (#ffffff) background chunein, aur bina watermark Download PNG par click karein.",
+          "sourceIds": [
+            "REPO-INPUT-LIMITS",
+            "REPO-EDITOR-EXPORT"
+          ]
+        },
+        {
+          "question": "Kya meri photo kisi server par upload ya save hoti hai?",
+          "answer": "Nahi. Aapki chuni hui photo, mask aur brush edits aapke browser ki memory mein hi rehte hain aur Clearcut ke backend server par upload nahi hote. Tab band karne ya New photo dabane par editing session khatam ho jata hai.",
+          "sourceIds": [
+            "REPO-PRIVACY-NETWORK"
+          ]
+        },
+        {
+          "question": "Pehli baar background hatane mein zyada samay aur data kyun lagta hai?",
+          "answer": "Pehli baar chalane par browser AI model download karta hai: Standard mode mein lagbhag 98 MB aur Detailed mode mein lagbhag 473 MB tak. Browser is model ko aage ke liye cache kar sakta hai, isliye pehli baar Wi-Fi ya achhe internet connection ka upyog karein.",
+          "sourceIds": [
+            "REPO-MODELS-RUNTIME"
+          ]
+        },
+        {
+          "question": "Kya yeh tool Android phone aur iPhone par kaam karta hai?",
+          "answer": "iPhone, iPad (iOS) aur HEIC photos supported nahi hain. Android Chrome par 98 MB Standard model default hai aur user testing mein kai phones par chala hai, lekin har phone ki memory alag hone ke karan universal support ki guarantee nahi hai. Error aane par desktop Chrome ya Edge use karein.",
+          "sourceIds": [
+            "REPO-PLATFORM-LIMITS"
+          ]
+        },
+        {
+          "question": "Background hatane ke baad safed colour ya doosri photo kaise lagayein?",
+          "answer": "Editor mein Background ke neeche Transparent, White (#ffffff), preset colours, Custom background color (+), ya Add background photo chunein. Aap 20 MB aur 25 megapixel tak ki JPG, PNG ya WebP background image laga sakte hain aur result PNG mein download kar sakte hain.",
+          "sourceIds": [
+            "REPO-EDITOR-EXPORT"
+          ]
+        }
+      ],
+      "contextualLinks": [
+        {
+          "href": "/#workspace",
+          "anchorText": "Free background remover kholein",
+          "placement": "primary-cta",
+          "purpose": "Open the live on-device Clearcut editor immediately."
+        },
+        {
+          "href": "/how-to-remove-background/",
+          "anchorText": "Read this step-by-step guide in English",
+          "placement": "section:step-by-step-workflow",
+          "purpose": "Provide an explicit language bridge without duplicating English keyword targeting."
+        },
+        {
+          "href": "/passport-exam-form-white-background/",
+          "anchorText": "Passport aur Indian exam form white-background rules dekhein",
+          "placement": "section:mobile-desktop-aur-format-seemayein",
+          "purpose": "Route government/exam applicants to the portal-rules warning and PNG-to-JPG guidance."
+        },
+        {
+          "href": "/amazon-flipkart-meesho-product-white-background/",
+          "anchorText": "Amazon, Flipkart aur Meesho product photo guide",
+          "placement": "section:mobile-desktop-aur-format-seemayein",
+          "purpose": "Route Indian marketplace sellers to platform-specific #ffffff and JPEG/PNG guidance."
+        }
+      ],
+      "sourceIds": [
+        "REPO-INPUT-LIMITS",
+        "REPO-MODELS-RUNTIME",
+        "REPO-EDITOR-EXPORT",
+        "REPO-PLATFORM-LIMITS",
+        "REPO-PRIVACY-NETWORK"
+      ]
+    },
+    {
+      "slug": "passport-exam-form-white-background",
+      "canonicalUrl": "https://clearcutt.in/passport-exam-form-white-background/",
+      "lang": "en",
+      "title": "Passport and Exam Form White Background Guide",
+      "renderedTitle": "Passport and Exam Form White Background Guide | Clearcut",
+      "description": "Check Passport Seva, UPSC, SSC, IBPS and NTA photo rules before editing. Add a #ffffff white background locally in Clearcut where allowed.",
+      "h1": "White Background for Passport and Indian Exam Form Photos: Rules and Limits",
+      "lead": "Read your official portal instructions before editing any ID or application portrait: some authorities prohibit software-edited photographs or capture live webcam photos during registration. Where background cleanup is allowed, Clearcut can place your portrait on solid white (#ffffff) locally in your browser without uploading your photo, after which you must convert and resize the PNG externally if the form requires a specific JPG size.",
+      "uniqueIntent": "Indian passport and competitive-exam applicants checking whether and how they can put an application portrait on a plain white (#ffffff) background while respecting official non-alteration rules, live-photo mandates, and external JPG/pixel/KB conversion steps.",
+      "cannibalizationBoundary": {
+        "versusHomepage": "Homepage (/) targets general commercial background removal; this page addresses Indian government/exam portrait compliance boundaries and white-background preparation.",
+        "versusExistingGuides": "Leaves creative/profile portrait editing to /remove-background-portraits/ and delegates handwritten ink signature rules to /remove-background-from-signature-png/."
+      },
+      "sections": [
+        {
+          "id": "mandatory-portal-warning-before-editing",
+          "heading": "Check first: software editing may be prohibited or replaced by live capture",
+          "callout": {
+            "level": "warning",
+            "text": "Clearcut is an uncertified visual background editor and never guarantees acceptance on Passport Seva or any government or exam portal. Do not edit a passport or exam photograph with software if your official instructions forbid computer-altered images or require live camera capture."
+          },
+          "paragraphs": [
+            "Official Passport Seva ICAO guidelines for uploaded passport photographs require a white background and 630×810 pixel colour framing (80–85% face coverage), and explicitly state: 'Photos should be unaltered by computer software.' In addition, Passport Seva Kendra (PSK) and Post Office Passport Seva Kendra (POPSK) appointments do not require a pasted photograph on the form because your photo is captured at the centre, while physical DPC/SPC/CSC collection-centre forms require an unsigned 4.5 cm × 3.5 cm colour print on photo paper against a plain white background.",
+            "Several major recruitment portals also restrict or bypass pre-edited photo files. Staff Selection Commission (SSC) candidate notices capture a live photograph via webcam or phone against a plain well-lit background instead of asking candidates to upload a pre-existing portrait. Recent UPSC Common Application Form (CAF) and IBPS CRP notifications require both a scanned photograph upload and a live webcam/mobile photo capture, and NTA bulletins state that Polaroid and computer-generated photographs are not acceptable. Whenever an authority forbids software alteration, retake the photograph in front of a real plain white wall in even daylight."
+          ],
+          "sourceIds": [
+            "SRC-PASSPORT-ICAO",
+            "SRC-PASSPORT-BOOKLET",
+            "SRC-SSC-CAPF-2026",
+            "SRC-UPSC-CAF-2026",
+            "SRC-IBPS-PO-XVI-2026",
+            "SRC-NTA-UGCNET-2025"
+          ]
+        },
+        {
+          "id": "portal-rules-vary-by-notification",
+          "heading": "Why there is no single 'government exam photo size' in India",
+          "paragraphs": [
+            "Format, file-size (KB), and framing requirements change across commissions and even between different exam notifications from the same body. Always verify the exact PDF notification for your current exam cycle rather than relying on generic presets:"
+          ],
+          "bullets": [
+            "UPSC (varies by notice): 2026 Common Application Form notices (such as CAPF AC 2026 and IES/ISS 2026) require a scanned .jpg photograph between 20 KB and 200 KB plus live photo capture, whereas Engineering Services 2026 specified 20 KB to 300 KB in .jpg format.",
+            "SSC (varies by workflow): Candidate exam modules (such as SI in Delhi Police & CAPFs 2026) use live photo capture without cap, mask, or spectacles; however, SSC's Scribe One Time Registration portal accepts an uploaded JPEG/JPG photograph of 20 KB to 50 KB (about 3.5 cm × 4.5 cm).",
+            "IBPS (CRP notifications): Recent CRP PO/MT-XVI (2026) guidelines specify a 4.5 cm × 3.5 cm colour photograph (200×230 pixels preferred, 20 KB to 50 KB in .jpeg/.jpg) against a light, preferably white background, alongside mandatory live photo capture.",
+            "NTA (information bulletins): UGC-NET June 2025 specifies a scanned JPG/JPEG photograph of 10 KB to 200 KB showing 80% face including ears against a white background, without cap, goggles, or mask."
+          ],
+          "sourceIds": [
+            "SRC-UPSC-CAF-2026",
+            "SRC-UPSC-ESE-2026",
+            "SRC-SSC-CAPF-2026",
+            "SRC-SSC-SCRIBE-OTR",
+            "SRC-IBPS-PO-XVI-2026",
+            "SRC-NTA-UGCNET-2025"
+          ]
+        },
+        {
+          "id": "clearcut-white-background-workflow",
+          "heading": "How to add a #ffffff white background in Clearcut (only where permitted)",
+          "paragraphs": [
+            "When you are preparing an ID, college, office, or form portrait whose rules permit replacing a distracting home backdrop, start with a sharp, front-facing photo taken at eye level in even lighting, with both ears visible and no harsh face shadows or eyeglass glare. Clearcut edits only the background mask—it does not relight faces, remove spectacle reflections, or retouch clothing."
+          ],
+          "bullets": [
+            "1. Open Clearcut on desktop Chrome or Edge (Android Chrome runs the 98 MB Standard model by default and has worked in user testing, though low-memory phones can fail; iOS/iPadOS and HEIC are unsupported).",
+            "2. Select, drop, or paste your JPG, PNG, or WebP portrait (up to 20 MB and 25 megapixels). Your photo stays in local browser memory and is never uploaded to Clearcut's backend.",
+            "3. After the 512px AI mask finishes (about 98 MB model download on first Standard run, or up to 473 MB in Detailed mode), click the White background swatch to fill the backdrop with pure #ffffff (RGB 255, 255, 255).",
+            "4. Toggle between 'Result' and 'Original'. Use 'Restore' and 'Erase' (5–150 px brush; single-step 'Undo' and 'Reset cutout' available) to clean stray hair, ear contours, and dark collar edges.",
+            "5. Leave 'Trim empty edges' UNCHECKED, then click 'Download PNG'. Checking 'Trim empty edges' crops tightly to the subject's outer edge with zero head or shoulder margin—even when White (#ffffff) is selected."
+          ],
+          "sourceIds": [
+            "REPO-INPUT-LIMITS",
+            "REPO-MODELS-RUNTIME",
+            "REPO-EDITOR-EXPORT",
+            "REPO-PLATFORM-LIMITS",
+            "REPO-PRIVACY-NETWORK"
+          ]
+        },
+        {
+          "id": "external-jpg-crop-kb-steps",
+          "heading": "External steps Clearcut does not perform: JPG conversion, cropping, DPI and KB limits",
+          "paragraphs": [
+            "Clearcut always downloads a full-resolution PNG ('clearcut.png') at your source image's pixel dimensions. It does not export .jpg/.jpeg files, crop to fixed ratios such as 3.5 cm × 4.5 cm, 630×810 px, or 200×230 px, write DPI metadata, or compress files to portal windows like 20–50 KB or 10–200 KB.",
+            "If an online form allows your white-background portrait and asks for a specific JPG size, open the downloaded PNG in your operating system's built-in photo editor or offline image tool, crop to the exact head-and-shoulders framing specified in your notice, export as .jpg/.jpeg, and verify both pixel dimensions and kilobyte size before uploading."
+          ],
+          "sourceIds": [
+            "REPO-EDITOR-EXPORT",
+            "SRC-UPSC-CAF-2026",
+            "SRC-IBPS-PO-XVI-2026",
+            "SRC-NTA-UGCNET-2025"
+          ]
+        }
+      ],
+      "faqs": [
+        {
+          "question": "Does Clearcut guarantee acceptance on Passport Seva or government exam portals?",
+          "answer": "No. Clearcut is not passport-certified and cannot guarantee acceptance on any portal. Official Passport Seva ICAO upload guidelines require photos to be unaltered by computer software, and portals such as SSC, UPSC, and IBPS use live webcam or phone photo capture for all or part of registration. Always check your official notice before editing.",
+          "sourceIds": [
+            "SRC-PASSPORT-ICAO",
+            "SRC-SSC-CAPF-2026",
+            "SRC-UPSC-CAF-2026",
+            "SRC-IBPS-PO-XVI-2026"
+          ]
+        },
+        {
+          "question": "Does Clearcut apply pure white (#ffffff) to the photo background?",
+          "answer": "Yes. Choosing the White swatch fills the background behind your cutout with solid hex #ffffff (RGB 255, 255, 255). It does not fix shadows on your face, red-eye, or glare on spectacles, so start with an evenly lit front-facing photo.",
+          "sourceIds": [
+            "REPO-EDITOR-EXPORT",
+            "SRC-PASSPORT-ICAO"
+          ]
+        },
+        {
+          "question": "Can Clearcut export a 20 KB to 50 KB JPG or crop to 3.5 x 4.5 cm?",
+          "answer": "No. Clearcut exports full-resolution PNG files only and does not convert to JPG/JPEG, crop to centimetre or pixel templates, set DPI, or compress files to KB targets. Use a separate image utility to crop and save as JPG within your notification's exact size range.",
+          "sourceIds": [
+            "REPO-EDITOR-EXPORT"
+          ]
+        },
+        {
+          "question": "Should I check Trim empty edges for an ID or exam form portrait?",
+          "answer": "No. Keep Trim empty edges unchecked. When checked, Clearcut crops tightly to the detected person's outline with zero space above the head or beside the shoulders—even on a #ffffff white background—which ruins standard ID framing.",
+          "sourceIds": [
+            "REPO-EDITOR-EXPORT"
+          ]
+        },
+        {
+          "question": "Are my ID or application photos uploaded to Clearcut's servers?",
+          "answer": "No. Your selected photograph, mask, and brush adjustments stay in local browser memory on your device and are never uploaded to Clearcut's backend. Closing the tab or clicking New photo clears the editing session.",
+          "sourceIds": [
+            "REPO-PRIVACY-NETWORK"
+          ]
+        }
+      ],
+      "contextualLinks": [
+        {
+          "href": "/#workspace",
+          "anchorText": "Open the free browser background editor",
+          "placement": "primary-cta",
+          "purpose": "Launch Clearcut's workspace after reading official portal constraints."
+        },
+        {
+          "href": "/remove-background-portraits/",
+          "anchorText": "Portrait edge refinement tips for hair, collars, and glasses",
+          "placement": "section:clearcut-white-background-workflow",
+          "purpose": "Link to general portrait mask-cleanup guidance without mixing compliance rules."
+        },
+        {
+          "href": "/remove-background-from-signature-png/",
+          "anchorText": "Signature background removal and exam JPG rules",
+          "placement": "section:external-jpg-crop-kb-steps",
+          "purpose": "Separate handwritten signature requirements from candidate portrait rules."
+        },
+        {
+          "href": "/photo-ka-background-kaise-hataye/",
+          "anchorText": "Hinglish step-by-step guide: Photo ka background kaise hataye",
+          "placement": "section:clearcut-white-background-workflow",
+          "purpose": "Assist Hindi/Hinglish readers who want UI walkthrough steps."
+        }
+      ],
+      "sourceIds": [
+        "REPO-INPUT-LIMITS",
+        "REPO-MODELS-RUNTIME",
+        "REPO-EDITOR-EXPORT",
+        "REPO-PLATFORM-LIMITS",
+        "REPO-PRIVACY-NETWORK",
+        "SRC-PASSPORT-ICAO",
+        "SRC-PASSPORT-BOOKLET",
+        "SRC-UPSC-CAF-2026",
+        "SRC-UPSC-ESE-2026",
+        "SRC-SSC-CAPF-2026",
+        "SRC-SSC-SCRIBE-OTR",
+        "SRC-IBPS-PO-XVI-2026",
+        "SRC-NTA-UGCNET-2025"
+      ]
+    },
+    {
+      "slug": "amazon-flipkart-meesho-product-white-background",
+      "canonicalUrl": "https://clearcutt.in/amazon-flipkart-meesho-product-white-background/",
+      "lang": "en",
+      "title": "Amazon, Flipkart, Meesho White Background",
+      "renderedTitle": "Amazon, Flipkart, Meesho White Background | Clearcut",
+      "description": "Put product photos on pure white (#ffffff) locally in Clearcut. Review Amazon India, Flipkart, Meesho and Myntra category rules and PNG/JPEG formats.",
+      "h1": "Pure White Product Backgrounds for Amazon India, Flipkart, Meesho and Myntra",
+      "lead": "Clearcut lets Indian ecommerce sellers place single product photos onto a pure white (#ffffff / RGB 255, 255, 255) or transparent background privately in the browser with no watermark. Because catalog image rules vary across Amazon India, Flipkart, Meesho, and Myntra—and by product category—check your seller panel's vertical guidelines and format requirements before uploading.",
+      "uniqueIntent": "Indian marketplace sellers preparing #ffffff (RGB 255, 255, 255) catalog images who need accurate boundaries on Amazon India, Flipkart, Meesho, and Myntra category rules, PNG vs JPEG upload formats, Trim empty edges behavior, and single-image local editing.",
+      "cannibalizationBoundary": {
+        "versusHomepage": "Homepage (/) targets broad background-remover queries; this page targets Indian multi-marketplace seller workflows and pure-white catalog requirements.",
+        "versusExistingGuides": "Complements generic photography advice on /remove-background-products/ by focusing specifically on Amazon.in, Flipkart Seller Hub, Meesho Supplier Panel, and Myntra category/file-format constraints."
+      },
+      "sections": [
+        {
+          "id": "marketplace-rules-by-platform-and-category",
+          "heading": "How white-background rules differ across Amazon India, Flipkart, Meesho and Myntra",
+          "paragraphs": [
+            "Pure white (#ffffff) is widely used for Indian marketplace main images, but no single rule applies to every platform or category. Review the official requirements inside your seller account for each vertical you list:"
+          ],
+          "bullets": [
+            "Amazon India (Seller Central): Main images require a pure white background (RGB 255, 255, 255), with the product filling at least 85% of the frame, 500 to 10,000 pixels on the longest side (1,000+ pixels preferred to enable customer zoom), and zero text, logos, borders, watermarks, or unincluded props. Accepted formats are JPEG (preferred), TIFF, PNG, and non-animated GIF. Category style guides still vary—for example, standing models for adult clothing, flat-lay without models for children's clothing and accessories, and a single left-facing shoe at a 45-degree angle for footwear.",
+            "Flipkart Seller Hub: Flipkart's listing workflow recommends high-resolution, multi-angle product images on a white background for standard catalog quality checks, while Flipkart's fashion photography guidance explicitly allows neutral white, grey, or beige walls and category-suited backdrops.",
+            "Meesho Supplier Panel: Public Meesho supplier category guides instruct sellers to upload a clear front image in JPEG format without logos, watermarks, props, or partial views, and point to detailed per-category image rules inside the Meesho Supplier Panel.",
+            "Myntra (DIY / MAS Cataloging): Myntra Seller University publishes category-specific image guidelines plus model styling and sizing rules, so open the sheet for your vertical inside the portal. Some apparel verticals specify studio model photography rather than isolated #ffffff cutouts."
+          ],
+          "sourceIds": [
+            "SRC-AMAZON-IN-IMAGES",
+            "SRC-FLIPKART-LISTING",
+            "SRC-FLIPKART-FASHION",
+            "SRC-MEESHO-CATALOG",
+            "SRC-MYNTRA-CATALOG"
+          ]
+        },
+        {
+          "id": "clearcut-seller-workflow",
+          "heading": "Creating a pure white (#ffffff) product cutout in Clearcut",
+          "paragraphs": [
+            "Photograph one clean, unpacked product (unless packaging is an explicit product feature) in diffused, even lighting against a contrasting surface so pale edges remain easy to inspect. Avoid harsh floor shadows or coloured tabletops that cast tint onto reflective parts."
+          ],
+          "bullets": [
+            "1. Open Clearcut on desktop Chrome or Edge and upload, drop, or paste a JPG, PNG, or WebP photo up to 20 MB and 25 megapixels (Android Chrome defaults to the 98 MB Standard model and has worked in user testing, though low-RAM phones are not guaranteed; iOS and HEIC are unsupported).",
+            "2. Select 'Standard · original model (98 MB)' for straightforward shapes, or 'Detailed · larger model' (up to 473 MB on capable hardware) when a smaller product occupies under 85% of the frame and benefits from Clearcut's focused 512px crop pass.",
+            "3. Click the White swatch (#ffffff) to set an exact RGB 255, 255, 255 background, or leave Transparent selected if you are placing the cutout into a separate catalog template.",
+            "4. Inspect straps, handles, ports, and inner cutouts using 'Result' vs 'Original'. Clean the mask with 'Erase' and 'Restore' (5–150 px brush; single-step 'Undo' and 'Reset cutout' included), then click 'Download PNG'."
+          ],
+          "sourceIds": [
+            "REPO-INPUT-LIMITS",
+            "REPO-MODELS-RUNTIME",
+            "REPO-EDITOR-EXPORT",
+            "REPO-PLATFORM-LIMITS"
+          ]
+        },
+        {
+          "id": "trim-framing-and-jpeg-conversion",
+          "heading": "Managing Amazon's 85% frame rule, Trim empty edges, and JPEG conversion",
+          "paragraphs": [
+            "Understanding how Clearcut exports canvases prevents accidental catalog rejections. When 'Trim empty edges' is left unchecked, Clearcut preserves your original photo's pixel width and height. When 'Trim empty edges' IS checked, Clearcut crops tightly to the outer edge of the detected product with zero white margin—even when the White (#ffffff) swatch is active.",
+            "If you need a square 1:1 or 3:4 marketplace canvas where the item fills roughly 85–90% of the frame with clean white breathing room, either frame your camera shot with that margin and leave 'Trim empty edges' unchecked, or export a trimmed transparent PNG and place it onto a sized #ffffff canvas (for example, 1500×1500 px or 2000×2000 px) in your layout editor. Likewise, because Clearcut exports PNG only—and does not resize, set DPI, or compress files—convert your #ffffff PNG to JPEG externally whenever Meesho, Flipkart, Myntra, or your catalog feed requires .jpg/.jpeg files."
+          ],
+          "sourceIds": [
+            "REPO-EDITOR-EXPORT",
+            "SRC-AMAZON-IN-IMAGES",
+            "SRC-MEESHO-CATALOG"
+          ]
+        },
+        {
+          "id": "catalog-scale-and-optical-limits",
+          "heading": "Single-image limits, glass/jewellery edges, and honest capabilities",
+          "paragraphs": [
+            "Clearcut processes one photo per run in your browser memory without uploading product images to a backend server. There is no bulk folder queue, Excel/CSV catalog integration, or public API today, and Clearcut Plus (₹90 for 30 days, manual renewal) does not unlock batch processing yet—so Clearcut fits individual SKU launches, sample listings, and hero-image cleanup rather than multi-hundred-SKU automation.",
+            "Both AI models compute masks at 512×512 internal resolution. Transparent glass bottles, fine jewellery chains, mesh fabrics, and polished steel can retain colour reflections from the original room or lose thin links, and Clearcut does not generate synthetic drop shadows or certifiably validate marketplace QC compliance."
+          ],
+          "sourceIds": [
+            "REPO-MODELS-RUNTIME",
+            "REPO-PRIVACY-NETWORK",
+            "REPO-PLANS-LIMITS"
+          ]
+        }
+      ],
+      "faqs": [
+        {
+          "question": "Is Clearcut's White swatch pure RGB 255, 255, 255 for Amazon India main images?",
+          "answer": "Yes. Selecting the White background swatch fills transparent areas with solid #ffffff, which is exact RGB 255, 255, 255. You still need to meet Amazon India's framing and content rules, including 85% minimum product frame fill, 500 to 10,000 pixels on the longest side (1,000+ pixels recommended for zoom), and no watermarks, text, or unincluded props.",
+          "sourceIds": [
+            "REPO-EDITOR-EXPORT",
+            "SRC-AMAZON-IN-IMAGES"
+          ]
+        },
+        {
+          "question": "Can I upload Clearcut's PNG file directly to Amazon India, Flipkart, Meesho, and Myntra?",
+          "answer": "Amazon India accepts PNG alongside JPEG (preferred), TIFF, and non-animated GIF. Meesho's public category guides specify JPEG format for catalog images, and Flipkart or Myntra uploaders may impose their own format or aspect-ratio rules. Check the uploader in your seller panel, and convert Clearcut's PNG export to JPEG externally whenever your portal requires it.",
+          "sourceIds": [
+            "REPO-EDITOR-EXPORT",
+            "SRC-AMAZON-IN-IMAGES",
+            "SRC-MEESHO-CATALOG",
+            "SRC-FLIPKART-LISTING",
+            "SRC-MYNTRA-CATALOG"
+          ]
+        },
+        {
+          "question": "Do Flipkart, Meesho, and Myntra require pure white backgrounds in every category?",
+          "answer": "No. Rules depend on the platform and product vertical. While white backgrounds are standard for many hard-goods listings, Flipkart's fashion guide permits neutral white, grey, or beige walls, and Myntra publishes category-specific cataloging guidelines where apparel often specifies studio model photography rather than pure-white cutouts.",
+          "sourceIds": [
+            "SRC-FLIPKART-LISTING",
+            "SRC-FLIPKART-FASHION",
+            "SRC-MEESHO-CATALOG",
+            "SRC-MYNTRA-CATALOG"
+          ]
+        },
+        {
+          "question": "Does Clearcut offer bulk catalog background removal, an API, or drop shadows?",
+          "answer": "No. Clearcut edits one JPG, PNG, or WebP photo (up to 20 MB and 25 megapixels) at a time in your browser, has no batch uploader or public API, and does not generate realistic drop shadows or remove colour reflections from glass and chrome.",
+          "sourceIds": [
+            "REPO-INPUT-LIMITS",
+            "REPO-PLANS-LIMITS"
+          ]
+        },
+        {
+          "question": "What happens if I check Trim empty edges on a white-background product photo?",
+          "answer": "Checking Trim empty edges crops the exported PNG tightly to the detected product's outer edge with zero white border, even when White (#ffffff) is selected. Leave Trim empty edges unchecked if your source photo already has the margin you want, or add exact canvas padding in a separate editor.",
+          "sourceIds": [
+            "REPO-EDITOR-EXPORT"
+          ]
+        }
+      ],
+      "contextualLinks": [
+        {
+          "href": "/#workspace",
+          "anchorText": "Create a #ffffff product image in Clearcut",
+          "placement": "primary-cta",
+          "purpose": "Open the browser editor for single-SKU white or transparent cutouts."
+        },
+        {
+          "href": "/remove-background-products/",
+          "anchorText": "General product photography lighting and cutout tips",
+          "placement": "section:clearcut-seller-workflow",
+          "purpose": "Connect to global product shooting advice without duplicating marketplace rules."
+        },
+        {
+          "href": "/transparent-background/",
+          "anchorText": "Exporting transparent background PNGs for combo graphics and banners",
+          "placement": "section:trim-framing-and-jpeg-conversion",
+          "purpose": "Guide sellers who need alpha transparency for secondary infographics or store banners."
+        },
+        {
+          "href": "/#plans",
+          "anchorText": "Current free usage and Clearcut Plus single-photo scope",
+          "placement": "section:catalog-scale-and-optical-limits",
+          "purpose": "Set transparent expectations that Plus does not yet unlock batch processing."
+        }
+      ],
+      "sourceIds": [
+        "REPO-INPUT-LIMITS",
+        "REPO-MODELS-RUNTIME",
+        "REPO-EDITOR-EXPORT",
+        "REPO-PLATFORM-LIMITS",
+        "REPO-PRIVACY-NETWORK",
+        "REPO-PLANS-LIMITS",
+        "SRC-AMAZON-IN-IMAGES",
+        "SRC-FLIPKART-LISTING",
+        "SRC-FLIPKART-FASHION",
+        "SRC-MEESHO-CATALOG",
+        "SRC-MYNTRA-CATALOG"
+      ]
+    },
+    {
+      "slug": "remove-background-from-signature-png",
+      "canonicalUrl": "https://clearcutt.in/remove-background-from-signature-png/",
+      "lang": "en",
+      "title": "Remove Background from Signature to PNG",
+      "renderedTitle": "Remove Background from Signature to PNG | Clearcut",
+      "description": "Turn a signature on paper into a transparent or white-background PNG in your browser. Refine ink strokes locally and check exam portal JPG rules.",
+      "h1": "Remove Background from a Signature Image and Export a Transparent PNG",
+      "lead": "Need a cleaner signature image for PDFs, letters or invoices? You can try Clearcut's on-device background remover and save a PNG without uploading your signature. It uses a general subject-segmentation model: removing only the paper around thin ink strokes is not guaranteed. Check the result against a dark background, inspect the exported PNG, and use Erase or Restore where needed. A dedicated scanning or threshold tool may be a better fit for ink-only transparency. For exam forms, first check whether editing is allowed and whether the portal requires a white-paper JPG.",
+      "uniqueIntent": "Users extracting a handwritten ink signature from photographed or scanned paper into a transparent PNG for digital documents, while understanding 512px AI segmentation limits on thin pen strokes and why Indian government exam portals reject transparent PNGs in favor of white-paper JPGs.",
+      "cannibalizationBoundary": {
+        "versusHomepage": "Homepage (/) targets general image background removal; this page focuses specifically on thin-stroke handwritten signature extraction and document vs exam format rules.",
+        "versusExistingGuides": "Distinct from general alpha-channel/logo concepts on /transparent-background/ and from candidate face-portrait rules on /passport-exam-form-white-background/."
+      },
+      "sections": [
+        {
+          "id": "transparent-png-vs-exam-portal-jpg",
+          "heading": "When to use a transparent signature PNG—and why exam forms require JPG instead",
+          "paragraphs": [
+            "A PNG can store transparent pixels, allowing a cutout to sit over a document without a rectangular backdrop. Clearcut uses a general subject-segmentation model rather than a document scanner, so it may keep some or all of the paper around a signature. Preview against a dark background, inspect the exported PNG, and refine with Erase and Restore. Ink-only transparency is not guaranteed.",
+            "Do NOT upload a transparent PNG signature to Indian government or banking exam portals, and do not convert a transparent PNG blindly to JPG in basic viewers that turn transparent pixels solid black. Official exam portals require opaque JPG/JPEG files signed on white paper with strict rules that vary by notice:"
+          ],
+          "bullets": [
+            "UPSC (2026 CAF notices such as CAPF AC 2026 and IES/ISS 2026): Sign three times (one below the other) on plain white paper using black ink and upload in .jpg format between 20 KB and 100 KB (other notices such as ESE 2026 specify 20 KB to 300 KB .jpg).",
+            "SSC (SI CAPF 2026 & Scribe OTR): Scanned horizontal signature in JPEG/JPG format between 10 KB and 20 KB (about 4.0 cm × 2.0 cm on candidate notices, or 6.0 cm × 2.0 cm on Scribe OTR); blurred or miniature signatures are rejected.",
+            "IBPS (CRP PO/MT-XVI 2026 & regional notices): Black-ink signature on white paper, 140×60 pixels preferred, 10 KB to 20 KB in .jpeg/.jpg, not in capital letters; some IBPS-hosted notices require a 200+ DPI scan and explicitly reject mobile-phone signature photos.",
+            "NTA (UGC-NET June 2025): Full running-hand signature (not capital letters) in blue or black ink on white paper, uploaded in JPG/JPEG format between 4 KB and 30 KB."
+          ],
+          "sourceIds": [
+            "REPO-EDITOR-EXPORT",
+            "SRC-UPSC-CAF-2026",
+            "SRC-UPSC-ESE-2026",
+            "SRC-SSC-CAPF-2026",
+            "SRC-SSC-SCRIBE-OTR",
+            "SRC-IBPS-PO-XVI-2026",
+            "SRC-IBPS-REGIONAL-SCAN",
+            "SRC-NTA-UGCNET-2025"
+          ]
+        },
+        {
+          "id": "capture-and-crop-before-upload",
+          "heading": "Step 1: Sign cleanly and crop tightly before uploading to Clearcut",
+          "paragraphs": [
+            "Because Clearcut's AI models evaluate a 512×512 internal image representation rather than running a document scanner contrast threshold, uploading a full uncropped A4 sheet shrinks your signature into a tiny strip of pixels where hairline pen strokes can disappear.",
+            "For the sharpest mask: sign with a dark black or blue rollerball, gel, or smooth ballpoint pen on unlined white paper (avoid ruled notebook lines, stamps, or faint pencil). Photograph or scan straight down in even daylight with no phone shadow across the paper, then crop closely around the signature rectangle before selecting the file in Clearcut."
+          ],
+          "sourceIds": [
+            "REPO-MODELS-RUNTIME"
+          ]
+        },
+        {
+          "id": "refine-loops-strokes-and-trim",
+          "heading": "Step 2: Isolate ink strokes, check enclosed loops, and export PNG",
+          "paragraphs": [
+            "Open Clearcut on desktop Chrome or Edge and upload, drop, or paste your cropped JPG, PNG, or WebP signature image (up to 20 MB and 25 megapixels). 'Standard · original model (98 MB)' is the default; 'Detailed · larger model' swaps in larger weights (up to 473 MB first-run download on supported hardware, with automatic fallback to the 98 MB Standard model) and adds a focused second pass only when the detected subject occupies under 85% of the frame, so it may not run on a tightly cropped signature. Compare both modes against a dark background swatch before you export."
+          ],
+          "bullets": [
+            "Preview against a dark swatch: Temporarily click the dark green (#20372f) background swatch to spot pale paper halos around the ink or leftover white islands trapped inside closed loops of letters like 'a', 'e', 'o', 'd', and 'g'.",
+            "Clean with Erase and Restore: Select 'Erase' with a small brush (5–20 px on the 5–150 px slider) to clear paper specks inside letter loops, and use 'Restore' to bring back faint pen tails or dots. Remember that 'Undo' reverts only the single latest stroke, while 'Reset cutout' restores the initial AI mask.",
+            "Choose background and Trim empty edges: Switch back to the Transparent checkerboard swatch for digital document signing (or White #ffffff if you plan to convert externally to a white-background JPG). For document signatures, checking 'Trim empty edges' is helpful because it crops 'clearcut.png' tightly around whatever the model kept, without extra empty canvas."
+          ],
+          "sourceIds": [
+            "REPO-INPUT-LIMITS",
+            "REPO-MODELS-RUNTIME",
+            "REPO-EDITOR-EXPORT"
+          ]
+        },
+        {
+          "id": "privacy-and-format-boundaries",
+          "heading": "Local signature privacy, supported devices, and unsupported formats",
+          "paragraphs": [
+            "Handwritten signatures are sensitive personal identifiers. In Clearcut, your selected image, its cutout mask, and your brush edits stay in your browser's memory on your device and are never uploaded to Clearcut's backend or stored in a database. Download your PNG before closing or refreshing the tab, as ending the session discards the cutout in the app.",
+            "Desktop Chrome or Edge is recommended. Android Chrome runs the 98 MB Standard model by default and has worked in user testing, though universal phone compatibility is not guaranteed on low-memory devices; iOS/iPadOS and HEIC files are unsupported. Clearcut exports raster PNGs only—it does not trace vector SVG paths, convert to PDF or JPG, resize to 140×60 pixels, set 200 DPI, or compress files to 4–30 KB."
+          ],
+          "sourceIds": [
+            "REPO-EDITOR-EXPORT",
+            "REPO-PLATFORM-LIMITS",
+            "REPO-PRIVACY-NETWORK"
+          ]
+        }
+      ],
+      "faqs": [
+        {
+          "question": "How do I get the cleanest transparent PNG from a signature on paper?",
+          "answer": "Sign with dark black or blue ink on plain unlined white paper in even shadow-free light, and crop closely around the signature so the 512px segmentation model has more pixels to work with. Try Standard and Detailed mode on desktop Chrome or Edge, inspect the result against a dark background swatch, refine with a small Erase or Restore brush, and click Download PNG. Ink-only transparency is not guaranteed: always inspect the exported PNG, and consider a dedicated scanning or threshold tool if you need ink-only cutouts.",
+          "sourceIds": [
+            "REPO-MODELS-RUNTIME",
+            "REPO-EDITOR-EXPORT"
+          ]
+        },
+        {
+          "question": "Why do very thin pen lines or inner letter loops sometimes need manual cleanup?",
+          "answer": "Clearcut uses a 512px general subject-segmentation neural network rather than document contrast thresholding or vector tracing. Hairline ballpoint strokes, ruled paper lines, or uneven shadows can leave faint paper inside closed loops or soften thin pen tips, which you can adjust with the 5–150 px Erase and Restore brushes.",
+          "sourceIds": [
+            "REPO-MODELS-RUNTIME",
+            "REPO-EDITOR-EXPORT"
+          ]
+        },
+        {
+          "question": "Should I upload a transparent signature PNG to UPSC, SSC, IBPS, or NTA exam portals?",
+          "answer": "No. Indian exam portals generally require opaque JPG/JPEG files signed on white paper with notice-specific rules—such as three stacked black-ink signatures in 20–100 KB .jpg for UPSC 2026 CAF notices, 10–20 KB JPEG for SSC and IBPS, or 4–30 KB JPG for NTA—and some IBPS notices reject mobile-camera signature photos. Always follow your official notification.",
+          "sourceIds": [
+            "SRC-UPSC-CAF-2026",
+            "SRC-SSC-CAPF-2026",
+            "SRC-IBPS-PO-XVI-2026",
+            "SRC-IBPS-REGIONAL-SCAN",
+            "SRC-NTA-UGCNET-2025"
+          ]
+        },
+        {
+          "question": "Can Clearcut export my signature as an SVG vector or a 10 to 20 KB JPG?",
+          "answer": "No. Clearcut exports raster PNG files only at your image's pixel dimensions (or tightly cropped to ink pixels when Trim empty edges is checked). It does not vectorize signatures into SVG or export resized, DPI-tagged, or KB-compressed JPG files.",
+          "sourceIds": [
+            "REPO-EDITOR-EXPORT"
+          ]
+        },
+        {
+          "question": "Is my handwritten signature uploaded or stored on Clearcut's servers?",
+          "answer": "No. Your signature photo, cutout mask, and brush edits stay in local browser memory on your device and are never uploaded to Clearcut's servers. Save your PNG before closing the tab, because closing or resetting clears the session.",
+          "sourceIds": [
+            "REPO-PRIVACY-NETWORK"
+          ]
+        }
+      ],
+      "contextualLinks": [
+        {
+          "href": "/#workspace",
+          "anchorText": "Isolate your signature in the free browser editor",
+          "placement": "primary-cta",
+          "purpose": "Open Clearcut's local workspace to create a signature PNG."
+        },
+        {
+          "href": "/transparent-background/",
+          "anchorText": "How PNG alpha transparency displays across image viewers",
+          "placement": "section:transparent-png-vs-exam-portal-jpg",
+          "purpose": "Explain why some preview apps show white or black behind transparent PNGs."
+        },
+        {
+          "href": "/passport-exam-form-white-background/",
+          "anchorText": "Passport Seva and Indian exam portrait white-background rules",
+          "placement": "section:transparent-png-vs-exam-portal-jpg",
+          "purpose": "Cross-link exam candidates who also need candidate photograph rules."
+        },
+        {
+          "href": "/privacy/",
+          "anchorText": "Read Clearcut's local-processing privacy policy",
+          "placement": "section:privacy-and-format-boundaries",
+          "purpose": "Provide verifiable detail on browser-memory handling and network requests."
+        }
+      ],
+      "sourceIds": [
+        "REPO-INPUT-LIMITS",
+        "REPO-MODELS-RUNTIME",
+        "REPO-EDITOR-EXPORT",
+        "REPO-PLATFORM-LIMITS",
+        "REPO-PRIVACY-NETWORK",
+        "SRC-UPSC-CAF-2026",
+        "SRC-UPSC-ESE-2026",
+        "SRC-SSC-CAPF-2026",
+        "SRC-SSC-SCRIBE-OTR",
+        "SRC-IBPS-PO-XVI-2026",
+        "SRC-IBPS-REGIONAL-SCAN",
+        "SRC-NTA-UGCNET-2025"
+      ]
+    }
+  ]
+}
