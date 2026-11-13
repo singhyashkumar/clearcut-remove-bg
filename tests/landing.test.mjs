@@ -113,7 +113,7 @@ test('original artwork is not reused across sections and borrowed media is absen
   assert.equal(new Set(outsideImages).size, outsideImages.length, 'A display image was repeated in another section');
   for (const path of outsideImages) assert.equal(comparison.has(path), false, 'Comparison artwork must not reappear in other sections');
   const paths = [...new Set([...outsideImages, ...comparison])];
-  assert.equal(paths.length, 10, 'Category artwork, hero, feature and two distinct motion posters must be represented');
+  assert.equal(paths.length, 16, 'Category artwork, hero, feature, two motion posters and six tutorial illustrations must be represented');
   const hashes = paths.map(path => createHash('sha256').update(readFileSync(new URL(`../public/${path.replace('%BASE_URL%', '')}`, import.meta.url))).digest('hex'));
   assert.equal(new Set(hashes).size, hashes.length, 'The same image was copied to a different filename');
 });
