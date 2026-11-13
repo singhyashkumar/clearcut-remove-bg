@@ -20,7 +20,8 @@ test('home SEO exposes linked guides, instant reviews and complete honest social
  assert.ok(html.includes('name="twitter:image" content="https://clearcutt.in/artwork/clearcut-social-card.png"'));
  assert.equal(html.includes('chatgpt.site'),false);
  assert.equal(schema['@graph'][0].name,'Clearcut');assert.deepEqual(schema['@graph'][0].alternateName,['Clearcut Remove BG','clearcutt.in']);
- assert.equal(schema['@graph'][2].offers.price,'0');assert.equal(JSON.stringify(schema).includes('aggregateRating'),false);
+ assert.equal(schema['@graph'][2]['@type'],'FAQPage');assert.equal(schema['@graph'][2].mainEntity.length,4);
+ assert.equal(schema['@graph'][3].offers.price,'0');assert.equal(JSON.stringify(schema).includes('aggregateRating'),false);
  assert.ok(html.includes('href="/favicon.ico"'));assert.ok(html.includes('href="/favicon-48.png"'));assert.ok(html.includes('href="/apple-touch-icon.png"'));
 });
 test('every generated page has production social metadata without fake ratings',()=>{

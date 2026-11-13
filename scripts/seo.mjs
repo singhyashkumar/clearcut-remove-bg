@@ -49,6 +49,12 @@ const description = 'Remove image backgrounds for free with Clearcut. Create tra
 export const schema = {'@context':'https://schema.org','@graph':[
  {'@type':'WebSite','@id':`${site}#website`,name:'Clearcut',alternateName:['Clearcut Remove BG','clearcutt.in'],url:site,inLanguage:'en'},
  {'@type':'Organization','@id':`${site}#organization`,name:'Clearcut',alternateName:'Clearcut Remove BG',url:site,logo:{'@type':'ImageObject',url:`${site}favicon-512.png`,width:512,height:512},sameAs:['https://github.com/singhyashkumar/clearcut-remove-bg']},
+ {'@type':'FAQPage','@id':`${site}#faq`,mainEntity:[
+  {'@type':'Question',name:'Is Clearcut free to use?',acceptedAnswer:{'@type':'Answer',text:'The current Clearcut background remover is free to use without a watermark or required account. Processing runs on the user’s device.'}},
+  {'@type':'Question',name:'Are images uploaded or saved by Clearcut?',acceptedAnswer:{'@type':'Answer',text:'Selected photos, masks and edits remain in browser memory and are not uploaded to Clearcut’s payment backend. Model files may be cached by the browser.'}},
+  {'@type':'Question',name:'Why does the first background removal take longer?',acceptedAnswer:{'@type':'Answer',text:'The first run downloads an AI model of approximately 98 MB in Standard mode or up to approximately 473 MB in Detailed mode. Browser caching can help later runs.'}},
+  {'@type':'Question',name:'Which image formats does Clearcut support?',acceptedAnswer:{'@type':'Answer',text:'Clearcut accepts JPG, PNG and WebP images up to 20 MB and 25 megapixels. HEIC and iOS are not supported in the current release.'}}
+ ]},
  {'@type':'WebApplication',name:'Clearcut Remove BG',url:site,applicationCategory:'MultimediaApplication',operatingSystem:'Windows, macOS, Linux',browserRequirements:'Current desktop Chrome or Edge; JavaScript and WebAssembly required',description,offers:{'@type':'Offer',price:'0',priceCurrency:'INR',description:'Free single-image background removal and PNG export'}}
 ]};
 export function enhanceHome(html) {
