@@ -1,0 +1,650 @@
+{
+  "schemaVersion": "1.0.0",
+  "documentType": "release-correction-handoff",
+  "generatedDate": "2026-11-13",
+  "repository": "singhyashkumar/clearcut-remove-bg",
+  "contentBranch": "arena/52c8c4ce-clearcut-remove-bg",
+  "contentCommit": "8954e63f84a17eb92eb6b5169146c29aa7981aaf",
+  "codeBaseCommit": "bef5689b8d79e722f89341ea1b8b9ed6a487c7fc",
+  "targets": {
+    "content": "docs/seo/india-page-content.json",
+    "ledger": "docs/seo/india-page-sources.md"
+  },
+  "scope": "Content-only corrections to the four India pages and their source ledger. No template, CSS, test, or verification-script changes are proposed or made here.",
+  "conventions": {
+    "id": "R1..R12 — matches the review matrix reported on 2026-11-13. Suffixes (R1-a) split one finding across several fields.",
+    "rank": "P1 = block release, P2 = fix before release, P3 = track.",
+    "slug": "Primary page the correction applies to. null for ledger-only corrections that are not page-scoped.",
+    "affectsSlugs": "Every page whose published HTML changes when this correction is applied.",
+    "target": "content | ledger — which file the field path addresses.",
+    "field": "Path into the target. content: pages[i].<path> (e.g. pages[3].lead, pages[1].sections[2].bullets[4], pages[2].faqs[1].answer). ledger: ledger:<SOURCE-ID> for an entry, or ledger:DOCUMENT-LEVEL for a note that sits outside a single entry.",
+    "action": "replace | remove | append | keep.",
+    "claimType": "verified-fact | inference | hypothesis | editorial. Describes the strength of the reason for the change, not of the proposed wording.",
+    "claimDetail": "What exactly is fact, inference, or hypothesis.",
+    "evidence": "Array of {type: repo-path | url, value, note, claimType}.",
+    "verification": "How the item is closed. runtime-test items must not be published as fact until the test is recorded.",
+    "applyWith": "Other correction ids that touch the same string; apply them together to avoid clobbering."
+  },
+  "releaseGate": {
+    "blockReleaseUntilApplied": [
+      "R1",
+      "R2"
+    ],
+    "runtimeTestsRequiredBeforePublishingBehaviourClaims": [
+      "R1",
+      "R2"
+    ],
+    "note": "R1 and R2 change user-facing wording only. They do not change the JSON schema, so they can be applied on top of the cherry-picked content commit without touching shared infrastructure.",
+    "status": "Cautious copy applied; unverified signature-behaviour claims are excluded."
+  },
+  "preserve": [
+    {
+      "id": "P1-warning-first",
+      "slug": "passport-exam-form-white-background",
+      "mustContain": [
+        "clearcutt?[^.]{0,120}never guarantees acceptance"
+      ],
+      "mustPrecede": {
+        "before": "Check first: software editing may be prohibited or replaced by live capture",
+        "after": "How to add a #ffffff white background in Clearcut (only where permitted)"
+      },
+      "note": "The no-guarantee / editing-may-be-prohibited warning must render as the first section, before any Clearcut workflow steps. Never market Clearcut as passport-certified."
+    },
+    {
+      "id": "P2-no-certification-claim",
+      "slug": "*",
+      "mustNotContain": [
+        "certified\\s+by",
+        "government[-\\s]approved",
+        "guaranteed\\s+acceptance",
+        "passport[-\\s]approved"
+      ],
+      "note": "Clearcut is uncertified. Claims of portal or government approval are prohibited on every page."
+    },
+    {
+      "id": "P3-external-format-steps",
+      "slug": "*",
+      "mustContainAny": [
+        "external(ly)?",
+        "separate (image |photo )?(utility|tool|editor)",
+        "kisi alag",
+        "alag .{0,24}(tool|resize)"
+      ],
+      "mustContainAll": [
+        "(JPG|JPEG)",
+        "(DPI|KB)"
+      ],
+      "note": "JPG conversion, cm/pixel cropping, DPI metadata and KB compression must stay explicitly external and unsupported on every page that mentions portal uploads."
+    },
+    {
+      "id": "P4-device-and-format-limits",
+      "slug": "*",
+      "mustContainAll": [
+        "iOS",
+        "HEIC",
+        "Android",
+        "(20 MB|25 megapixels|25 MP)"
+      ],
+      "note": "Practical limits (supported browsers, HEIC/iOS unsupported, Android not guaranteed, 20 MB / 25 MP intake) must survive every copy edit."
+    },
+    {
+      "id": "P5-white-swatch-value",
+      "slug": "passport-exam-form-white-background",
+      "mustContainAll": [
+        "#ffffff",
+        "255, 255, 255"
+      ],
+      "note": "The exact pure-white value must remain stated on the passport and marketplace pages."
+    }
+  ],
+  "corrections": [
+    {
+      "id": "R1-a",
+      "rank": "P1",
+      "slug": "remove-background-from-signature-png",
+      "affectsSlugs": [
+        "remove-background-from-signature-png"
+      ],
+      "target": "content",
+      "field": "pages[3].lead",
+      "action": "replace",
+      "claimType": "hypothesis",
+      "claimDetail": "Verified fact: the exported alpha is the model's subject-segmentation probability and the code contains no ink or darkness threshold, so Clearcut does not perform document thresholding. Hypothesis: what the model actually selects for a photographed signature (the sheet, the ink, or the whole frame) is unknown until a recorded runtime test exists. The proposed wording states only the caution and never asserts which outcome occurs.",
+      "currentText": "Need a clean handwritten signature without grey paper behind it for PDFs, digital letters, or invoices? Clearcut isolates dark ink on plain paper locally in your browser memory and exports a watermark-free transparent or white-background PNG—without uploading your signature to a server. Before editing for an Indian exam form, check whether your portal requires a white-paper JPG instead of a transparent PNG.",
+      "proposedText": "Need a cleaner signature image for PDFs, digital letters, or invoices? Clearcut separates the photographed sheet or signature area from its surroundings locally in your browser memory and exports a watermark-free PNG on a transparent, white, or coloured background—without uploading your signature to a server. How much of the paper is removed depends on your photo: ink-only transparency is not guaranteed, so preview against a dark background swatch, inspect the exported PNG, and refine with the Erase and Restore brushes; for guaranteed ink-only transparency, use a scanner or a dedicated threshold tool. Before editing for an Indian exam form, check whether your portal requires a white-paper JPG instead of a transparent PNG.",
+      "verification": "runtime-test: in desktop Chrome run Standard and Detailed on (a) an A4 sheet with a signature photographed on a contrasting desk and (b) a tight signature crop. For each, record source pixel dimensions, mode, date, model id and the exported PNG alpha histogram (share of fully transparent vs fully opaque pixels). Publish any ink-isolation claim only if the recorded output shows ink-shaped transparency. Until then keep the cautious wording above.",
+      "evidence": [
+        {
+          "type": "repo-path",
+          "value": "vendor/bg0/image.ts:594-617",
+          "note": "alphaCanvas writes the model probability straight to the alpha channel (pixels.data[offset+3] = Math.round(alpha*255)); smoothstep(0.08,0.92,...) in fast mode only. No darkness or ink threshold exists anywhere in vendor/bg0/.",
+          "claimType": "verified-fact"
+        },
+        {
+          "type": "repo-path",
+          "value": "vendor/bg0/models.ts:8-25",
+          "note": "Models are studioludens/birefnet-lite-512 (98,484,532 bytes) and naddy24/birefnet-512-webgpu (473,435,223 bytes) — general salient-object segmentation networks, not document scanners.",
+          "claimType": "verified-fact"
+        },
+        {
+          "type": "repo-path",
+          "value": "docs/seo/india-page-content.json @ 8954e63 — pages[3].faqs[1].answer",
+          "note": "The page already says Clearcut uses a general subject-segmentation network rather than document contrast thresholding; the removed lead sentence contradicted it.",
+          "claimType": "verified-fact"
+        }
+      ],
+      "appliedText": "Need a cleaner signature image for PDFs, letters or invoices? You can try Clearcut's on-device background remover and save a PNG without uploading your signature. It uses a general subject-segmentation model: removing only the paper around thin ink strokes is not guaranteed. Check the result against a dark background, inspect the exported PNG, and use Erase or Restore where needed. A dedicated scanning or threshold tool may be a better fit for ink-only transparency. For exam forms, first check whether editing is allowed and whether the portal requires a white-paper JPG.",
+      "status": "applied"
+    },
+    {
+      "id": "R1-b",
+      "rank": "P1",
+      "slug": "remove-background-from-signature-png",
+      "affectsSlugs": [
+        "remove-background-from-signature-png"
+      ],
+      "target": "content",
+      "field": "pages[3].sections[0].paragraphs[0]",
+      "action": "replace",
+      "claimType": "hypothesis",
+      "claimDetail": "Same basis as R1-a: the removed phrase (ink strokes with alpha opacity) asserts an outcome the model is not proven to produce. The replacement describes what a transparent PNG is without promising ink-only cutouts.",
+      "currentText": "A transparent PNG keeps only your ink strokes with alpha opacity around them, so your signature sits naturally over PDF lines, Word or Google Docs letters, e-invoices, and certificates without covering underlying borders with a white rectangle.",
+      "proposedText": "A transparent PNG keeps the part of the image Clearcut keeps, with transparency around it, so a signature can sit over PDF lines, Word or Google Docs letters, e-invoices, and certificates without covering borders with a white rectangle. Clearcut's models are general subject-segmentation networks rather than document scanners, so the result depends on how your signature is framed and lit: preview against a dark background swatch, inspect the exported PNG, and refine with the Erase and Restore brushes.",
+      "verification": "runtime-test per R1-a.",
+      "evidence": [
+        {
+          "type": "repo-path",
+          "value": "vendor/bg0/image.ts:594-617",
+          "note": "Alpha is the model mask; no ink threshold.",
+          "claimType": "verified-fact"
+        }
+      ],
+      "appliedText": "A PNG can store transparent pixels, allowing a cutout to sit over a document without a rectangular backdrop. Clearcut uses a general subject-segmentation model rather than a document scanner, so it may keep some or all of the paper around a signature. Preview against a dark background, inspect the exported PNG, and refine with Erase and Restore. Ink-only transparency is not guaranteed.",
+      "status": "applied"
+    },
+    {
+      "id": "R1-c",
+      "rank": "P1",
+      "slug": "remove-background-from-signature-png",
+      "affectsSlugs": [
+        "remove-background-from-signature-png"
+      ],
+      "target": "content",
+      "field": "pages[3].faqs[0].answer",
+      "action": "replace",
+      "claimType": "hypothesis",
+      "claimDetail": "Removes 'so the 512px AI model focuses on the strokes', which presumes the model targets ink. Replaced with a framing-neutral reason plus the inspect-the-result caution.",
+      "currentText": "Sign with dark black or blue ink on plain unlined white paper in even shadow-free light, and crop closely around the signature before uploading so the 512px AI model focuses on the strokes. Run Detailed mode on desktop Chrome or Edge, inspect against a dark background swatch, refine loops with a small Erase or Restore brush, check Trim empty edges if desired, and click Download PNG.",
+      "proposedText": "Sign with dark black or blue ink on plain unlined white paper in even shadow-free light, and crop closely around the signature so the 512px segmentation model has more pixels to work with. Try Standard and Detailed mode on desktop Chrome or Edge, inspect the result against a dark background swatch, refine with a small Erase or Restore brush, and click Download PNG. Ink-only transparency is not guaranteed: always inspect the exported PNG, and use a scanner or a dedicated threshold tool if you need guaranteed ink-only cutouts.",
+      "verification": "runtime-test per R1-a.",
+      "applyWith": [
+        "R2"
+      ],
+      "evidence": [
+        {
+          "type": "repo-path",
+          "value": "vendor/bg0/models.ts:8-25",
+          "note": "Both models run a 512px input; neither is a document/ink model.",
+          "claimType": "verified-fact"
+        }
+      ],
+      "appliedText": "Sign with dark black or blue ink on plain unlined white paper in even shadow-free light, and crop closely around the signature so the 512px segmentation model has more pixels to work with. Try Standard and Detailed mode on desktop Chrome or Edge, inspect the result against a dark background swatch, refine with a small Erase or Restore brush, and click Download PNG. Ink-only transparency is not guaranteed: always inspect the exported PNG, and consider a dedicated scanning or threshold tool if you need ink-only cutouts.",
+      "status": "applied"
+    },
+    {
+      "id": "R2",
+      "rank": "P1",
+      "slug": "remove-background-from-signature-png",
+      "affectsSlugs": [
+        "remove-background-from-signature-png"
+      ],
+      "target": "content",
+      "field": "pages[3].sections[2].paragraphs[0]",
+      "action": "replace",
+      "claimType": "inference",
+      "claimDetail": "Verified fact: the refinement pass is skipped whenever the detected subject crop occupies 85% or more of the frame (or is under 32px on either axis). Inference: a tightly cropped signature is likely to fall in that skipped range, because how much of the frame the mask covers depends on what the model selects — so the wording says 'may not run' rather than asserting it.",
+      "currentText": "Open Clearcut on desktop Chrome or Edge and upload, drop, or paste your cropped JPG, PNG, or WebP signature image (up to 20 MB and 25 megapixels). Choose 'Detailed · larger model' (up to 473 MB first-run download on supported hardware, with automatic fallback to the 98 MB Standard model) for finer stroke retention.",
+      "proposedText": "Open Clearcut on desktop Chrome or Edge and upload, drop, or paste your cropped JPG, PNG, or WebP signature image (up to 20 MB and 25 megapixels). 'Standard · original model (98 MB)' is the default; 'Detailed · larger model' swaps in larger weights (up to 473 MB first-run download on supported hardware, with automatic fallback to the 98 MB Standard model) and adds a focused second pass only when the detected subject occupies under 85% of the frame, so it may not run on a tightly cropped signature. Compare both modes against a dark background swatch before you export.",
+      "verification": "runtime-test per R1-a, recording whether the refining stage appeared for each input framing.",
+      "evidence": [
+        {
+          "type": "repo-path",
+          "value": "vendor/bg0/image.ts:404,498-499",
+          "note": "MAX_REFINEMENT_AREA_RATIO = 0.85; findRefinementCrop returns null when cropArea >= imageArea * 0.85 or when the crop is under 32px on either axis.",
+          "claimType": "verified-fact"
+        },
+        {
+          "type": "repo-path",
+          "value": "vendor/bg0/refinement.ts:29-33",
+          "note": "createMaskRefinement returns undefined when no crop is found, so no second pass runs.",
+          "claimType": "verified-fact"
+        },
+        {
+          "type": "repo-path",
+          "value": "vendor/bg0/index.ts:365-383",
+          "note": "The refinement crop is taken from a copy scaled so the longest side is at most 1024px, then mapped back to full output resolution.",
+          "claimType": "verified-fact"
+        }
+      ],
+      "appliedText": "Open Clearcut on desktop Chrome or Edge and upload, drop, or paste your cropped JPG, PNG, or WebP signature image (up to 20 MB and 25 megapixels). 'Standard · original model (98 MB)' is the default; 'Detailed · larger model' swaps in larger weights (up to 473 MB first-run download on supported hardware, with automatic fallback to the 98 MB Standard model) and adds a focused second pass only when the detected subject occupies under 85% of the frame, so it may not run on a tightly cropped signature. Compare both modes against a dark background swatch before you export.",
+      "status": "applied"
+    },
+    {
+      "id": "R3-a",
+      "rank": "P2",
+      "slug": "photo-ka-background-kaise-hataye",
+      "affectsSlugs": [
+        "photo-ka-background-kaise-hataye"
+      ],
+      "target": "content",
+      "field": "pages[0].sections[2].bullets[3]",
+      "action": "replace",
+      "claimType": "editorial",
+      "claimDetail": "The internal alpha cut-off is an implementation detail. Omit it from consumer prose; do not substitute other technical wording.",
+      "currentText": "Trim empty edges: Ise tick karne par Clearcut photo ke charon taraf ki khali jagah kaatkar seedha subject ke kinaron (alpha > 4) tak tight crop kar deta hai—chahe aapne safed ya rangin background hi kyun na chuna ho. Agar aapko subject ke aas-paas margin chahiye toh ise unticked chhod dein.",
+      "proposedText": "Trim empty edges: Ise tick karne par Clearcut photo ke charon taraf ki khali jagah kaatkar seedha subject ke kinaron tak tight crop kar deta hai—chahe aapne safed ya rangin background hi kyun na chuna ho. Agar aapko subject ke aas-paas margin chahiye toh ise unticked chhod dein.",
+      "appliedText": "Trim empty edges: Ise tick karne par Clearcut photo ke charon taraf ki khali jagah kaatkar seedha subject ke kinaron tak tight crop kar deta hai—chahe aapne safed ya rangin background hi kyun na chuna ho. Agar aapko subject ke aas-paas margin chahiye toh ise unticked chhod dein.",
+      "status": "applied"
+    },
+    {
+      "id": "R3-b",
+      "rank": "P2",
+      "slug": "passport-exam-form-white-background",
+      "affectsSlugs": [
+        "passport-exam-form-white-background"
+      ],
+      "target": "content",
+      "field": "pages[1].sections[2].bullets[4]",
+      "action": "replace",
+      "claimType": "editorial",
+      "claimDetail": "Omit the internal alpha constant; keep the practical consequence (zero margin, even on #ffffff).",
+      "currentText": "5. Leave 'Trim empty edges' UNCHECKED, then click 'Download PNG'. Checking 'Trim empty edges' crops tightly to subject pixels (alpha > 4) with zero head or shoulder margin—even when White (#ffffff) is selected.",
+      "proposedText": "5. Leave 'Trim empty edges' UNCHECKED, then click 'Download PNG'. Checking 'Trim empty edges' crops tightly to the subject's outer edge with zero head or shoulder margin—even when White (#ffffff) is selected.",
+      "appliedText": "5. Leave 'Trim empty edges' UNCHECKED, then click 'Download PNG'. Checking 'Trim empty edges' crops tightly to the subject's outer edge with zero head or shoulder margin—even when White (#ffffff) is selected.",
+      "status": "applied"
+    },
+    {
+      "id": "R3-c",
+      "rank": "P2",
+      "slug": "passport-exam-form-white-background",
+      "affectsSlugs": [
+        "passport-exam-form-white-background"
+      ],
+      "target": "content",
+      "field": "pages[1].faqs[3].answer",
+      "action": "replace",
+      "claimType": "editorial",
+      "claimDetail": "Omit the internal alpha constant.",
+      "currentText": "No. Keep Trim empty edges unchecked. When checked, Clearcut crops tightly to the detected person's outline (alpha > 4) with zero space above the head or beside the shoulders—even on a #ffffff white background—which ruins standard ID framing.",
+      "proposedText": "No. Keep Trim empty edges unchecked. When checked, Clearcut crops tightly to the detected person's outline with zero space above the head or beside the shoulders—even on a #ffffff white background—which ruins standard ID framing.",
+      "appliedText": "No. Keep Trim empty edges unchecked. When checked, Clearcut crops tightly to the detected person's outline with zero space above the head or beside the shoulders—even on a #ffffff white background—which ruins standard ID framing.",
+      "status": "applied"
+    },
+    {
+      "id": "R3-d",
+      "rank": "P2",
+      "slug": "amazon-flipkart-meesho-product-white-background",
+      "affectsSlugs": [
+        "amazon-flipkart-meesho-product-white-background"
+      ],
+      "target": "content",
+      "field": "pages[2].sections[2].paragraphs[0]",
+      "action": "replace",
+      "claimType": "editorial",
+      "claimDetail": "Omit the internal alpha constant.",
+      "currentText": "Understanding how Clearcut exports canvases prevents accidental catalog rejections. When 'Trim empty edges' is left unchecked, Clearcut preserves your original photo's pixel width and height. When 'Trim empty edges' IS checked, Clearcut crops tightly to the outer pixels of the product mask (alpha > 4) with zero white margin—even when the White (#ffffff) swatch is active.",
+      "proposedText": "Understanding how Clearcut exports canvases prevents accidental catalog rejections. When 'Trim empty edges' is left unchecked, Clearcut preserves your original photo's pixel width and height. When 'Trim empty edges' IS checked, Clearcut crops tightly to the outer edge of the detected product with zero white margin—even when the White (#ffffff) swatch is active.",
+      "appliedText": "Understanding how Clearcut exports canvases prevents accidental catalog rejections. When 'Trim empty edges' is left unchecked, Clearcut preserves your original photo's pixel width and height. When 'Trim empty edges' IS checked, Clearcut crops tightly to the outer edge of the detected product with zero white margin—even when the White (#ffffff) swatch is active.",
+      "status": "applied"
+    },
+    {
+      "id": "R3-e",
+      "rank": "P2",
+      "slug": "amazon-flipkart-meesho-product-white-background",
+      "affectsSlugs": [
+        "amazon-flipkart-meesho-product-white-background"
+      ],
+      "target": "content",
+      "field": "pages[2].faqs[4].answer",
+      "action": "replace",
+      "claimType": "editorial",
+      "claimDetail": "Omit the internal alpha constant.",
+      "currentText": "Checking Trim empty edges crops the exported PNG tightly to the detected product's outer pixels (alpha > 4) with zero white border, even when White (#ffffff) is selected. Leave Trim empty edges unchecked if your source photo already has the margin you want, or add exact canvas padding in a separate editor.",
+      "proposedText": "Checking Trim empty edges crops the exported PNG tightly to the detected product's outer edge with zero white border, even when White (#ffffff) is selected. Leave Trim empty edges unchecked if your source photo already has the margin you want, or add exact canvas padding in a separate editor.",
+      "appliedText": "Checking Trim empty edges crops the exported PNG tightly to the detected product's outer edge with zero white border, even when White (#ffffff) is selected. Leave Trim empty edges unchecked if your source photo already has the margin you want, or add exact canvas padding in a separate editor.",
+      "status": "applied"
+    },
+    {
+      "id": "R3-f",
+      "rank": "P2",
+      "slug": "remove-background-from-signature-png",
+      "affectsSlugs": [
+        "remove-background-from-signature-png"
+      ],
+      "target": "content",
+      "field": "pages[3].sections[2].bullets[2]",
+      "action": "replace",
+      "claimType": "editorial",
+      "claimDetail": "Removes the alpha constant and the unsupported claim that the crop lands on ink bounds; 'whatever the model kept' is outcome-neutral and consistent with R1.",
+      "currentText": "Choose background and Trim empty edges: Switch back to the Transparent checkerboard swatch for digital document signing (or White #ffffff if you plan to convert externally to a white-background JPG). For transparent document signatures, checking 'Trim empty edges' is helpful because it crops 'clearcut.png' tightly to the ink bounds (alpha > 4) without extra empty canvas.",
+      "proposedText": "Choose background and Trim empty edges: Switch back to the Transparent checkerboard swatch for digital document signing (or White #ffffff if you plan to convert externally to a white-background JPG). For document signatures, checking 'Trim empty edges' is helpful because it crops 'clearcut.png' tightly around whatever the model kept, without extra empty canvas.",
+      "appliedText": "Choose background and Trim empty edges: Switch back to the Transparent checkerboard swatch for digital document signing (or White #ffffff if you plan to convert externally to a white-background JPG). For document signatures, checking 'Trim empty edges' is helpful because it crops 'clearcut.png' tightly around whatever the model kept, without extra empty canvas.",
+      "status": "applied"
+    },
+    {
+      "id": "R4-a",
+      "rank": "P2",
+      "slug": "photo-ka-background-kaise-hataye",
+      "affectsSlugs": [
+        "photo-ka-background-kaise-hataye"
+      ],
+      "target": "content",
+      "field": "pages[0].sections[1].paragraphs[0]",
+      "action": "replace",
+      "claimType": "editorial",
+      "claimDetail": "Drop the forensic-memory clause from consumer prose. It is replaced with a practical instruction, not with other operating-system detail.",
+      "currentText": "Clearcut aapki photo ko kisi cloud image server ya payment backend par bhejkar edit nahi karta. Aapki photo, AI mask aur brush edits sirf aapke browser ki memory (RAM) mein rehte hain. Jab aap 'New photo ↗' dabate hain ya browser tab band karte hain, toh editing session khatam ho jata hai (halaanki tab band karna forensic RAM erasure ki guarantee nahi hota).",
+      "proposedText": "Clearcut aapki photo ko kisi cloud image server ya payment backend par bhejkar edit nahi karta. Aapki photo, AI mask aur brush edits sirf aapke browser ki memory mein rehte hain. Jab aap 'New photo ↗' dabate hain ya browser tab band karte hain, toh editing session khatam ho jata hai—isliye PNG download karne se pehle tab na band karein.",
+      "appliedText": "Clearcut aapki photo ko kisi cloud image server ya payment backend par bhejkar edit nahi karta. Aapki photo, AI mask aur brush edits sirf aapke browser ki memory mein rehte hain. Jab aap 'New photo ↗' dabate hain ya browser tab band karte hain, toh editing session khatam ho jata hai—isliye PNG download karne se pehle tab na band karein.",
+      "status": "applied"
+    },
+    {
+      "id": "R4-b",
+      "rank": "P2",
+      "slug": "remove-background-from-signature-png",
+      "affectsSlugs": [
+        "remove-background-from-signature-png"
+      ],
+      "target": "content",
+      "field": "pages[3].sections[3].paragraphs[0]",
+      "action": "replace",
+      "claimType": "editorial",
+      "claimDetail": "Drop the forensic-memory clause and the word 'alpha' from consumer prose. See R12-b for the mask wording inside the same sentence.",
+      "currentText": "Handwritten signatures are sensitive personal identifiers. In Clearcut, your selected image, alpha mask, and brush edits stay in your browser's memory on your device and are never uploaded to Clearcut's backend or stored in a database. Download your PNG before closing or refreshing the tab, as ending the session discards the cutout in the app (closing a tab is not a forensic RAM-erasure guarantee).",
+      "proposedText": "Handwritten signatures are sensitive personal identifiers. In Clearcut, your selected image, its cutout mask, and your brush edits stay in your browser's memory on your device and are never uploaded to Clearcut's backend or stored in a database. Download your PNG before closing or refreshing the tab, as ending the session discards the cutout in the app.",
+      "applyWith": [
+        "R12-b"
+      ],
+      "appliedText": "Handwritten signatures are sensitive personal identifiers. In Clearcut, your selected image, its cutout mask, and your brush edits stay in your browser's memory on your device and are never uploaded to Clearcut's backend or stored in a database. Download your PNG before closing or refreshing the tab, as ending the session discards the cutout in the app.",
+      "status": "applied"
+    },
+    {
+      "id": "R5",
+      "rank": "P2",
+      "slug": null,
+      "affectsSlugs": [
+        "amazon-flipkart-meesho-product-white-background"
+      ],
+      "target": "ledger",
+      "field": "ledger:SRC-AMAZON-IN-IMAGES",
+      "action": "append",
+      "claimType": "verified-fact",
+      "claimDetail": "Re-fetched on 2026-11-13: the Seller Central Help page G1881 that the cited forum thread references is behind the Amazon seller sign-in wall, so it is not publicly verifiable. The two Amazon-moderated forum threads on sellercentral.amazon.in are public and remain the citable source; the numbers themselves are unchanged.",
+      "proposedText": "Citation note (2026-11-13): the authoritative Seller Central Help page (G1881, https://sellercentral.amazon.in/help/hub/reference/G1881) redirects to the Amazon seller sign-in wall and could not be verified publicly. The figures above therefore rest on the public Amazon-moderated Seller Forums threads listed here. Do not describe them as quoted from Amazon's official help documentation. Amazon India sellers should confirm the current wording inside their own Seller Central account.",
+      "evidence": [
+        {
+          "type": "url",
+          "value": "https://sellercentral.amazon.in/help/hub/reference/G1881",
+          "note": "Re-fetched 2026-11-13; resolves to the seller sign-in page, not to public help content.",
+          "claimType": "verified-fact"
+        },
+        {
+          "type": "url",
+          "value": "https://sellercentral.amazon.in/seller-forums/discussions/t/41489053-40d6-493e-b5c1-dd8611082354",
+          "note": "Public Amazon-moderated thread (05.03.2025) citing Help G1881; source of the RGB 255,255,255 / 85% / 500-10,000 px figures.",
+          "claimType": "verified-fact"
+        }
+      ],
+      "appliedText": "Citation note (2026-11-13): the authoritative Seller Central Help page (G1881, https://sellercentral.amazon.in/help/hub/reference/G1881) redirects to the Amazon seller sign-in wall and could not be verified publicly. The figures above therefore rest on the public Amazon-moderated Seller Forums threads listed here. Do not describe them as quoted from Amazon's official help documentation. Amazon India sellers should confirm the current wording inside their own Seller Central account.",
+      "status": "applied"
+    },
+    {
+      "id": "R6",
+      "rank": "P2",
+      "slug": "amazon-flipkart-meesho-product-white-background",
+      "affectsSlugs": [
+        "amazon-flipkart-meesho-product-white-background"
+      ],
+      "target": "content",
+      "field": "pages[2].faqs[1].answer",
+      "action": "replace",
+      "claimType": "verified-fact",
+      "claimDetail": "The cited Flipkart and Myntra sources do not state JPEG or aspect-ratio upload requirements, so the specific assertion is unsupported. Replaced with the weaker, sourced statement that uploaders may impose their own rules.",
+      "currentText": "Amazon India accepts PNG alongside JPEG (preferred), TIFF, and non-animated GIF. However, Meesho public category guides specify JPEG format for catalog images, and Flipkart or Myntra category uploaders often require JPEG and fixed aspect ratios. Convert Clearcut's PNG export to JPEG externally whenever your seller portal requires it.",
+      "proposedText": "Amazon India accepts PNG alongside JPEG (preferred), TIFF, and non-animated GIF. Meesho's public category guides specify JPEG format for catalog images, and Flipkart or Myntra uploaders may impose their own format or aspect-ratio rules. Check the uploader in your seller panel, and convert Clearcut's PNG export to JPEG externally whenever your portal requires it.",
+      "evidence": [
+        {
+          "type": "url",
+          "value": "https://seller.flipkart.com/seller-blog/how-to-list-products-on-flipkart",
+          "note": "States white-background, high-resolution, multi-angle images; does not state JPEG or fixed aspect ratios.",
+          "claimType": "verified-fact"
+        },
+        {
+          "type": "url",
+          "value": "https://seller-university.myntra.com/listing-and-cataloging/",
+          "note": "Category cataloging training page; no public statement of a JPEG or aspect-ratio requirement.",
+          "claimType": "verified-fact"
+        }
+      ],
+      "appliedText": "Amazon India accepts PNG alongside JPEG (preferred), TIFF, and non-animated GIF. Meesho's public category guides specify JPEG format for catalog images, and Flipkart or Myntra uploaders may impose their own format or aspect-ratio rules. Check the uploader in your seller panel, and convert Clearcut's PNG export to JPEG externally whenever your portal requires it.",
+      "status": "applied"
+    },
+    {
+      "id": "R7-a",
+      "rank": "P2",
+      "slug": "amazon-flipkart-meesho-product-white-background",
+      "affectsSlugs": [
+        "amazon-flipkart-meesho-product-white-background"
+      ],
+      "target": "content",
+      "field": "pages[2].sections[0].bullets[3]",
+      "action": "replace",
+      "claimType": "editorial",
+      "claimDetail": "Drop the mutable document count (16 PDFs) and soften 'Many apparel verticals require' to 'Some apparel verticals specify', which is what the category sheets support.",
+      "currentText": "Myntra (DIY / MAS Cataloging): Myntra Seller University provides 16 category-specific image guideline PDFs plus model styling and sizing rules. Many apparel verticals require studio model shoots on neutral/grey backdrops rather than isolated #ffffff cutouts.",
+      "proposedText": "Myntra (DIY / MAS Cataloging): Myntra Seller University publishes category-specific image guidelines plus model styling and sizing rules, so open the sheet for your vertical inside the portal. Some apparel verticals specify studio model photography rather than isolated #ffffff cutouts.",
+      "evidence": [
+        {
+          "type": "url",
+          "value": "https://seller-university.myntra.com/apparels/",
+          "note": "Category guidelines are published as separate sheets whose number can change without notice.",
+          "claimType": "verified-fact"
+        }
+      ],
+      "appliedText": "Myntra (DIY / MAS Cataloging): Myntra Seller University publishes category-specific image guidelines plus model styling and sizing rules, so open the sheet for your vertical inside the portal. Some apparel verticals specify studio model photography rather than isolated #ffffff cutouts.",
+      "status": "applied"
+    },
+    {
+      "id": "R7-b",
+      "rank": "P2",
+      "slug": "amazon-flipkart-meesho-product-white-background",
+      "affectsSlugs": [
+        "amazon-flipkart-meesho-product-white-background"
+      ],
+      "target": "content",
+      "field": "pages[2].faqs[2].answer",
+      "action": "replace",
+      "claimType": "editorial",
+      "claimDetail": "Drop the mutable document count from the FAQ answer too.",
+      "currentText": "No. Rules depend on the platform and product vertical. While white backgrounds are standard for many hard-goods listings, Flipkart's fashion guide permits neutral white, grey, or beige walls, and Myntra enforces 16 category-specific cataloging guidelines where apparel often requires studio model photography rather than pure-white cutouts.",
+      "proposedText": "No. Rules depend on the platform and product vertical. While white backgrounds are standard for many hard-goods listings, Flipkart's fashion guide permits neutral white, grey, or beige walls, and Myntra publishes category-specific cataloging guidelines where apparel often specifies studio model photography rather than pure-white cutouts.",
+      "appliedText": "No. Rules depend on the platform and product vertical. While white backgrounds are standard for many hard-goods listings, Flipkart's fashion guide permits neutral white, grey, or beige walls, and Myntra publishes category-specific cataloging guidelines where apparel often specifies studio model photography rather than pure-white cutouts.",
+      "status": "applied"
+    },
+    {
+      "id": "R8",
+      "rank": "P3",
+      "slug": null,
+      "affectsSlugs": [
+        "passport-exam-form-white-background",
+        "remove-background-from-signature-png"
+      ],
+      "target": "ledger",
+      "field": "ledger:SRC-NTA-UGCNET-2025",
+      "action": "append",
+      "claimType": "editorial",
+      "claimDetail": "The dated cycle bulletin stays as the cited example. No claim is made that the figures are stable across cycles, and no third-party corroboration is used; applicants are directed to their own notification.",
+      "proposedText": "Applicability note: the photograph figures (10 KB to 200 KB, 80% face including ears on a white background) and signature figures (4 KB to 30 KB, running hand, not capital letters) above are quoted from the dated cycle bulletin listed here, together with the NTA public notice of 15.07.2020. NTA publishes a bulletin for each session, so these are illustrative: applicants must follow the notification and information bulletin for their own exam cycle. Do not present these figures as permanent NTA rules.",
+      "evidence": [
+        {
+          "type": "url",
+          "value": "https://ugcnet.nta.ac.in/images/information-bulletin-for-ugc-net-june-2025-16042025.pdf",
+          "note": "Dated-cycle primary source retained as an example (published 16.04.2025).",
+          "claimType": "verified-fact"
+        },
+        {
+          "type": "url",
+          "value": "https://nta.ac.in/Download/Notice/Notice_20200716081822.pdf",
+          "note": "NTA photograph/signature specification notice dated 15.07.2020.",
+          "claimType": "verified-fact"
+        }
+      ],
+      "appliedText": "Applicability note: the photograph figures (10 KB to 200 KB, 80% face including ears on a white background) and signature figures (4 KB to 30 KB, running hand, not capital letters) above are quoted from the dated cycle bulletin listed here, together with the NTA public notice of 15.07.2020. NTA publishes a bulletin for each session, so these are illustrative: applicants must follow the notification and information bulletin for their own exam cycle. Do not present these figures as permanent NTA rules.",
+      "status": "applied"
+    },
+    {
+      "id": "R9",
+      "rank": "P3",
+      "slug": null,
+      "affectsSlugs": [
+        "passport-exam-form-white-background"
+      ],
+      "target": "ledger",
+      "field": "ledger:SRC-PASSPORT-BOOKLET",
+      "action": "replace",
+      "claimType": "verified-fact",
+      "claimDetail": "Verified fact: both passportindia.gov.in URLs served the V3.0 booklet on 2026-11-13, and its PSK/POPSK and DPC/SPC/CSC statements read as quoted. Not established: that V3.0 is the newest published version, so the entry says 'remains available' and not 'latest'.",
+      "currentText": "**Publication / Applicability Date:** Published August 2020 (Version 3.0); active official instruction booklet on `passportindia.gov.in`, verified live `2026-11-13` (corroborated on `https://www.passportindia.gov.in/psp/FaqServicesAvailable`).",
+      "proposedText": "**Publication / Applicability Date:** Version 3.0, published August 2020. Both `https://www.passportindia.gov.in/AppOnlineProject/pdf/ApplicationformInstructionBooklet-V3.0.pdf` and `https://portal5.passportindia.gov.in/Online/pdf/ApplicationformInstructionBooklet-V3.0.pdf` served this V3.0 booklet on `2026-11-13`, so the booklet remains available; whether V3.0 is the newest published version was not established. Applicants should confirm the current instruction booklet and the DPC/SPC/CSC pasted-photo rule on the Passport Seva site before relying on it.",
+      "evidence": [
+        {
+          "type": "url",
+          "value": "https://portal5.passportindia.gov.in/Online/pdf/ApplicationformInstructionBooklet-V3.0.pdf",
+          "note": "Serves V3.0 with 'Photograph is NOT REQUIRED for applications submitted at Passport Seva Kendra (PSK), Post Office Passport Seva Kendra (POPSK)' and the 4.5 cm x 3.5 cm plain-white-background rule for DPC/SPC/CSC.",
+          "claimType": "verified-fact"
+        }
+      ],
+      "appliedText": "**Publication / Applicability Date:** Version 3.0, published August 2020. Both `https://www.passportindia.gov.in/AppOnlineProject/pdf/ApplicationformInstructionBooklet-V3.0.pdf` and `https://portal5.passportindia.gov.in/Online/pdf/ApplicationformInstructionBooklet-V3.0.pdf` served this V3.0 booklet on `2026-11-13`, so the booklet remains available; whether V3.0 is the newest published version was not established. Applicants should confirm the current instruction booklet and the DPC/SPC/CSC pasted-photo rule on the Passport Seva site before relying on it.",
+      "status": "applied"
+    },
+    {
+      "id": "R9-b",
+      "rank": "P3",
+      "slug": null,
+      "affectsSlugs": [],
+      "target": "ledger",
+      "field": "ledger:SRC-PASSPORT-BOOKLET",
+      "action": "append",
+      "claimType": "verified-fact",
+      "claimDetail": "A second passportindia.gov.in host serves the same V3.0 booklet; recording it stops a single-host outage from making the citation look dead.",
+      "proposedText": "- **Mirror URL:** `https://portal5.passportindia.gov.in/Online/pdf/ApplicationformInstructionBooklet-V3.0.pdf` (same V3.0 content, served on `2026-11-13`).",
+      "evidence": [
+        {
+          "type": "url",
+          "value": "https://portal5.passportindia.gov.in/Online/pdf/ApplicationformInstructionBooklet-V3.0.pdf",
+          "note": "Serves the same V3.0 instruction booklet text.",
+          "claimType": "verified-fact"
+        }
+      ],
+      "appliedText": "- **Mirror URL:** `https://portal5.passportindia.gov.in/Online/pdf/ApplicationformInstructionBooklet-V3.0.pdf` (same V3.0 content, served on `2026-11-13`).",
+      "status": "applied"
+    },
+    {
+      "id": "R10",
+      "rank": "P3",
+      "slug": null,
+      "affectsSlugs": [
+        "passport-exam-form-white-background",
+        "remove-background-from-signature-png"
+      ],
+      "target": "ledger",
+      "field": "ledger:DOCUMENT-LEVEL",
+      "action": "append",
+      "claimType": "editorial",
+      "claimDetail": "Several cited exam notices belong to application windows that have already closed; they are kept as dated examples of how rules vary, and readers are told to follow their own notification.",
+      "proposedText": "Illustrative-cycle note: SRC-SSC-CAPF-2026 (application window 10.09.2026-30.09.2026), SRC-UPSC-CAF-2026 (notices dated 11.02.2026 and 20.02.2026), SRC-UPSC-ESE-2026 (26.09.2025) and SRC-IBPS-REGIONAL-SCAN (September 2025) are cited to show that photo and signature rules differ by commission, workflow and even notice. Each of those cycles may be closed by the time this page is read; applicants must read the notification for their own exam cycle.",
+      "appliedText": "Illustrative-cycle note: SRC-SSC-CAPF-2026 (application window 10.09.2026-30.09.2026), SRC-UPSC-CAF-2026 (notices dated 11.02.2026 and 20.02.2026), SRC-UPSC-ESE-2026 (26.09.2025) and SRC-IBPS-REGIONAL-SCAN (September 2025) are cited to show that photo and signature rules differ by commission, workflow and even notice. Each of those cycles may be closed by the time this page is read; applicants must read the notification for their own exam cycle.",
+      "status": "applied"
+    },
+    {
+      "id": "R11",
+      "rank": "P2",
+      "slug": "amazon-flipkart-meesho-product-white-background",
+      "affectsSlugs": [
+        "amazon-flipkart-meesho-product-white-background"
+      ],
+      "target": "content",
+      "field": "pages[2].sections[0].bullets[2]",
+      "action": "replace",
+      "claimType": "verified-fact",
+      "claimDetail": "The '1 to 9 products per catalog' figure comes from a marketing how-it-works page dated 2022-04-21 that returned HTTP 500 on both re-fetch attempts on 2026-11-13. It is dropped rather than re-sourced. The JPEG / no-watermark rule from the current category supplier pages is retained.",
+      "currentText": "Meesho Supplier Panel: Meesho catalogs group 1 to 9 products from the same category. Public supplier category guides instruct sellers to upload a clear front image in JPEG format without logos, watermarks, props, or partial views, and point to detailed per-category image rules inside the Meesho Supplier Panel.",
+      "proposedText": "Meesho Supplier Panel: Public Meesho supplier category guides instruct sellers to upload a clear front image in JPEG format without logos, watermarks, props, or partial views, and point to detailed per-category image rules inside the Meesho Supplier Panel.",
+      "evidence": [
+        {
+          "type": "url",
+          "value": "https://supplier.meesho.com/how-it-works",
+          "note": "Re-fetched twice on 2026-11-13: HTTP 500. Source page is dated 2022-04-21.",
+          "claimType": "verified-fact"
+        },
+        {
+          "type": "url",
+          "value": "https://supplier.meesho.com/sell-online/accessories",
+          "note": "Active supplier category page stating the clear front image, JPEG, no logo or watermark rule.",
+          "claimType": "verified-fact"
+        }
+      ],
+      "appliedText": "Meesho Supplier Panel: Public Meesho supplier category guides instruct sellers to upload a clear front image in JPEG format without logos, watermarks, props, or partial views, and point to detailed per-category image rules inside the Meesho Supplier Panel.",
+      "status": "applied"
+    },
+    {
+      "id": "R12-a",
+      "rank": "P3",
+      "slug": "passport-exam-form-white-background",
+      "affectsSlugs": [
+        "passport-exam-form-white-background"
+      ],
+      "target": "content",
+      "field": "pages[1].sections[3].paragraphs[0]",
+      "action": "replace",
+      "claimType": "editorial",
+      "claimDetail": "'uncompressed-alpha raster PNG' is implementation vocabulary; the practical fact is full-resolution PNG export. The rest of the sentence, including the external JPG/DPI/KB limits, is unchanged.",
+      "currentText": "Clearcut always downloads an uncompressed-alpha raster PNG ('clearcut.png') at your source image's pixel dimensions.",
+      "proposedText": "Clearcut always downloads a full-resolution PNG ('clearcut.png') at your source image's pixel dimensions.",
+      "appliedText": "Clearcut always downloads a full-resolution PNG ('clearcut.png') at your source image's pixel dimensions. It does not export .jpg/.jpeg files, crop to fixed ratios such as 3.5 cm × 4.5 cm, 630×810 px, or 200×230 px, write DPI metadata, or compress files to portal windows like 20–50 KB or 10–200 KB.",
+      "status": "applied"
+    },
+    {
+      "id": "R12-b",
+      "rank": "P3",
+      "slug": "remove-background-from-signature-png",
+      "affectsSlugs": [
+        "remove-background-from-signature-png"
+      ],
+      "target": "content",
+      "field": "pages[3].sections[3].paragraphs[0]",
+      "action": "keep",
+      "claimType": "editorial",
+      "claimDetail": "The 'alpha mask' wording is removed by R4-b, which replaces the whole paragraph. This entry exists so the two are not applied as conflicting edits.",
+      "currentText": "In Clearcut, your selected image, alpha mask, and brush edits stay in your browser's memory",
+      "proposedText": "Superseded by R4-b: the replacement paragraph reads 'your selected image, its cutout mask, and your brush edits'.",
+      "applyWith": [
+        "R4-b"
+      ]
+    },
+    {
+      "id": "R12-c",
+      "rank": "P3",
+      "slug": "remove-background-from-signature-png",
+      "affectsSlugs": [],
+      "target": "content",
+      "field": "pages[3].cannibalizationBoundary.versusExistingGuides",
+      "action": "keep",
+      "claimType": "editorial",
+      "claimDetail": "The phrase 'alpha-channel/logo concepts' appears in an internal boundary note that is not published as page copy. No change required; recorded so reviewers do not flag it as a missed correction.",
+      "currentText": "Distinct from general alpha-channel/logo concepts on /transparent-background/",
+      "proposedText": "No change — internal field, not rendered copy."
+    }
+  ],
+  "appliedDate": "2026-11-13"
+}

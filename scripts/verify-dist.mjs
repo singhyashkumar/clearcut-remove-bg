@@ -25,10 +25,29 @@ for (const icon of ['favicon.ico', 'favicon-48.png', 'favicon-512.png', 'favicon
 }
 
 const urls = [...sitemap.matchAll(/<loc>(https:\/\/clearcutt\.in\/[^<]*)<\/loc>/g)].map(match => new URL(match[1]));
-assert.equal(urls.length, 10, 'Sitemap must include the homepage and nine generated pages');
+const { pages } = await import(new URL('../scripts/seo.mjs', import.meta.url).pathname);
+assert.equal(urls.length, pages.length + 1, `Sitemap must include the homepage and every generated page (${pages.length + 1} URLs)`);
 for (const url of urls) {
   const relative = url.pathname === '/' ? 'index.html' : `${url.pathname.slice(1)}index.html`;
   assert.ok(existsSync(resolve(root, relative)), `Missing generated page: ${relative}`);
+  if (url.pathname !== '/') {
+    const pageHtml = readFileSync(resolve(root, relative), 'utf8');
+    assert.match(pageHtml, /<link rel="canonical" href="https:\/\/clearcutt\.in\/[^"]*\/">/, `Missing canonical for ${relative}`);
+    assert.match(pageHtml, /Content-Security-Policy" content="[^"]*img-src 'self' data:[^"]*"/, `Static page CSP must allow self-hosted images (img-src 'self' data:) for ${relative}`);
+    const imageAttrs = [...pageHtml.matchAll(/<img\s([^>]*)>/g)].map(match => match[1]);
+    for (const attrs of imageAttrs) {
+      const src = attrs.match(/\ssrc="([^"]*)"/);
+      const srcset = attrs.match(/\ssrcset="([^"]*)"/);
+      const candidates = [];
+      if (src) candidates.push(src[1]);
+      if (srcset) for (const descriptor of srcset[1].split(',')) candidates.push(descriptor.trim().split(/\s+/)[0]);
+      for (const candidate of candidates) {
+        if (/^(https?:|data:|blob:|\/\/)/i.test(candidate)) continue;
+        const resolved = new URL(candidate, url).pathname;
+        assert.ok(existsSync(resolve(root, resolved.slice(1))), `Missing local image asset for ${relative}: ${candidate} (expected dist${resolved})`);
+      }
+    }
+  }
 }
 
 const assetPaths = [...html.matchAll(/<(?:script|link)[^>]+(?:src|href)="(\/assets\/[^"]+)"/g)].map(match => match[1]);

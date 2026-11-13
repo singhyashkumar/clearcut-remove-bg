@@ -31,8 +31,16 @@ for (const asset of assets) await request(asset);
 
 const sitemap = await (await request(new URL('/sitemap.xml', site))).text();
 const urls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match => new URL(match[1]));
-assert.equal(urls.length, 10, 'Live sitemap must include ten pages');
-for (const url of urls) await request(url);
+const { pages } = await import(new URL('../scripts/seo.mjs', import.meta.url).pathname);
+const expected = [new URL('/', site), ...pages.map(p => new URL(`/${p.slug}/`, site))];
+assert.equal(urls.length, expected.length, `Live sitemap must include the homepage and every generated page (${expected.length} URLs)`);
+assert.deepEqual(urls.map(url => url.href).sort(), expected.map(url => url.href).sort(), 'Live sitemap URLs must exactly match the generated page list');
+for (const url of urls) {
+  const page = await (await request(url)).text();
+  const canonical = page.match(/<link rel="canonical" href="([^"]+)">/);
+  assert.ok(canonical, `Missing canonical link on ${url.href}`);
+  assert.equal(new URL(canonical[1], url).href, url.href, `Canonical must match the fetched URL for ${url.href}`);
+}
 await request(new URL('/robots.txt', site));
 await request(new URL('/artwork/clearcut-social-card.png', site));
 console.log(`Live SEO smoke test passed for ${urls.length} pages and ${assets.length} hashed assets.`);
