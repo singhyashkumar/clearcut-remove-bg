@@ -2,6 +2,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 const site = 'https://clearcutt.in/';
 const socialImage = `${site}artwork/clearcut-social-card.png`;
+const faviconLinks = '<link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="icon" href="/favicon-48.png" type="image/png" sizes="48x48"><link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">';
 const escape = value => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('"', '&quot;');
 export const pages = [
  ['how-to-remove-background','How to Remove an Image Background for Free','Learn to remove backgrounds, refine edges and export transparent PNGs with Clearcut.',[
@@ -46,7 +47,8 @@ export const pages = [
 const links = () => pages.map(p => `<li><a href="${site}${p.slug}/">${escape(p.title)}</a></li>`).join('');
 const description = 'Remove image backgrounds for free with Clearcut. Create transparent PNGs, add white or colored backgrounds, and refine cutouts privately on your device.';
 export const schema = {'@context':'https://schema.org','@graph':[
- {'@type':'WebSite','@id':`${site}#website`,name:'Clearcut Remove BG',alternateName:'Clearcut',url:site,inLanguage:'en'},
+ {'@type':'WebSite','@id':`${site}#website`,name:'Clearcut',alternateName:['Clearcut Remove BG','clearcutt.in'],url:site,inLanguage:'en'},
+ {'@type':'Organization','@id':`${site}#organization`,name:'Clearcut',alternateName:'Clearcut Remove BG',url:site,logo:{'@type':'ImageObject',url:`${site}favicon-512.png`,width:512,height:512},sameAs:['https://github.com/singhyashkumar/clearcut-remove-bg']},
  {'@type':'WebApplication',name:'Clearcut Remove BG',url:site,applicationCategory:'MultimediaApplication',operatingSystem:'Windows, macOS, Linux',browserRequirements:'Current desktop Chrome or Edge; JavaScript and WebAssembly required',description,offers:{'@type':'Offer',price:'0',priceCurrency:'INR',description:'Free single-image background removal and PNG export'}}
 ]};
 export function enhanceHome(html) {
@@ -58,10 +60,15 @@ export function enhanceHome(html) {
  .replace('<section class="final-cta">',`${feedback}${guides}<section class="final-cta">`)
  .replace('</footer>','<a href="/about/">About</a><a href="/privacy/">Privacy</a><a href="/contact/">Contact</a><a href="mailto:yxsingh2@gmail.com">Support</a></footer>');
 }
-export function renderPage(p) {
+function renderPageBase(p) {
  const url=`${site}${p.slug}/`;
  const data={'@context':'https://schema.org','@type':'WebPage',name:p.title,description:p.description,url,isPartOf:{'@id':`${site}#website`},breadcrumb:{'@type':'BreadcrumbList',itemListElement:[{'@type':'ListItem',position:1,name:'Clearcut Remove BG',item:site},{'@type':'ListItem',position:2,name:p.title,item:url}]}};
  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escape(p.title)} | Clearcut</title><meta name="description" content="${escape(p.description)}"><meta name="robots" content="index,follow,max-image-preview:large"><meta name="referrer" content="no-referrer"><meta property="og:site_name" content="Clearcut Remove BG"><meta property="og:title" content="${escape(p.title)} | Clearcut"><meta property="og:description" content="${escape(p.description)}"><meta property="og:type" content="website"><meta property="og:url" content="${url}"><meta property="og:image" content="${socialImage}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Clearcut Remove BG — private, on-device image background removal"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${escape(p.title)} | Clearcut"><meta name="twitter:description" content="${escape(p.description)}"><meta name="twitter:image" content="${socialImage}"><meta name="twitter:image:alt" content="Clearcut Remove BG — private, on-device image background removal"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; font-src 'self'; script-src 'none'; base-uri 'none'; object-src 'none'; form-action 'none'"><link rel="canonical" href="${url}"><link rel="stylesheet" href="/seo.css"><script type="application/ld+json">${JSON.stringify(data)}</script></head><body><a class="skip" href="#content">Skip to content</a><header><a class="brand" href="/">◩ clearcut.</a><nav aria-label="Main"><a href="/#workspace">Remove background</a><a href="/how-to-remove-background/">How to use</a><a href="/#plans">Pricing</a></nav></header><main id="content"><p class="breadcrumb"><a href="/">Home</a><span aria-hidden="true"> / </span>${escape(p.title)}</p><h1>${escape(p.title)}</h1><p class="lead">${escape(p.description)}</p>${p.sections.map(([h,t])=>`<section><h2>${escape(h)}</h2><p>${escape(t)}</p></section>`).join('')}<p><a class="cta" href="/#workspace">Open the free background remover →</a></p>${p.slug==='contact'?'<p><a href="mailto:yxsingh2@gmail.com?subject=Clearcut%20feedback">Send private feedback</a> · <a href="https://github.com/singhyashkumar/clearcut-remove-bg/issues">Open the public issue tracker</a></p>':''}<aside aria-label="Related guides"><h2>Explore Clearcut</h2><ul>${links()}</ul></aside></main><footer><a href="/about/">About</a><a href="/privacy/">Privacy</a><a href="/contact/">Contact</a><a href="/THIRD_PARTY_NOTICES.md">Open-source notices</a></footer></body></html>`;
+}
+export function renderPage(p) {
+ return renderPageBase(p)
+  .replace('property="og:site_name" content="Clearcut Remove BG"','property="og:site_name" content="Clearcut"')
+  .replace('<link rel="stylesheet" href="/seo.css">',`${faviconLinks}<link rel="stylesheet" href="/seo.css">`);
 }
 export const robots=`User-agent: *\nAllow: /\n\nSitemap: ${site}sitemap.xml\n`;
 export const sitemap=`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${['',...pages.map(p=>`${p.slug}/`)].map(path=>`<url><loc>${site}${path}</loc></url>`).join('')}</urlset>\n`;
