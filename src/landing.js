@@ -30,9 +30,6 @@ export function initLanding(doc) {
     image.src = previewUrl(category);
     return ready;
   }
-  // Small display-sized previews are fetched once before the visitor clicks.
-  for (const category of categories) warmPreview(category)?.catch(() => {});
-
   function updateSlider() {
     const value = Number(slider.value);
     const split = Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : 50;
@@ -71,6 +68,9 @@ export function initLanding(doc) {
 
   for (const [index, tab] of tabs.entries()) {
     tab.addEventListener('click', () => selectTab(tab));
+    const anticipateSelection = () => warmPreview(tab.dataset.example)?.catch(() => {});
+    tab.addEventListener('pointerenter', anticipateSelection, { once: true });
+    tab.addEventListener('focus', anticipateSelection, { once: true });
     tab.addEventListener('keydown', event => {
       let next;
       if (event.key === 'ArrowRight') next = (index + 1) % tabs.length;

@@ -174,31 +174,33 @@ test('explicit GIF preference overrides reduced motion and is restored on later 
 
 
 
-test('gallery warms all categories and stale loads cannot replace the newest selection', async () => {
+test('gallery warms only likely or selected categories and stale loads cannot replace the newest selection', async () => {
  const images=[];
  class Preview {constructor(){images.push(this);} async decode(){} }
  const {elements,tabs}=fixture(Preview);
- assert.equal(images.length,5);
- assert.ok(images.every(image=>image.fetchPriority==='low'));
+ assert.equal(images.length,0,'inactive categories must not download on page load');
+ tabs[1].dispatchEvent(new Event('pointerenter'));
+ assert.equal(images.length,1,'pointer intent should warm just one category');
+ assert.equal(images[0].fetchPriority,'low');
  tabs[1].dispatchEvent(new Event('click'));
  tabs[2].dispatchEvent(new Event('click'));
- await images[1].onload();
+ await images[0].onload();
  await new Promise(setImmediate);
  assert.equal(elements['quality-before'].src,undefined);
- await images[2].onload();
+ await images[1].onload();
  await new Promise(setImmediate);
  assert.equal(elements['quality-before'].src,'/test-base/artwork/gallery/animals.webp');
  assert.equal(elements['quality-after'].src,elements['quality-before'].src);
  assert.equal(elements['quality-panel'].attributes['aria-busy'],'false');
  tabs[3].dispatchEvent(new Event('click'));
- images[3].onerror();await new Promise(setImmediate);
+ images[2].onerror();await new Promise(setImmediate);
  assert.equal(elements['quality-before'].src,'/test-base/artwork/gallery/animals.webp');
  tabs[3].dispatchEvent(new Event('click'));
- assert.equal(images.length,6);
- await images[5].onload();await new Promise(setImmediate);
+ assert.equal(images.length,4);
+ await images[3].onload();await new Promise(setImmediate);
  assert.equal(elements['quality-before'].src,'/test-base/artwork/gallery/cars.webp');
  tabs[2].dispatchEvent(new Event('click'));await new Promise(setImmediate);
- assert.equal(images.length,6,'decoded previews are reused');
+ assert.equal(images.length,4,'decoded previews are reused');
 });
 
 test('primary GIF loops forever and has no pause control or gallery preference binding', () => {
@@ -209,4 +211,13 @@ test('primary GIF loops forever and has no pause control or gallery preference b
  assert.ok(hero.includes('loading="eager"'));assert.ok(hero.includes('fetchpriority="high"'));
  const gif=readFileSync(new URL('../public/artwork/hero-demo.gif',import.meta.url));
  assert.ok(gif.includes(Buffer.from([78,69,84,83,67,65,80,69,50,46,48,3,1,0,0])),'GIF must contain NETSCAPE infinite-loop extension');
+ assert.ok(gif.length<800000,'hero GIF should stay below 800 KB');
+ for(const name of ['loop-fern.gif','loop-pet.gif'])assert.ok(readFileSync(new URL(`../public/artwork/${name}`,import.meta.url)).length<1000000,`${name} should stay below 1 MB`);
+});
+
+test('sample photo uses the lightweight WebP instead of the source PNG',()=>{
+ const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+ assert.match(main,/artwork\/hero-sample\.webp/);
+ assert.doesNotMatch(main,/artwork\/hero\.png/);
+ assert.ok(readFileSync(new URL('../public/artwork/hero-sample.webp',import.meta.url)).length<150000);
 });

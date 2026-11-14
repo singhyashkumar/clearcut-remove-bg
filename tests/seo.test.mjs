@@ -18,6 +18,8 @@ test('home SEO exposes linked guides, instant reviews and complete honest social
  assert.ok(html.includes('name="twitter:card" content="summary_large_image"'));
  assert.ok(html.includes('name="twitter:description"'));
  assert.ok(html.includes('name="twitter:image" content="https://clearcutt.in/artwork/clearcut-social-card.png"'));
+ assert.ok(html.includes('Cloudflare Web Analytics collects cookie-free page-performance measurements'),'homepage privacy answer must disclose the live Cloudflare performance beacon');
+ assert.equal(html.includes('No image upload service, analytics, or image storage is used.'),false,'homepage must not claim that no analytics are used');
  assert.equal(html.includes('chatgpt.site'),false);
  assert.equal(schema['@graph'][0].name,'Clearcut');assert.deepEqual(schema['@graph'][0].alternateName,['Clearcut Remove BG','clearcutt.in']);
  assert.equal(schema['@graph'][2]['@type'],'FAQPage');assert.equal(schema['@graph'][2].mainEntity.length,4);
@@ -161,6 +163,30 @@ test('privacy page keeps its public-reviews and privacy-request sections rendere
  assert.ok(html.includes('<h2>Public reviews</h2>'),'Public reviews section must be rendered');
  assert.ok(html.includes('<h2>Contact for privacy requests</h2>'),'Contact for privacy requests section must be rendered');
 });
+test('privacy, authorship and editorial signals match the live implementation',()=>{
+ const privacy=renderPage(pages.find(page=>page.slug==='privacy'));
+ assert.match(privacy,/Cloudflare Web Analytics currently injects a cookie-free performance beacon/);
+ assert.match(privacy,/page URL, referrer and browser performance measurements/);
+ assert.match(privacy,/does not receive your selected photo, mask or edits/);
+ assert.doesNotMatch(privacy,/security policy blocks/);
+ const about=renderPage(pages.find(page=>page.slug==='about'));
+ assert.match(about,/<section id="editorial-standards"><h2>Editorial standards<\/h2>/);
+ assert.match(about,/reviewed at least every 90 days/);
+ for(const p of pages){
+  const html=renderPage(p);
+  const data=JSON.parse([...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/gs)].map(m=>m[1])[0]);
+  assert.equal(data.author.name,'Clearcut',`${p.slug} schema author`);
+  assert.equal(data.author.url,'https://clearcutt.in/',`${p.slug} author URL`);
+  assert.equal(data.publisher['@id'],'https://clearcutt.in/#organization',`${p.slug} publisher identity`);
+  assert.equal(data.dateModified,p.lastModified,`${p.slug} schema modification date`);
+  if(p.isGuide){
+   assert.match(html,new RegExp(`<time datetime="${p.lastModified}">`),`${p.slug} visible update date`);
+   assert.match(html,/Maintained by <a href="\/about\/#editorial-standards">Clearcut<\/a>/,`${p.slug} visible authorship`);
+  }else assert.equal(html.includes('class="page-meta"'),false,`${p.slug} policy page should not use the guide byline`);
+ }
+ const org=schema['@graph'].find(node=>node['@type']==='Organization');
+ assert.ok(org.sameAs.includes('https://www.instagram.com/clearcutt.in/'),'Organization schema must identify the official Instagram account');
+});
 test('legacy pages without optional fields render no optional markup and keep title equal to H1',()=>{
  const legacy=pages.filter(p=>!p.india);
  assert.equal(legacy.length,9,'the nine pre-existing pages must stay legacy');
@@ -285,6 +311,15 @@ test('sitemap URL count follows the generated page list dynamically',()=>{
  assert.equal(count,pages.length+1,'sitemap must contain exactly one URL per page plus the homepage');
  assert.equal(new Set(expected).size,expected.length,'page slugs must stay unique');
 });
+test('sitemap publishes one accurate lastmod for every canonical URL',()=>{
+ assert.ok(sitemap.includes('<loc>https://clearcutt.in/</loc><lastmod>2026-11-14</lastmod>'),'homepage lastmod must reflect the privacy disclosure release');
+ for(const p of pages){
+  const entry=`<url><loc>https://clearcutt.in/${p.slug}/</loc><lastmod>${p.lastModified}</lastmod></url>`;
+  assert.ok(sitemap.includes(entry),`${p.slug} sitemap lastmod must match page metadata`);
+  assert.match(p.lastModified,/^2026-\d{2}-\d{2}$/,`${p.slug} lastModified must be an ISO date`);
+ }
+ assert.equal((sitemap.match(/<lastmod>/g)||[]).length,pages.length+1,'every sitemap URL must carry exactly one lastmod');
+});
 test('page lang overrides the html lang attribute and JSON-LD inLanguage',()=>{
  const base=pages.find(page=>page.slug==='about');
  const variant={...base,lang:'en-IN',explicitLang:true};
@@ -404,7 +439,7 @@ test('legacy pages render byte-identical apart from the shared guide navigation 
   const html=renderPage(p);
   assert.equal(html.includes('india'),false,`${p.slug} must not contain india markers`);
   assert.equal(html.includes('callout'),false,`${p.slug} must not render callouts`);
-  assert.equal(html.includes('sources'),false,`${p.slug} must not render sources rows`);
+  assert.equal(html.includes('class="sources"'),false,`${p.slug} must not render sources rows`);
   assert.equal(html.includes('editorial-note'),false,`${p.slug} must not render editorial notes`);
   const aside=html.match(/<aside aria-label="Related guides"><h2>Explore Clearcut<\/h2><ul>([\s\S]*?)<\/ul>/)[1];
   const listed=[...aside.matchAll(/href="https:\/\/clearcutt\.in\/([a-z-]+)\/"/g)].map(m=>m[1]);

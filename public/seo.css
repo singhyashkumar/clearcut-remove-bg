@@ -27,4 +27,6 @@
 .guide-demo figure{margin:0;padding:22px;background:#fff}
 .guide-demo picture,.guide-demo img{display:block;width:100%;height:auto}
 .guide-demo img{border-radius:12px;background:#f4f6f0}
+.page-meta{font-size:13px;line-height:1.6;color:var(--muted);margin:-22px 0 32px}
+.page-meta a{font-weight:700;text-decoration:none}.page-meta a:hover{text-decoration:underline}
 @media(max-width:767px){.guide-visual{margin-bottom:36px}.guide-visual-image{border-radius:14px}.guide-demo{margin-top:36px}.guide-demo summary{padding:16px 18px}.guide-demo figure{padding:16px}}
