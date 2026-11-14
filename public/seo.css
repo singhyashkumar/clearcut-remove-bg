@@ -17,3 +17,14 @@
 .sources .citation,.contextual a,.editorial-note{font-size:13px}
 .contextual{margin-top:12px}
 .editorial-note{color:var(--muted);border-top:1px solid var(--line);margin-top:40px;padding-top:16px;max-width:68ch}
+.guide-visual{margin:0 0 48px}
+.guide-visual-image{display:block;width:100%;height:auto;border:1px solid #e5e9e3;border-radius:20px;background:#f4f6f0;box-shadow:0 12px 36px rgba(28,55,46,.08)}
+.guide-visual figcaption,.guide-demo figcaption{font-size:13px;line-height:1.6;color:var(--muted);margin-top:10px;max-width:68ch}
+.guide-demo{margin:44px 0 0;border:1px solid #dfe7e2;border-radius:16px;background:#f4f6f0;overflow:hidden}
+.guide-demo summary{cursor:pointer;padding:18px 22px;font-family:Poppins,Arial,sans-serif;font-weight:700;color:#31564c;list-style-position:inside}
+.guide-demo summary:hover{background:#eef3e9}
+.guide-demo[open] summary{border-bottom:1px solid #dfe7e2}
+.guide-demo figure{margin:0;padding:22px;background:#fff}
+.guide-demo picture,.guide-demo img{display:block;width:100%;height:auto}
+.guide-demo img{border-radius:12px;background:#f4f6f0}
+@media(max-width:767px){.guide-visual{margin-bottom:36px}.guide-visual-image{border-radius:14px}.guide-demo{margin-top:36px}.guide-demo summary{padding:16px 18px}.guide-demo figure{padding:16px}}

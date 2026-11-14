@@ -34,10 +34,10 @@ for (const url of urls) {
     const pageHtml = readFileSync(resolve(root, relative), 'utf8');
     assert.match(pageHtml, /<link rel="canonical" href="https:\/\/clearcutt\.in\/[^"]*\/">/, `Missing canonical for ${relative}`);
     assert.match(pageHtml, /Content-Security-Policy" content="[^"]*img-src 'self' data:[^"]*"/, `Static page CSP must allow self-hosted images (img-src 'self' data:) for ${relative}`);
-    const imageAttrs = [...pageHtml.matchAll(/<img\s([^>]*)>/g)].map(match => match[1]);
-    for (const attrs of imageAttrs) {
-      const src = attrs.match(/\ssrc="([^"]*)"/);
-      const srcset = attrs.match(/\ssrcset="([^"]*)"/);
+    const mediaAttrs = [...pageHtml.matchAll(/<(?:img|source)\s([^>]*)>/g)].map(match => match[1]);
+    for (const attrs of mediaAttrs) {
+      const src = attrs.match(/(?:^|\s)src="([^"]*)"/);
+      const srcset = attrs.match(/(?:^|\s)srcset="([^"]*)"/);
       const candidates = [];
       if (src) candidates.push(src[1]);
       if (srcset) for (const descriptor of srcset[1].split(',')) candidates.push(descriptor.trim().split(/\s+/)[0]);

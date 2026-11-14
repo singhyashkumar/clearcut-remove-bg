@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 import { pages, enhanceHome, renderPage, robots, sitemap, schema } from '../scripts/seo.mjs';
 test('search pages have unique canonical URLs, crawlable content and matching sitemap entries',()=>{
  assert.equal(new Set(pages.map(p=>p.slug)).size,pages.length);
@@ -166,7 +166,7 @@ test('legacy pages without optional fields render no optional markup and keep ti
  assert.equal(legacy.length,9,'the nine pre-existing pages must stay legacy');
  for(const p of legacy){
   const html=renderPage(p);
-  assert.equal(html.includes('<figure'),false,`${p.slug} must not render figures when no images are defined`);
+  assert.equal(html.includes('<figure class="evidence">'),false,`${p.slug} must not render evidence figures when no images are defined`);
   assert.equal(html.includes('<table'),false,`${p.slug} must not render tables when none are defined`);
   assert.equal(html.includes('primaryImageOfPage'),false,`${p.slug} must not emit primaryImageOfPage without images`);
   assert.equal(p.metaTitle,p.title,`${p.slug} metaTitle must default to title`);
@@ -175,6 +175,35 @@ test('legacy pages without optional fields render no optional markup and keep ti
   assert.ok(html.includes(`<h1>${p.title}</h1>`),`${p.slug} H1 must use the title field`);
   assert.equal(html.match(/<html lang="([^"]*)"/)[1],'en',`${p.slug} must default to lang en`);
  }
+});
+test('guide pages render responsive lightweight visuals while policy pages stay media-free',()=>{
+ const visualSlugs=['how-to-remove-background','remove-background-products','remove-background-portraits','remove-background-animals','remove-background-cars','transparent-background','photo-ka-background-kaise-hataye','passport-exam-form-white-background','amazon-flipkart-meesho-product-white-background','remove-background-from-signature-png'];
+ for(const slug of visualSlugs){
+  const html=renderPage(pages.find(page=>page.slug===slug));
+  const figure=html.match(/<figure class="guide-visual">([\s\S]*?)<\/figure>/)?.[1];
+  assert.ok(figure,`${slug} must render one guide visual`);
+  assert.match(figure,/srcset="\/artwork\/guides\/[^"]+-480\.webp 480w, \/artwork\/guides\/[^"]+-960\.webp 960w"/,`${slug} must offer 480px and 960px WebP variants`);
+  assert.match(figure,/width="960" height="(?:340|600)"/,`${slug} must reserve the visual dimensions`);
+  assert.match(figure,/fetchpriority="high"/,`${slug} visual should be prioritized without JavaScript`);
+  assert.match(figure,/<figcaption>[^<]+<\/figcaption>/,`${slug} visual needs an honest caption`);
+ }
+ for(const slug of ['about','privacy','contact'])assert.equal(renderPage(pages.find(page=>page.slug===slug)).includes('guide-visual'),false,`${slug} must stay media-free`);
+ const tutorial=renderPage(pages.find(page=>page.slug==='how-to-remove-background'));
+ assert.match(tutorial,/<details class="guide-demo">/, 'the main guide must include the optional walkthrough');
+ assert.match(tutorial,/src="\/artwork\/guides\/workflow\.gif"[^>]*loading="lazy"/, 'the GIF must lazy-load');
+ assert.match(tutorial,/<source media="\(prefers-reduced-motion: reduce\)" srcset="\/artwork\/how-to\/download\.webp">/, 'the walkthrough must have a static reduced-motion fallback');
+ const passport=renderPage(pages.find(page=>page.slug==='passport-exam-form-white-background'));
+ assert.ok(passport.indexOf('callout-warning')<passport.indexOf('guide-visual'),'the passport warning must appear before its illustration');
+});
+test('guide media stays inside its explicit transfer budget',()=>{
+ for(const name of ['workflow','transparency','products','portraits','animals','cars','passport','signature']){
+  const small=statSync(new URL(`../public/artwork/guides/${name}-480.webp`,import.meta.url)).size;
+  const large=statSync(new URL(`../public/artwork/guides/${name}-960.webp`,import.meta.url)).size;
+  assert.ok(small<=15_000,`${name}-480.webp must stay at or below 15 KB, got ${small} bytes`);
+  assert.ok(large<=30_000,`${name}-960.webp must stay at or below 30 KB, got ${large} bytes`);
+ }
+ const animation=statSync(new URL('../public/artwork/guides/workflow.gif',import.meta.url)).size;
+ assert.ok(animation<=70_000,`workflow.gif must stay at or below 70 KB, got ${animation} bytes`);
 });
 test('optional metaTitle and h1 override the meta title and heading independently',()=>{
  const base=pages.find(page=>page.slug==='about');
