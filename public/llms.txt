@@ -16,7 +16,7 @@ Clearcut is a free browser-based image background remover at https://clearcutt.i
 - [Product photo backgrounds](https://clearcutt.in/remove-background-products/)
 - [Portrait backgrounds](https://clearcutt.in/remove-background-portraits/)
 - [Animal and pet backgrounds](https://clearcutt.in/remove-background-animals/)
-- [Car photo backgrounds](https://clearcutt.in/remove-background-cars/)
+- [Car Background Remover](https://clearcutt.in/remove-background-cars/)
 - [Photo ka background kaise hataye (Hinglish guide)](https://clearcutt.in/photo-ka-background-kaise-hataye/)
 - [Passport and exam form white backgrounds](https://clearcutt.in/passport-exam-form-white-background/)
 - [Amazon, Flipkart and Meesho product white backgrounds](https://clearcutt.in/amazon-flipkart-meesho-product-white-background/)

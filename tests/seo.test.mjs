@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, statSync } from 'node:fs';
 import { pages, enhanceHome, renderPage, robots, sitemap, schema } from '../scripts/seo.mjs';
+/** Guides that intentionally carry more than the default five FAQs. */
+const expectedFaqs = slug => (slug === 'remove-background-cars' ? 7 : 5);
 test('search pages have unique canonical URLs, crawlable content and matching sitemap entries',()=>{
  assert.equal(new Set(pages.map(p=>p.slug)).size,pages.length);
  assert.equal(new Set(pages.map(p=>p.title)).size,pages.length);
@@ -67,7 +69,7 @@ test('all six legacy guide pages render visible FAQs that exactly match their FA
  assert.equal(guides.length,6,'all six legacy guide pages must exist');
  const esc=value=>value.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;');
  for(const p of guides){
-  assert.equal(p.faqs.length,5,`${p.slug} must expose exactly 5 FAQs`);
+   assert.equal(p.faqs.length,expectedFaqs(p.slug),`${p.slug} must expose exactly ${expectedFaqs(p.slug)} FAQs`);
   const html=renderPage(p);
   assert.ok(html.includes('id="faq-heading"'),`${p.slug} FAQ section must be visibly rendered`);
   const data=JSON.parse([...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/gs)].map(m=>m[1])[0]);
@@ -78,11 +80,11 @@ test('all six legacy guide pages render visible FAQs that exactly match their FA
   assert.ok(faqGraph,`${p.slug} FAQPage @graph must exist`);
   assert.equal(faqGraph.length,1);
   assert.equal(faqGraph[0]['@type'],'FAQPage');
-  assert.equal(faqGraph[0].mainEntity.length,5);
+   assert.equal(faqGraph[0].mainEntity.length,expectedFaqs(p.slug));
   const sectionStart=html.indexOf('<section class="faq"');
   const sectionEnd=html.indexOf('</section>',sectionStart);
   const visibleQuestions=[...html.slice(sectionStart,sectionEnd).matchAll(/<h3>(.*?)<\/h3>/g)].map(m=>m[1]);
-  assert.equal(visibleQuestions.length,5,`${p.slug} must render exactly 5 visible FAQ questions, found ${visibleQuestions.length}`);
+   assert.equal(visibleQuestions.length,expectedFaqs(p.slug),`${p.slug} must render exactly ${expectedFaqs(p.slug)} visible FAQ questions, found ${visibleQuestions.length}`);
   assert.deepEqual(visibleQuestions,faqGraph[0].mainEntity.map(f=>esc(f.name)),`${p.slug} visible questions must match schema questions in order`);
   for(const [q,a] of p.faqs){
    assert.ok(html.includes(`<h3>${esc(q)}</h3>`),`${p.slug} visible FAQ missing: ${q}`);
@@ -112,8 +114,8 @@ test('about, privacy and contact pages expose no FAQ schema and no visible FAQ s
  }
 });
 test('guide pages have unique FAQs and unique section headings across the site',()=>{
- const guides=pages.filter(p=>p.faqs.length===5);
- assert.equal(guides.length,11,'six legacy guides, four India pages and the migration explainer must each expose five FAQs');
+ const guides=pages.filter(p=>p.faqs.length===expectedFaqs(p.slug));
+ assert.equal(guides.length,11,'six legacy guides, four India pages and the migration explainer must each expose their expected FAQ count');
  const questions=guides.flatMap(p=>p.faqs.map(([q])=>`${p.slug}|${q}`));
  assert.equal(new Set(questions).size,questions.length,'FAQ questions must be page-specific');
  const headings=guides.flatMap(p=>p.sections.map(p.india?s=>s.heading:([h])=>h));
@@ -212,8 +214,8 @@ test('remove.bg migration explainer is factual, sourced and uses Article schema'
  assert.equal(data.mainEntityOfPage,'https://clearcutt.in/remove-bg-shutting-down/');
 });
 test('legacy pages without optional fields render no optional markup and keep title equal to H1',()=>{
- const legacy=pages.filter(p=>!p.india&&!p.article);
- assert.equal(legacy.length,9,'the nine pre-existing pages must stay legacy');
+ const legacy=pages.filter(p=>!p.india&&!p.article&&p.slug!=='remove-background-cars');
+ assert.equal(legacy.length,8,'the eight pre-existing pages without optional fields must stay legacy');
  for(const p of legacy){
   const html=renderPage(p);
   assert.equal(html.includes('<figure class="evidence">'),false,`${p.slug} must not render evidence figures when no images are defined`);
