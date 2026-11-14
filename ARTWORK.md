@@ -97,6 +97,8 @@ Original: exec-99627e6c-b797-45e9-85cf-35b14082c352.png, 1448x1086 RGBA, archive
 
 ### loop-fern.gif and loop-pet.gif
 
+Production GIFs are display-sized, palette-optimized versions of the original loops. The source artwork remains in the repository for provenance, while the production build excludes unused PNG/MP4 masters. `hero-sample.webp` is the quality-preserving WebP used by the editor's example button.
+
 Original videos were generated in the user's Gemini account and supplied by the user as gemini_generated_video_3d5c45a0.mp4 (fern) and gemini_generated_video_2efcb598.mp4 (border collie). Both sources are 720x1280 portrait H.264, 24fps, duration about 10.01 seconds. Source MP4s remain in the task's local outputs/media/ archive; they are not added to the deployable site.
 
 Fern prompt: One maidenhair fern in a terracotta pot, locked camera, soft daylight, fine leaves; a softly blurred home background changes to white, then blush and back. Stable plant geometry, no people, text, logos or camera movement. Portrait 9:16, ten seconds or supported native duration, calm loop-friendly pacing.
