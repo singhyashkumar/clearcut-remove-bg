@@ -20,6 +20,8 @@ test('home SEO exposes linked guides, instant reviews and complete honest social
  assert.ok(html.includes('name="twitter:image" content="https://clearcutt.in/artwork/clearcut-social-card.png"'));
  assert.ok(html.includes('Cloudflare Web Analytics collects cookie-free page-performance measurements'),'homepage privacy answer must disclose the live Cloudflare performance beacon');
  assert.equal(html.includes('No image upload service, analytics, or image storage is used.'),false,'homepage must not claim that no analytics are used');
+ assert.match(html,/<!--email_off--><a href="mailto:yxsingh2@gmail\.com">Support<\/a><!--\/email_off-->/,'Cloudflare must not rewrite the homepage support link');
+ assert.match(html,/<!--email_off--><a href="mailto:yxsingh2@gmail\.com\?subject=Private%20Clearcut%20feedback">Send private feedback instead<\/a><!--\/email_off-->/,'Cloudflare must not rewrite private-feedback links');
  assert.equal(html.includes('chatgpt.site'),false);
  assert.equal(schema['@graph'][0].name,'Clearcut');assert.deepEqual(schema['@graph'][0].alternateName,['Clearcut Remove BG','clearcutt.in']);
  assert.equal(schema['@graph'][2]['@type'],'FAQPage');assert.equal(schema['@graph'][2].mainEntity.length,4);
@@ -169,6 +171,10 @@ test('privacy, authorship and editorial signals match the live implementation',(
  assert.match(privacy,/page URL, referrer and browser performance measurements/);
  assert.match(privacy,/does not receive your selected photo, mask or edits/);
  assert.doesNotMatch(privacy,/security policy blocks/);
+ assert.match(privacy,/<!--email_off-->yxsingh2@gmail\.com<!--\/email_off-->/,'Cloudflare must leave the privacy-request address readable');
+ const contact=renderPage(pages.find(page=>page.slug==='contact'));
+ assert.match(contact,/<!--email_off-->yxsingh2@gmail\.com<!--\/email_off-->/,'Cloudflare must leave the support address readable');
+ assert.match(contact,/<!--email_off--><a href="mailto:yxsingh2@gmail\.com\?subject=Clearcut%20feedback">Send private feedback<\/a><!--\/email_off-->/,'Cloudflare must leave the contact action clickable');
  const about=renderPage(pages.find(page=>page.slug==='about'));
  assert.match(about,/<section id="editorial-standards"><h2>Editorial standards<\/h2>/);
  assert.match(about,/reviewed at least every 90 days/);
