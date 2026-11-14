@@ -49,6 +49,7 @@ footer{flex-wrap:wrap;gap:18px}
 
 /* Keep the full GIF visible in a larger, responsive primary frame. */
 .hero{max-width:1160px}.hero-video-frame>img{aspect-ratio:360/202;object-fit:contain}
+.migration-notice{max-width:1160px;margin:18px auto 0;padding:0 32px;color:#3f5147}.migration-notice p{margin:0;padding:13px 18px;border:1px solid #cbd8cd;border-radius:14px;background:#f3f7f1;font-size:14px;line-height:1.55}.migration-notice a{font-weight:700}@media(max-width:767px){.migration-notice{margin-top:12px;padding:0 20px}.migration-notice p{padding:12px 14px;font-size:13px}}
 @media(min-width:768px){.workspace{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:40px}}
 
 /* Illustrated how-to: three actions, then three practical editor tips. */

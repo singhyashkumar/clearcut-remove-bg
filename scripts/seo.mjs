@@ -155,7 +155,29 @@ const indiaPages=indiaDoc.pages.map(page=>{
  const primaryCta=(page.contextualLinks||[]).find(l=>l.placement==='primary-cta');
  return {slug:page.slug,title:page.title,metaTitle:page.title,description:page.description,h1:page.h1,lead:mdProse(page.lead),lang:page.lang,explicitLang:true,faqs,india:true,sections:page.sections,indiaBody:renderedSections,indiaCta:primaryCta?primaryCta.anchorText:'Open the free background remover',editorialDate:indiaDoc.verifiedDate,lastModified:releaseDate,isGuide:true};
 });
-export const pages=[...legacyPages,...indiaPages];
+const newsPages=[{
+ slug:'remove-bg-shutting-down',
+ title:'Is remove.bg Shutting Down? What Changes on 1 December 2026',
+ metaTitle:'remove.bg Is Moving to Canva: What Changes on 1 December 2026',
+ h1:'Is remove.bg shutting down? What changes on 1 December 2026',
+ description:'remove.bg says its standalone background-removal service is moving to Canva on 1 December 2026, while API users are directed to Leonardo.Ai. Here is what is confirmed and where Clearcut fits.',
+ lang:'en',explicitLang:true,lastModified:releaseDate,datePublished:releaseDate,isGuide:true,article:true,
+ sections:[
+  ['What remove.bg confirms','Yes—the standalone remove.bg experience is changing. The [official remove.bg FAQ](https://www.remove.bg/faq/) says its background-removal functionality is moving into Canva. The [official remove.bg API page](https://www.remove.bg/bg/api/) says that, starting 1 December 2026, API background removal moves to Leonardo.Ai. Clearcut is independent and is not affiliated with remove.bg, Canva or Leonardo.Ai.'],
+  ['What is changing on 1 December 2026','For people removing backgrounds through the remove.bg website, the official destination is Canva. For developers using the self-service API, remove.bg points to Leonardo.Ai. The companies may update migration details, so check the official FAQ before making account, subscription or API decisions.'],
+  ['What remove.bg users should do now','Review the official migration FAQ, save any account records you need, and test your replacement workflow before the change date. If you depend on an API, bulk processing, JPG or WebP output, mobile support or integrations, Clearcut is not a like-for-like replacement.'],
+  ['Where Clearcut can help','Clearcut is useful for one photo at a time in current desktop Chrome or Edge. The photo, mask and edits stay in browser memory; Standard mode downloads about 98 MB on first use, while Detailed can download up to about 473 MB. You can refine edges with Erase and Restore, choose a background and export a PNG without a watermark. HEIC, iOS, batch processing and a public API are not supported.'],
+  ['Sources and review date','This explainer was checked on 14 November 2026 against the [remove.bg migration FAQ](https://www.remove.bg/faq/), the [remove.bg API migration notice](https://www.remove.bg/bg/api/) and [Canva’s Background Remover help page](https://www.canva.com/help/background-remover/). It will be updated if those official sources change.']
+ ],
+ faqs:[
+  ['Is remove.bg shutting down?','The standalone service is moving into Canva. remove.bg’s official FAQ describes the change as a migration of its background-removal functionality to Canva, beginning on 1 December 2026.'],
+  ['When does the remove.bg change happen?','The official remove.bg API page says the migration starts on 1 December 2026. Check remove.bg’s migration FAQ for the latest timing and account instructions.'],
+  ['Where are remove.bg API users being sent?','The official API page directs API background removal to Leonardo.Ai, which is also part of Canva. Clearcut does not offer a public API and is not an API replacement.'],
+  ['Is Clearcut affiliated with remove.bg or Canva?','No. Clearcut is an independent browser-based editor and is not affiliated with remove.bg, Canva or Leonardo.Ai.'],
+  ['Can Clearcut replace remove.bg for bulk or mobile workflows?','No. Clearcut currently processes one photo at a time in desktop Chrome or Edge, exports PNG only, and does not support an API, batch processing, HEIC or iOS.']
+ ]
+}];
+export const pages=[...legacyPages,...indiaPages,...newsPages];
 const guideMedia={
  'how-to-remove-background':{name:'workflow',width:960,height:340,alt:'Illustrated three-step Clearcut workflow showing upload, edge refinement and PNG download',caption:'Illustrated walkthrough — your own photo and result will be different.'},
  'photo-ka-background-kaise-hataye':{name:'workflow',width:960,height:340,alt:'Clearcut mein upload, edge refine aur PNG download ka illustrated three-step workflow',caption:'Illustrated walkthrough — aapki photo aur result alag honge.'},
@@ -188,11 +210,13 @@ export const schema = {'@context':'https://schema.org','@graph':[
 ]};
 export function enhanceHome(html) {
  const guides = `<section class="seo-guides reference-container" aria-labelledby="guides-heading"><h2 id="guides-heading">Background removal guides and help</h2><p>Find practical steps for your photo and learn how Clearcut handles your images.</p><nav aria-label="Guides"><ul>${links()}</ul></nav><p><a href="https://github.com/singhyashkumar/clearcut-remove-bg/issues">Report a technical issue</a> · Keep private account and payment information out of public reports.</p></section>`;
+ const migrationNotice = `<aside class="migration-notice" aria-label="remove.bg service update"><p><strong>remove.bg is moving to Canva on 1 December 2026.</strong> <a href="/remove-bg-shutting-down/">See what is changing and whether Clearcut fits your workflow →</a></p></aside>`;
  const feedback = `<section class="reviews-section reference-container" id="reviews" aria-labelledby="reviews-heading"><header class="reviews-heading"><div><span class="eyebrow">REAL USER FEEDBACK</span><h2 id="reviews-heading">Clearcut reviews</h2><p>Reviews come from signed-in users and are published immediately. They are not verified purchases or Google reviews.</p></div><p class="reviews-summary" id="reviews-summary" role="status">Loading published reviews…</p></header><ul class="reviews-list" id="reviews-list" aria-label="Published Clearcut reviews"></ul><p class="reviews-empty" id="reviews-empty">No published reviews yet.</p><div class="review-compose"><div><h3>Share your experience</h3><p>One review per Google account. Be specific and honest; do not include private information.</p><p><a href="mailto:yxsingh2@gmail.com?subject=Private%20Clearcut%20feedback">Send private feedback instead</a></p></div><form id="review-form"><fieldset class="review-rating"><legend>Your rating</legend>${[1,2,3,4,5].map(value=>`<label><input type="radio" name="rating" value="${value}" required><span aria-hidden="true">★</span><span class="sr-only">${value} star${value===1?'':'s'}</span></label>`).join('')}</fieldset><label for="review-name">Public display name</label><input id="review-name" name="display_name" type="text" minlength="2" maxlength="50" autocomplete="nickname" required><label for="review-body">Your review</label><textarea id="review-body" name="body" minlength="20" maxlength="1000" rows="5" required></textarea><span class="review-count" id="review-count">0 / 1000</span><div class="review-actions"><button class="section-cta" id="review-signin" type="button">Sign in to review</button><button class="section-cta" id="review-submit" type="submit">Submit review</button><button class="review-delete" id="review-delete" type="button" hidden>Delete my review</button></div><p class="review-status" id="review-status" role="status" aria-live="polite">Checking sign-in…</p></form></div><section class="review-admin" id="review-admin" hidden aria-labelledby="review-admin-heading"><div class="review-admin-heading"><h3 id="review-admin-heading">Review moderation</h3><button id="review-admin-refresh" type="button">Refresh queue</button></div><ul id="review-admin-list"></ul><p id="review-admin-status" role="status" aria-live="polite"></p></section></section>`;
  return protectEmails(html.replace(/<title>.*?<\/title>/,'<title>Remove Background from Image for Free | Clearcut Remove BG</title>')
  .replace('No image upload service, analytics, or image storage is used.','No image upload or image-storage service is used. Cloudflare Web Analytics collects cookie-free page-performance measurements and page URLs, but never receives your selected photo, mask or edits.')
  .replace(/<meta name="description" content="[^"]*">/,`<meta name="description" content="${description}">`)
  .replace('</head>',`<meta name="robots" content="index,follow,max-image-preview:large"><script type="application/ld+json">${JSON.stringify(schema)}</script></head>`)
+ .replace('<main>',`<main>${migrationNotice}`)
  .replace('<section class="final-cta">',`${feedback}${guides}<section class="final-cta">`)
  .replace('</footer>','<a href="/about/">About</a><a href="/privacy/">Privacy</a><a href="/contact/">Contact</a><a href="mailto:yxsingh2@gmail.com">Support</a></footer>'));
 }
@@ -207,10 +231,11 @@ const evidenceImage=image=>{
 function renderPageBase(p) {
  const url=`${site}${p.slug}/`;
  const pageTitle=p.metaTitle||p.title;
- const data={'@context':'https://schema.org','@type':'WebPage',name:p.title,description:p.description,url,isPartOf:{'@id':`${site}#website`},breadcrumb:{'@type':'BreadcrumbList',itemListElement:[{'@type':'ListItem',position:1,name:'Clearcut Remove BG',item:site},{'@type':'ListItem',position:2,name:p.title,item:url}]}};
+ const data={'@context':'https://schema.org','@type':p.article?'Article':'WebPage',name:p.title,description:p.description,url,isPartOf:{'@id':`${site}#website`},breadcrumb:{'@type':'BreadcrumbList',itemListElement:[{'@type':'ListItem',position:1,name:'Clearcut Remove BG',item:site},{'@type':'ListItem',position:2,name:p.title,item:url}]}};
  data.author={'@type':'Organization','@id':`${site}#organization`,name:'Clearcut',url:site};
  data.publisher={'@id':`${site}#organization`};
  data.dateModified=p.lastModified;
+ if(p.article){data.headline=p.h1||p.title;data.datePublished=p.datePublished;data.mainEntityOfPage=url;}
  if(p.explicitLang)data.inLanguage=p.lang;
  if(p.images&&p.images.length){const first=p.images[0];data.primaryImageOfPage={'@type':'ImageObject',url:new URL(first.src,url).href,name:first.alt,width:first.width,height:first.height};}
  if(p.faqs.length)data['@graph']=[{'@type':'FAQPage','@id':`${url}#faq`,mainEntity:p.faqs.map(([q,a])=>({'@type':'Question',name:q,acceptedAnswer:{'@type':'Answer',text:a}}))}];

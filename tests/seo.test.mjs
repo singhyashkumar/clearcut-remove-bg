@@ -22,6 +22,8 @@ test('home SEO exposes linked guides, instant reviews and complete honest social
  assert.equal(html.includes('No image upload service, analytics, or image storage is used.'),false,'homepage must not claim that no analytics are used');
  assert.match(html,/<!--email_off--><a href="mailto:yxsingh2@gmail\.com">Support<\/a><!--\/email_off-->/,'Cloudflare must not rewrite the homepage support link');
  assert.match(html,/<!--email_off--><a href="mailto:yxsingh2@gmail\.com\?subject=Private%20Clearcut%20feedback">Send private feedback instead<\/a><!--\/email_off-->/,'Cloudflare must not rewrite private-feedback links');
+ assert.match(html,/class="migration-notice"/,'homepage must expose the dated remove.bg migration notice');
+ assert.match(html,/href="\/remove-bg-shutting-down\/"/,'migration notice must link to the sourced explainer');
  assert.equal(html.includes('chatgpt.site'),false);
  assert.equal(schema['@graph'][0].name,'Clearcut');assert.deepEqual(schema['@graph'][0].alternateName,['Clearcut Remove BG','clearcutt.in']);
  assert.equal(schema['@graph'][2]['@type'],'FAQPage');assert.equal(schema['@graph'][2].mainEntity.length,4);
@@ -44,7 +46,7 @@ test('every ld+json block on every rendered page parses and generated pages carr
   for(const block of pageBlocks){
    let data;
    assert.doesNotThrow(()=>{data=JSON.parse(block);},`${p.slug} has an invalid ld+json block`);
-   assert.equal(data['@type'],'WebPage',`${p.slug} root node must stay WebPage`);
+   assert.equal(data['@type'],p.article?'Article':'WebPage',`${p.slug} root node must match its page type`);
    assert.equal(data.breadcrumb['@type'],'BreadcrumbList',`${p.slug} must keep its BreadcrumbList`);
    assert.equal(data.breadcrumb.itemListElement.length,2,`${p.slug} breadcrumb must have two items`);
    assert.equal(data.breadcrumb.itemListElement[1].item,`https://clearcutt.in/${p.slug}/`);
@@ -111,7 +113,7 @@ test('about, privacy and contact pages expose no FAQ schema and no visible FAQ s
 });
 test('guide pages have unique FAQs and unique section headings across the site',()=>{
  const guides=pages.filter(p=>p.faqs.length===5);
- assert.equal(guides.length,10,'six legacy guides plus four india pages must each expose five FAQs');
+ assert.equal(guides.length,11,'six legacy guides, four India pages and the migration explainer must each expose five FAQs');
  const questions=guides.flatMap(p=>p.faqs.map(([q])=>`${p.slug}|${q}`));
  assert.equal(new Set(questions).size,questions.length,'FAQ questions must be page-specific');
  const headings=guides.flatMap(p=>p.sections.map(p.india?s=>s.heading:([h])=>h));
@@ -193,8 +195,24 @@ test('privacy, authorship and editorial signals match the live implementation',(
  const org=schema['@graph'].find(node=>node['@type']==='Organization');
  assert.ok(org.sameAs.includes('https://www.instagram.com/clearcutt.in/'),'Organization schema must identify the official Instagram account');
 });
+test('remove.bg migration explainer is factual, sourced and uses Article schema',()=>{
+ const page=pages.find(item=>item.slug==='remove-bg-shutting-down');
+ assert.ok(page,'time-sensitive migration explainer must be generated');
+ const html=renderPage(page);
+ assert.match(html,/https:\/\/www\.remove\.bg\/faq\//);
+ assert.match(html,/https:\/\/www\.remove\.bg\/bg\/api\//);
+ assert.match(html,/https:\/\/www\.canva\.com\/help\/background-remover\//);
+ assert.match(html,/not affiliated with remove\.bg, Canva or Leonardo\.Ai/i);
+ assert.match(html,/does not offer a public API/);
+ const data=JSON.parse(html.match(/<script type="application\/ld\+json">(.*?)<\/script>/s)[1]);
+ assert.equal(data['@type'],'Article');
+ assert.equal(data.datePublished,'2026-11-14');
+ assert.equal(data.dateModified,'2026-11-14');
+ assert.equal(data.author.name,'Clearcut');
+ assert.equal(data.mainEntityOfPage,'https://clearcutt.in/remove-bg-shutting-down/');
+});
 test('legacy pages without optional fields render no optional markup and keep title equal to H1',()=>{
- const legacy=pages.filter(p=>!p.india);
+ const legacy=pages.filter(p=>!p.india&&!p.article);
  assert.equal(legacy.length,9,'the nine pre-existing pages must stay legacy');
  for(const p of legacy){
   const html=renderPage(p);
@@ -362,10 +380,10 @@ test('the four india landing pages are built from the verified content spec with
   }
  }
 });
-test('the site exposes fourteen crawlable URLs covering every page exactly once',()=>{
+test('the site exposes fifteen crawlable URLs covering every page exactly once',()=>{
  const expected=['',...pages.map(p=>`${p.slug}/`)];
- assert.equal(pages.length,13,'nine legacy pages plus four india pages');
- assert.equal((sitemap.match(/<loc>/g)||[]).length,14,'sitemap must list 14 URLs');
+ assert.equal(pages.length,14,'nine legacy pages plus four India pages and one dated migration explainer');
+ assert.equal((sitemap.match(/<loc>/g)||[]).length,15,'sitemap must list 15 URLs');
  for(const path of expected)assert.ok(sitemap.includes(`<loc>https://clearcutt.in/${path}</loc>`),`sitemap missing ${path||'home'}`);
  assert.equal(new Set(expected).size,expected.length,'slugs must stay unique');
  for(const p of pages)assert.ok(sitemap.includes(`<loc>https://clearcutt.in/${p.slug}/</loc>`));
@@ -440,7 +458,7 @@ test('india pages publish no internal implementation details or forbidden claims
  }
 });
 test('legacy pages render byte-identical apart from the shared guide navigation list',()=>{
- const legacy=pages.filter(p=>!p.india);
+ const legacy=pages.filter(p=>!p.india&&!p.article);
  for(const p of legacy){
   const html=renderPage(p);
   assert.equal(html.includes('india'),false,`${p.slug} must not contain india markers`);
@@ -449,7 +467,7 @@ test('legacy pages render byte-identical apart from the shared guide navigation 
   assert.equal(html.includes('editorial-note'),false,`${p.slug} must not render editorial notes`);
   const aside=html.match(/<aside aria-label="Related guides"><h2>Explore Clearcut<\/h2><ul>([\s\S]*?)<\/ul>/)[1];
   const listed=[...aside.matchAll(/href="https:\/\/clearcutt\.in\/([a-z-]+)\/"/g)].map(m=>m[1]);
-  assert.equal(listed.length,13,`${p.slug} guide navigation must list all thirteen pages`);
+  assert.equal(listed.length,pages.length,`${p.slug} guide navigation must list every generated page`);
   for(const target of pages)assert.ok(listed.includes(target.slug),`${p.slug} navigation must link ${target.slug}`);
  }
 });

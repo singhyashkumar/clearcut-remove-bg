@@ -26,6 +26,7 @@ Clearcut is a free browser-based image background remover at https://clearcutt.i
 
 - [About Clearcut](https://clearcutt.in/about/)
 - [Editorial standards and review cadence](https://clearcutt.in/about/#editorial-standards)
+- [remove.bg migration explainer](https://clearcutt.in/remove-bg-shutting-down/)
 - [Privacy policy](https://clearcutt.in/privacy/)
 - [Contact and support](https://clearcutt.in/contact/)
 - [Open-source repository](https://github.com/singhyashkumar/clearcut-remove-bg)
