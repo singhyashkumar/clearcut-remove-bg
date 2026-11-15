@@ -316,19 +316,49 @@ test('evidence images reject invalid definitions instead of rendering broken mar
  const valid=renderPage({...base,images:[{src:'/a.png',alt:'a',width:1,height:1}]});
  assert.ok(valid.includes('width="1" height="1"'),'minimal valid image renders');
 });
-test('generated page CSP allows self-hosted images while keeping restrictive defaults',()=>{
+test('generated page CSP allows the Cloudflare beacon and same-origin RUM while keeping restrictive defaults',()=>{
  for(const p of pages){
   const html=renderPage(p);
   const csp=html.match(/http-equiv="Content-Security-Policy" content="([^"]*)"/)[1];
   assert.match(csp,/^default-src 'none'/,'CSP must keep default-src none');
   assert.ok(csp.includes("img-src 'self' data:"),'CSP must allow self-hosted and data images');
   assert.ok(csp.includes("style-src 'self'"),'CSP must keep style-src self');
-  assert.ok(csp.includes("script-src 'none'"),'CSP must keep script-src none');
+  assert.ok(csp.includes("font-src 'self'"),'CSP must keep font-src self');
+  assert.ok(csp.includes("script-src https://static.cloudflareinsights.com"),'CSP must allow the Cloudflare Web Analytics beacon host');
+  assert.ok(csp.includes("connect-src 'self'"),'CSP must allow same-origin RUM delivery to /cdn-cgi/rum');
   assert.ok(csp.includes("object-src 'none'"),'CSP must keep object-src none');
   assert.ok(csp.includes("base-uri 'none'"),'CSP must keep base-uri none');
   assert.ok(csp.includes("form-action 'none'"),'CSP must keep form-action none');
-  assert.equal(/https?:\/\/|http:/.test(csp),false,'CSP must not open external sources');
+  const scriptSources=csp.match(/script-src ([^;]*)/)[1].trim().split(/\s+/);
+  assert.deepEqual(scriptSources,['https://static.cloudflareinsights.com'],'CSP script-src must allow the beacon host and nothing else');
+  const connectSources=csp.match(/connect-src ([^;]*)/)[1].trim().split(/\s+/);
+  assert.deepEqual(connectSources,["'self'"],'CSP connect-src must allow self and nothing else');
+  assert.equal(csp.includes("'unsafe-inline'"),false,'CSP must not allow inline script or styles from any source');
+  assert.equal(csp.includes("'unsafe-eval'"),false,'CSP must not allow eval');
+  const external=[...new Set([...csp.matchAll(/https?:\/\/[^\s;]+/g)].map(m=>m[0]))];
+  assert.deepEqual(external,['https://static.cloudflareinsights.com'],'CSP must open no external source other than the Cloudflare beacon host');
  }
+});
+test('homepage CSP allows the Cloudflare beacon while keeping every existing script, connect and framing source',()=>{
+ const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+ const csp=html.match(/http-equiv="Content-Security-Policy" content="([^"]*)"/)[1];
+ const directive=name=>csp.match(new RegExp(`${name} ([^;]*)`))[1].trim().split(/\s+/);
+ const scriptSources=directive('script-src');
+ assert.ok(scriptSources.includes('https://static.cloudflareinsights.com'),'homepage script-src must allow the Cloudflare Web Analytics beacon host');
+ for(const source of ["'self'","blob:","https://checkout.razorpay.com","https://cdn.razorpay.com","https://apis.google.com","https://www.gstatic.com/firebasejs/13.0.0/","https://cdn.jsdelivr.net/npm/onnxruntime-web@1.31.0-dev.20260914-8d85527a0/dist/","'wasm-unsafe-eval'"])
+  assert.ok(scriptSources.includes(source),`homepage script-src must keep ${source}`);
+ assert.equal(scriptSources.some(s=>s==='*'||/^https?:$/.test(s)||s.startsWith('*.')),false,'homepage script-src must not gain a broad wildcard or scheme source');
+ const connectSources=directive('connect-src');
+ assert.ok(connectSources.includes("'self'"),'homepage connect-src must keep self for same-origin RUM delivery');
+ for(const source of ["blob:","https://asia-south1-clearcut-remove-bg.cloudfunctions.net","https://api.razorpay.com","https://identitytoolkit.googleapis.com","https://securetoken.googleapis.com","https://accounts.google.com","https://www.googleapis.com","https://huggingface.co","https://cdn.jsdelivr.net"])
+  assert.ok(connectSources.includes(source),`homepage connect-src must keep ${source}`);
+ for(const source of ["https://clearcut-remove-bg.firebaseapp.com","https://accounts.google.com","https://checkout.razorpay.com"])
+  assert.ok(directive('frame-src').includes(source),`homepage frame-src must keep ${source}`);
+ assert.match(csp,/^default-src 'self'/,'homepage must keep default-src self');
+ assert.ok(/object-src 'none'/.test(csp),'homepage must keep object-src none');
+ assert.ok(/base-uri 'none'/.test(csp),'homepage must keep base-uri none');
+ assert.ok(csp.includes("form-action https://checkout.razorpay.com https://api.razorpay.com https://*.razorpay.com"),'homepage must keep the Razorpay form-action allowlist');
+ assert.ok(csp.includes("worker-src 'self' blob:"),'homepage must keep worker-src self and blob');
 });
 test('sitemap URL count follows the generated page list dynamically',()=>{
  const expected=['',...pages.map(p=>`${p.slug}/`)];
