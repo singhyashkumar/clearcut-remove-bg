@@ -46,9 +46,9 @@
       ],
       "mustPrecede": {
         "before": "Check first: software editing may be prohibited or replaced by live capture",
-        "after": "How to add a #ffffff white background in Clearcut (only where permitted)"
+        "after": "How to add a #ffffff white background in Clearcutt (only where permitted)"
       },
-      "note": "The no-guarantee / editing-may-be-prohibited warning must render as the first section, before any Clearcut workflow steps. Never market Clearcut as passport-certified."
+      "note": "The no-guarantee / editing-may-be-prohibited warning must render as the first section, before any Clearcutt workflow steps. Never market Clearcutt as passport-certified."
     },
     {
       "id": "P2-no-certification-claim",
@@ -59,7 +59,7 @@
         "guaranteed\\s+acceptance",
         "passport[-\\s]approved"
       ],
-      "note": "Clearcut is uncertified. Claims of portal or government approval are prohibited on every page."
+      "note": "Clearcutt is uncertified. Claims of portal or government approval are prohibited on every page."
     },
     {
       "id": "P3-external-format-steps",
@@ -109,9 +109,9 @@
       "field": "pages[3].lead",
       "action": "replace",
       "claimType": "hypothesis",
-      "claimDetail": "Verified fact: the exported alpha is the model's subject-segmentation probability and the code contains no ink or darkness threshold, so Clearcut does not perform document thresholding. Hypothesis: what the model actually selects for a photographed signature (the sheet, the ink, or the whole frame) is unknown until a recorded runtime test exists. The proposed wording states only the caution and never asserts which outcome occurs.",
-      "currentText": "Need a clean handwritten signature without grey paper behind it for PDFs, digital letters, or invoices? Clearcut isolates dark ink on plain paper locally in your browser memory and exports a watermark-free transparent or white-background PNG—without uploading your signature to a server. Before editing for an Indian exam form, check whether your portal requires a white-paper JPG instead of a transparent PNG.",
-      "proposedText": "Need a cleaner signature image for PDFs, digital letters, or invoices? Clearcut separates the photographed sheet or signature area from its surroundings locally in your browser memory and exports a watermark-free PNG on a transparent, white, or coloured background—without uploading your signature to a server. How much of the paper is removed depends on your photo: ink-only transparency is not guaranteed, so preview against a dark background swatch, inspect the exported PNG, and refine with the Erase and Restore brushes; for guaranteed ink-only transparency, use a scanner or a dedicated threshold tool. Before editing for an Indian exam form, check whether your portal requires a white-paper JPG instead of a transparent PNG.",
+      "claimDetail": "Verified fact: the exported alpha is the model's subject-segmentation probability and the code contains no ink or darkness threshold, so Clearcutt does not perform document thresholding. Hypothesis: what the model actually selects for a photographed signature (the sheet, the ink, or the whole frame) is unknown until a recorded runtime test exists. The proposed wording states only the caution and never asserts which outcome occurs.",
+      "currentText": "Need a clean handwritten signature without grey paper behind it for PDFs, digital letters, or invoices? Clearcutt isolates dark ink on plain paper locally in your browser memory and exports a watermark-free transparent or white-background PNG—without uploading your signature to a server. Before editing for an Indian exam form, check whether your portal requires a white-paper JPG instead of a transparent PNG.",
+      "proposedText": "Need a cleaner signature image for PDFs, digital letters, or invoices? Clearcutt separates the photographed sheet or signature area from its surroundings locally in your browser memory and exports a watermark-free PNG on a transparent, white, or coloured background—without uploading your signature to a server. How much of the paper is removed depends on your photo: ink-only transparency is not guaranteed, so preview against a dark background swatch, inspect the exported PNG, and refine with the Erase and Restore brushes; for guaranteed ink-only transparency, use a scanner or a dedicated threshold tool. Before editing for an Indian exam form, check whether your portal requires a white-paper JPG instead of a transparent PNG.",
       "verification": "runtime-test: in desktop Chrome run Standard and Detailed on (a) an A4 sheet with a signature photographed on a contrasting desk and (b) a tight signature crop. For each, record source pixel dimensions, mode, date, model id and the exported PNG alpha histogram (share of fully transparent vs fully opaque pixels). Publish any ink-isolation claim only if the recorded output shows ink-shaped transparency. Until then keep the cautious wording above.",
       "evidence": [
         {
@@ -129,11 +129,11 @@
         {
           "type": "repo-path",
           "value": "docs/seo/india-page-content.json @ 8954e63 — pages[3].faqs[1].answer",
-          "note": "The page already says Clearcut uses a general subject-segmentation network rather than document contrast thresholding; the removed lead sentence contradicted it.",
+          "note": "The page already says Clearcutt uses a general subject-segmentation network rather than document contrast thresholding; the removed lead sentence contradicted it.",
           "claimType": "verified-fact"
         }
       ],
-      "appliedText": "Need a cleaner signature image for PDFs, letters or invoices? You can try Clearcut's on-device background remover and save a PNG without uploading your signature. It uses a general subject-segmentation model: removing only the paper around thin ink strokes is not guaranteed. Check the result against a dark background, inspect the exported PNG, and use Erase or Restore where needed. A dedicated scanning or threshold tool may be a better fit for ink-only transparency. For exam forms, first check whether editing is allowed and whether the portal requires a white-paper JPG.",
+      "appliedText": "Need a cleaner signature image for PDFs, letters or invoices? You can try Clearcutt's on-device background remover and save a PNG without uploading your signature. It uses a general subject-segmentation model: removing only the paper around thin ink strokes is not guaranteed. Check the result against a dark background, inspect the exported PNG, and use Erase or Restore where needed. A dedicated scanning or threshold tool may be a better fit for ink-only transparency. For exam forms, first check whether editing is allowed and whether the portal requires a white-paper JPG.",
       "status": "applied"
     },
     {
@@ -149,7 +149,7 @@
       "claimType": "hypothesis",
       "claimDetail": "Same basis as R1-a: the removed phrase (ink strokes with alpha opacity) asserts an outcome the model is not proven to produce. The replacement describes what a transparent PNG is without promising ink-only cutouts.",
       "currentText": "A transparent PNG keeps only your ink strokes with alpha opacity around them, so your signature sits naturally over PDF lines, Word or Google Docs letters, e-invoices, and certificates without covering underlying borders with a white rectangle.",
-      "proposedText": "A transparent PNG keeps the part of the image Clearcut keeps, with transparency around it, so a signature can sit over PDF lines, Word or Google Docs letters, e-invoices, and certificates without covering borders with a white rectangle. Clearcut's models are general subject-segmentation networks rather than document scanners, so the result depends on how your signature is framed and lit: preview against a dark background swatch, inspect the exported PNG, and refine with the Erase and Restore brushes.",
+      "proposedText": "A transparent PNG keeps the part of the image Clearcutt keeps, with transparency around it, so a signature can sit over PDF lines, Word or Google Docs letters, e-invoices, and certificates without covering borders with a white rectangle. Clearcutt's models are general subject-segmentation networks rather than document scanners, so the result depends on how your signature is framed and lit: preview against a dark background swatch, inspect the exported PNG, and refine with the Erase and Restore brushes.",
       "verification": "runtime-test per R1-a.",
       "evidence": [
         {
@@ -159,7 +159,7 @@
           "claimType": "verified-fact"
         }
       ],
-      "appliedText": "A PNG can store transparent pixels, allowing a cutout to sit over a document without a rectangular backdrop. Clearcut uses a general subject-segmentation model rather than a document scanner, so it may keep some or all of the paper around a signature. Preview against a dark background, inspect the exported PNG, and refine with Erase and Restore. Ink-only transparency is not guaranteed.",
+      "appliedText": "A PNG can store transparent pixels, allowing a cutout to sit over a document without a rectangular backdrop. Clearcutt uses a general subject-segmentation model rather than a document scanner, so it may keep some or all of the paper around a signature. Preview against a dark background, inspect the exported PNG, and refine with Erase and Restore. Ink-only transparency is not guaranteed.",
       "status": "applied"
     },
     {
@@ -203,8 +203,8 @@
       "action": "replace",
       "claimType": "inference",
       "claimDetail": "Verified fact: the refinement pass is skipped whenever the detected subject crop occupies 85% or more of the frame (or is under 32px on either axis). Inference: a tightly cropped signature is likely to fall in that skipped range, because how much of the frame the mask covers depends on what the model selects — so the wording says 'may not run' rather than asserting it.",
-      "currentText": "Open Clearcut on desktop Chrome or Edge and upload, drop, or paste your cropped JPG, PNG, or WebP signature image (up to 20 MB and 25 megapixels). Choose 'Detailed · larger model' (up to 473 MB first-run download on supported hardware, with automatic fallback to the 98 MB Standard model) for finer stroke retention.",
-      "proposedText": "Open Clearcut on desktop Chrome or Edge and upload, drop, or paste your cropped JPG, PNG, or WebP signature image (up to 20 MB and 25 megapixels). 'Standard · original model (98 MB)' is the default; 'Detailed · larger model' swaps in larger weights (up to 473 MB first-run download on supported hardware, with automatic fallback to the 98 MB Standard model) and adds a focused second pass only when the detected subject occupies under 85% of the frame, so it may not run on a tightly cropped signature. Compare both modes against a dark background swatch before you export.",
+      "currentText": "Open Clearcutt on desktop Chrome or Edge and upload, drop, or paste your cropped JPG, PNG, or WebP signature image (up to 20 MB and 25 megapixels). Choose 'Detailed · larger model' (up to 473 MB first-run download on supported hardware, with automatic fallback to the 98 MB Standard model) for finer stroke retention.",
+      "proposedText": "Open Clearcutt on desktop Chrome or Edge and upload, drop, or paste your cropped JPG, PNG, or WebP signature image (up to 20 MB and 25 megapixels). 'Standard · original model (98 MB)' is the default; 'Detailed · larger model' swaps in larger weights (up to 473 MB first-run download on supported hardware, with automatic fallback to the 98 MB Standard model) and adds a focused second pass only when the detected subject occupies under 85% of the frame, so it may not run on a tightly cropped signature. Compare both modes against a dark background swatch before you export.",
       "verification": "runtime-test per R1-a, recording whether the refining stage appeared for each input framing.",
       "evidence": [
         {
@@ -226,7 +226,7 @@
           "claimType": "verified-fact"
         }
       ],
-      "appliedText": "Open Clearcut on desktop Chrome or Edge and upload, drop, or paste your cropped JPG, PNG, or WebP signature image (up to 20 MB and 25 megapixels). 'Standard · original model (98 MB)' is the default; 'Detailed · larger model' swaps in larger weights (up to 473 MB first-run download on supported hardware, with automatic fallback to the 98 MB Standard model) and adds a focused second pass only when the detected subject occupies under 85% of the frame, so it may not run on a tightly cropped signature. Compare both modes against a dark background swatch before you export.",
+      "appliedText": "Open Clearcutt on desktop Chrome or Edge and upload, drop, or paste your cropped JPG, PNG, or WebP signature image (up to 20 MB and 25 megapixels). 'Standard · original model (98 MB)' is the default; 'Detailed · larger model' swaps in larger weights (up to 473 MB first-run download on supported hardware, with automatic fallback to the 98 MB Standard model) and adds a focused second pass only when the detected subject occupies under 85% of the frame, so it may not run on a tightly cropped signature. Compare both modes against a dark background swatch before you export.",
       "status": "applied"
     },
     {
@@ -241,9 +241,9 @@
       "action": "replace",
       "claimType": "editorial",
       "claimDetail": "The internal alpha cut-off is an implementation detail. Omit it from consumer prose; do not substitute other technical wording.",
-      "currentText": "Trim empty edges: Ise tick karne par Clearcut photo ke charon taraf ki khali jagah kaatkar seedha subject ke kinaron (alpha > 4) tak tight crop kar deta hai—chahe aapne safed ya rangin background hi kyun na chuna ho. Agar aapko subject ke aas-paas margin chahiye toh ise unticked chhod dein.",
-      "proposedText": "Trim empty edges: Ise tick karne par Clearcut photo ke charon taraf ki khali jagah kaatkar seedha subject ke kinaron tak tight crop kar deta hai—chahe aapne safed ya rangin background hi kyun na chuna ho. Agar aapko subject ke aas-paas margin chahiye toh ise unticked chhod dein.",
-      "appliedText": "Trim empty edges: Ise tick karne par Clearcut photo ke charon taraf ki khali jagah kaatkar seedha subject ke kinaron tak tight crop kar deta hai—chahe aapne safed ya rangin background hi kyun na chuna ho. Agar aapko subject ke aas-paas margin chahiye toh ise unticked chhod dein.",
+      "currentText": "Trim empty edges: Ise tick karne par Clearcutt photo ke charon taraf ki khali jagah kaatkar seedha subject ke kinaron (alpha > 4) tak tight crop kar deta hai—chahe aapne safed ya rangin background hi kyun na chuna ho. Agar aapko subject ke aas-paas margin chahiye toh ise unticked chhod dein.",
+      "proposedText": "Trim empty edges: Ise tick karne par Clearcutt photo ke charon taraf ki khali jagah kaatkar seedha subject ke kinaron tak tight crop kar deta hai—chahe aapne safed ya rangin background hi kyun na chuna ho. Agar aapko subject ke aas-paas margin chahiye toh ise unticked chhod dein.",
+      "appliedText": "Trim empty edges: Ise tick karne par Clearcutt photo ke charon taraf ki khali jagah kaatkar seedha subject ke kinaron tak tight crop kar deta hai—chahe aapne safed ya rangin background hi kyun na chuna ho. Agar aapko subject ke aas-paas margin chahiye toh ise unticked chhod dein.",
       "status": "applied"
     },
     {
@@ -275,9 +275,9 @@
       "action": "replace",
       "claimType": "editorial",
       "claimDetail": "Omit the internal alpha constant.",
-      "currentText": "No. Keep Trim empty edges unchecked. When checked, Clearcut crops tightly to the detected person's outline (alpha > 4) with zero space above the head or beside the shoulders—even on a #ffffff white background—which ruins standard ID framing.",
-      "proposedText": "No. Keep Trim empty edges unchecked. When checked, Clearcut crops tightly to the detected person's outline with zero space above the head or beside the shoulders—even on a #ffffff white background—which ruins standard ID framing.",
-      "appliedText": "No. Keep Trim empty edges unchecked. When checked, Clearcut crops tightly to the detected person's outline with zero space above the head or beside the shoulders—even on a #ffffff white background—which ruins standard ID framing.",
+      "currentText": "No. Keep Trim empty edges unchecked. When checked, Clearcutt crops tightly to the detected person's outline (alpha > 4) with zero space above the head or beside the shoulders—even on a #ffffff white background—which ruins standard ID framing.",
+      "proposedText": "No. Keep Trim empty edges unchecked. When checked, Clearcutt crops tightly to the detected person's outline with zero space above the head or beside the shoulders—even on a #ffffff white background—which ruins standard ID framing.",
+      "appliedText": "No. Keep Trim empty edges unchecked. When checked, Clearcutt crops tightly to the detected person's outline with zero space above the head or beside the shoulders—even on a #ffffff white background—which ruins standard ID framing.",
       "status": "applied"
     },
     {
@@ -292,9 +292,9 @@
       "action": "replace",
       "claimType": "editorial",
       "claimDetail": "Omit the internal alpha constant.",
-      "currentText": "Understanding how Clearcut exports canvases prevents accidental catalog rejections. When 'Trim empty edges' is left unchecked, Clearcut preserves your original photo's pixel width and height. When 'Trim empty edges' IS checked, Clearcut crops tightly to the outer pixels of the product mask (alpha > 4) with zero white margin—even when the White (#ffffff) swatch is active.",
-      "proposedText": "Understanding how Clearcut exports canvases prevents accidental catalog rejections. When 'Trim empty edges' is left unchecked, Clearcut preserves your original photo's pixel width and height. When 'Trim empty edges' IS checked, Clearcut crops tightly to the outer edge of the detected product with zero white margin—even when the White (#ffffff) swatch is active.",
-      "appliedText": "Understanding how Clearcut exports canvases prevents accidental catalog rejections. When 'Trim empty edges' is left unchecked, Clearcut preserves your original photo's pixel width and height. When 'Trim empty edges' IS checked, Clearcut crops tightly to the outer edge of the detected product with zero white margin—even when the White (#ffffff) swatch is active.",
+      "currentText": "Understanding how Clearcutt exports canvases prevents accidental catalog rejections. When 'Trim empty edges' is left unchecked, Clearcutt preserves your original photo's pixel width and height. When 'Trim empty edges' IS checked, Clearcutt crops tightly to the outer pixels of the product mask (alpha > 4) with zero white margin—even when the White (#ffffff) swatch is active.",
+      "proposedText": "Understanding how Clearcutt exports canvases prevents accidental catalog rejections. When 'Trim empty edges' is left unchecked, Clearcutt preserves your original photo's pixel width and height. When 'Trim empty edges' IS checked, Clearcutt crops tightly to the outer edge of the detected product with zero white margin—even when the White (#ffffff) swatch is active.",
+      "appliedText": "Understanding how Clearcutt exports canvases prevents accidental catalog rejections. When 'Trim empty edges' is left unchecked, Clearcutt preserves your original photo's pixel width and height. When 'Trim empty edges' IS checked, Clearcutt crops tightly to the outer edge of the detected product with zero white margin—even when the White (#ffffff) swatch is active.",
       "status": "applied"
     },
     {
@@ -326,9 +326,9 @@
       "action": "replace",
       "claimType": "editorial",
       "claimDetail": "Removes the alpha constant and the unsupported claim that the crop lands on ink bounds; 'whatever the model kept' is outcome-neutral and consistent with R1.",
-      "currentText": "Choose background and Trim empty edges: Switch back to the Transparent checkerboard swatch for digital document signing (or White #ffffff if you plan to convert externally to a white-background JPG). For transparent document signatures, checking 'Trim empty edges' is helpful because it crops 'clearcut.png' tightly to the ink bounds (alpha > 4) without extra empty canvas.",
-      "proposedText": "Choose background and Trim empty edges: Switch back to the Transparent checkerboard swatch for digital document signing (or White #ffffff if you plan to convert externally to a white-background JPG). For document signatures, checking 'Trim empty edges' is helpful because it crops 'clearcut.png' tightly around whatever the model kept, without extra empty canvas.",
-      "appliedText": "Choose background and Trim empty edges: Switch back to the Transparent checkerboard swatch for digital document signing (or White #ffffff if you plan to convert externally to a white-background JPG). For document signatures, checking 'Trim empty edges' is helpful because it crops 'clearcut.png' tightly around whatever the model kept, without extra empty canvas.",
+      "currentText": "Choose background and Trim empty edges: Switch back to the Transparent checkerboard swatch for digital document signing (or White #ffffff if you plan to convert externally to a white-background JPG). For transparent document signatures, checking 'Trim empty edges' is helpful because it crops 'clearcutt.png' tightly to the ink bounds (alpha > 4) without extra empty canvas.",
+      "proposedText": "Choose background and Trim empty edges: Switch back to the Transparent checkerboard swatch for digital document signing (or White #ffffff if you plan to convert externally to a white-background JPG). For document signatures, checking 'Trim empty edges' is helpful because it crops 'clearcutt.png' tightly around whatever the model kept, without extra empty canvas.",
+      "appliedText": "Choose background and Trim empty edges: Switch back to the Transparent checkerboard swatch for digital document signing (or White #ffffff if you plan to convert externally to a white-background JPG). For document signatures, checking 'Trim empty edges' is helpful because it crops 'clearcutt.png' tightly around whatever the model kept, without extra empty canvas.",
       "status": "applied"
     },
     {
@@ -343,9 +343,9 @@
       "action": "replace",
       "claimType": "editorial",
       "claimDetail": "Drop the forensic-memory clause from consumer prose. It is replaced with a practical instruction, not with other operating-system detail.",
-      "currentText": "Clearcut aapki photo ko kisi cloud image server ya payment backend par bhejkar edit nahi karta. Aapki photo, AI mask aur brush edits sirf aapke browser ki memory (RAM) mein rehte hain. Jab aap 'New photo ↗' dabate hain ya browser tab band karte hain, toh editing session khatam ho jata hai (halaanki tab band karna forensic RAM erasure ki guarantee nahi hota).",
-      "proposedText": "Clearcut aapki photo ko kisi cloud image server ya payment backend par bhejkar edit nahi karta. Aapki photo, AI mask aur brush edits sirf aapke browser ki memory mein rehte hain. Jab aap 'New photo ↗' dabate hain ya browser tab band karte hain, toh editing session khatam ho jata hai—isliye PNG download karne se pehle tab na band karein.",
-      "appliedText": "Clearcut aapki photo ko kisi cloud image server ya payment backend par bhejkar edit nahi karta. Aapki photo, AI mask aur brush edits sirf aapke browser ki memory mein rehte hain. Jab aap 'New photo ↗' dabate hain ya browser tab band karte hain, toh editing session khatam ho jata hai—isliye PNG download karne se pehle tab na band karein.",
+      "currentText": "Clearcutt aapki photo ko kisi cloud image server ya payment backend par bhejkar edit nahi karta. Aapki photo, AI mask aur brush edits sirf aapke browser ki memory (RAM) mein rehte hain. Jab aap 'New photo ↗' dabate hain ya browser tab band karte hain, toh editing session khatam ho jata hai (halaanki tab band karna forensic RAM erasure ki guarantee nahi hota).",
+      "proposedText": "Clearcutt aapki photo ko kisi cloud image server ya payment backend par bhejkar edit nahi karta. Aapki photo, AI mask aur brush edits sirf aapke browser ki memory mein rehte hain. Jab aap 'New photo ↗' dabate hain ya browser tab band karte hain, toh editing session khatam ho jata hai—isliye PNG download karne se pehle tab na band karein.",
+      "appliedText": "Clearcutt aapki photo ko kisi cloud image server ya payment backend par bhejkar edit nahi karta. Aapki photo, AI mask aur brush edits sirf aapke browser ki memory mein rehte hain. Jab aap 'New photo ↗' dabate hain ya browser tab band karte hain, toh editing session khatam ho jata hai—isliye PNG download karne se pehle tab na band karein.",
       "status": "applied"
     },
     {
@@ -360,12 +360,12 @@
       "action": "replace",
       "claimType": "editorial",
       "claimDetail": "Drop the forensic-memory clause and the word 'alpha' from consumer prose. See R12-b for the mask wording inside the same sentence.",
-      "currentText": "Handwritten signatures are sensitive personal identifiers. In Clearcut, your selected image, alpha mask, and brush edits stay in your browser's memory on your device and are never uploaded to Clearcut's backend or stored in a database. Download your PNG before closing or refreshing the tab, as ending the session discards the cutout in the app (closing a tab is not a forensic RAM-erasure guarantee).",
-      "proposedText": "Handwritten signatures are sensitive personal identifiers. In Clearcut, your selected image, its cutout mask, and your brush edits stay in your browser's memory on your device and are never uploaded to Clearcut's backend or stored in a database. Download your PNG before closing or refreshing the tab, as ending the session discards the cutout in the app.",
+      "currentText": "Handwritten signatures are sensitive personal identifiers. In Clearcutt, your selected image, alpha mask, and brush edits stay in your browser's memory on your device and are never uploaded to Clearcutt's backend or stored in a database. Download your PNG before closing or refreshing the tab, as ending the session discards the cutout in the app (closing a tab is not a forensic RAM-erasure guarantee).",
+      "proposedText": "Handwritten signatures are sensitive personal identifiers. In Clearcutt, your selected image, its cutout mask, and your brush edits stay in your browser's memory on your device and are never uploaded to Clearcutt's backend or stored in a database. Download your PNG before closing or refreshing the tab, as ending the session discards the cutout in the app.",
       "applyWith": [
         "R12-b"
       ],
-      "appliedText": "Handwritten signatures are sensitive personal identifiers. In Clearcut, your selected image, its cutout mask, and your brush edits stay in your browser's memory on your device and are never uploaded to Clearcut's backend or stored in a database. Download your PNG before closing or refreshing the tab, as ending the session discards the cutout in the app.",
+      "appliedText": "Handwritten signatures are sensitive personal identifiers. In Clearcutt, your selected image, its cutout mask, and your brush edits stay in your browser's memory on your device and are never uploaded to Clearcutt's backend or stored in a database. Download your PNG before closing or refreshing the tab, as ending the session discards the cutout in the app.",
       "status": "applied"
     },
     {
@@ -410,8 +410,8 @@
       "action": "replace",
       "claimType": "verified-fact",
       "claimDetail": "The cited Flipkart and Myntra sources do not state JPEG or aspect-ratio upload requirements, so the specific assertion is unsupported. Replaced with the weaker, sourced statement that uploaders may impose their own rules.",
-      "currentText": "Amazon India accepts PNG alongside JPEG (preferred), TIFF, and non-animated GIF. However, Meesho public category guides specify JPEG format for catalog images, and Flipkart or Myntra category uploaders often require JPEG and fixed aspect ratios. Convert Clearcut's PNG export to JPEG externally whenever your seller portal requires it.",
-      "proposedText": "Amazon India accepts PNG alongside JPEG (preferred), TIFF, and non-animated GIF. Meesho's public category guides specify JPEG format for catalog images, and Flipkart or Myntra uploaders may impose their own format or aspect-ratio rules. Check the uploader in your seller panel, and convert Clearcut's PNG export to JPEG externally whenever your portal requires it.",
+      "currentText": "Amazon India accepts PNG alongside JPEG (preferred), TIFF, and non-animated GIF. However, Meesho public category guides specify JPEG format for catalog images, and Flipkart or Myntra category uploaders often require JPEG and fixed aspect ratios. Convert Clearcutt's PNG export to JPEG externally whenever your seller portal requires it.",
+      "proposedText": "Amazon India accepts PNG alongside JPEG (preferred), TIFF, and non-animated GIF. Meesho's public category guides specify JPEG format for catalog images, and Flipkart or Myntra uploaders may impose their own format or aspect-ratio rules. Check the uploader in your seller panel, and convert Clearcutt's PNG export to JPEG externally whenever your portal requires it.",
       "evidence": [
         {
           "type": "url",
@@ -426,7 +426,7 @@
           "claimType": "verified-fact"
         }
       ],
-      "appliedText": "Amazon India accepts PNG alongside JPEG (preferred), TIFF, and non-animated GIF. Meesho's public category guides specify JPEG format for catalog images, and Flipkart or Myntra uploaders may impose their own format or aspect-ratio rules. Check the uploader in your seller panel, and convert Clearcut's PNG export to JPEG externally whenever your portal requires it.",
+      "appliedText": "Amazon India accepts PNG alongside JPEG (preferred), TIFF, and non-animated GIF. Meesho's public category guides specify JPEG format for catalog images, and Flipkart or Myntra uploaders may impose their own format or aspect-ratio rules. Check the uploader in your seller panel, and convert Clearcutt's PNG export to JPEG externally whenever your portal requires it.",
       "status": "applied"
     },
     {
@@ -609,9 +609,9 @@
       "action": "replace",
       "claimType": "editorial",
       "claimDetail": "'uncompressed-alpha raster PNG' is implementation vocabulary; the practical fact is full-resolution PNG export. The rest of the sentence, including the external JPG/DPI/KB limits, is unchanged.",
-      "currentText": "Clearcut always downloads an uncompressed-alpha raster PNG ('clearcut.png') at your source image's pixel dimensions.",
-      "proposedText": "Clearcut always downloads a full-resolution PNG ('clearcut.png') at your source image's pixel dimensions.",
-      "appliedText": "Clearcut always downloads a full-resolution PNG ('clearcut.png') at your source image's pixel dimensions. It does not export .jpg/.jpeg files, crop to fixed ratios such as 3.5 cm × 4.5 cm, 630×810 px, or 200×230 px, write DPI metadata, or compress files to portal windows like 20–50 KB or 10–200 KB.",
+      "currentText": "Clearcutt always downloads an uncompressed-alpha raster PNG ('clearcutt.png') at your source image's pixel dimensions.",
+      "proposedText": "Clearcutt always downloads a full-resolution PNG ('clearcutt.png') at your source image's pixel dimensions.",
+      "appliedText": "Clearcutt always downloads a full-resolution PNG ('clearcutt.png') at your source image's pixel dimensions. It does not export .jpg/.jpeg files, crop to fixed ratios such as 3.5 cm × 4.5 cm, 630×810 px, or 200×230 px, write DPI metadata, or compress files to portal windows like 20–50 KB or 10–200 KB.",
       "status": "applied"
     },
     {
@@ -626,7 +626,7 @@
       "action": "keep",
       "claimType": "editorial",
       "claimDetail": "The 'alpha mask' wording is removed by R4-b, which replaces the whole paragraph. This entry exists so the two are not applied as conflicting edits.",
-      "currentText": "In Clearcut, your selected image, alpha mask, and brush edits stay in your browser's memory",
+      "currentText": "In Clearcutt, your selected image, alpha mask, and brush edits stay in your browser's memory",
       "proposedText": "Superseded by R4-b: the replacement paragraph reads 'your selected image, its cutout mask, and your brush edits'.",
       "applyWith": [
         "R4-b"

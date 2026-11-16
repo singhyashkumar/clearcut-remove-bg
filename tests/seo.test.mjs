@@ -35,6 +35,11 @@ test('home SEO exposes linked guides, instant reviews and complete honest social
 test('every generated page has production social metadata without fake ratings',()=>{
  for(const p of pages){const html=renderPage(p);assert.ok(html.includes(`property="og:url" content="https://clearcutt.in/${p.slug}/"`));assert.ok(html.includes('property="og:image" content="https://clearcutt.in/artwork/clearcut-social-card.png"'));assert.ok(html.includes('name="twitter:card" content="summary_large_image"'));assert.ok(html.includes('name="twitter:description"'));assert.ok(html.includes('href="/favicon.ico"'));assert.ok(html.includes('property="og:site_name" content="Clearcutt"'));assert.equal(/AggregateRating|"@type":"Review"/.test(html),false);}
 });
+test('all public HTML uses the Clearcutt brand spelling',()=>{
+ const home=enhanceHome(readFileSync(new URL('../index.html',import.meta.url),'utf8'));
+ assert.doesNotMatch(home,/\bClearcut\b/,'homepage must not use the retired one-t spelling');
+ for(const p of pages)assert.doesNotMatch(renderPage(p),/\bClearcut\b/,`${p.slug} must not use the retired one-t spelling`);
+});
 test('generated pages have unique descriptions and a single canonical URL each',()=>{
  assert.equal(new Set(pages.map(p=>p.description)).size,pages.length);
  for(const p of pages){const html=renderPage(p);assert.equal((html.match(/rel="canonical"/g)||[]).length,1);}

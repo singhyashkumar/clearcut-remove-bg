@@ -191,7 +191,7 @@ async function moderateReview(request, env, uid) {
 
 async function createOrder(request, env, uid, fetchImpl = fetch) {
   const body = await readJson(request);
-  if (!body || body.plan !== 'plus-monthly') return json({ error: 'Choose the Clearcut Plus monthly plan.' }, 400);
+  if (!body || body.plan !== 'plus-monthly') return json({ error: 'Choose the Clearcutt Plus monthly plan.' }, 400);
   if (!configured(env)) return json({ error: 'Payment service is not configured for this mode.' }, 503);
   const recentOrders = await env.DB.prepare("SELECT COUNT(*) AS count FROM orders WHERE uid = ? AND created_at >= unixepoch() - 600").bind(uid).first();
   if ((recentOrders?.count || 0) >= 5) return json({ error: 'Too many checkout attempts. Wait a few minutes and try again.' }, 429);
@@ -278,7 +278,7 @@ async function webhook(request, env) {
     const prior = await env.DB.prepare('SELECT event_id FROM webhook_events WHERE event_id = ?').bind(eventId).first();
     if (prior) return json({ received: true, duplicate: true });
     const order = await env.DB.prepare('SELECT uid, amount_paise, currency, status FROM orders WHERE order_id = ?').bind(payment.order_id).first();
-    if (!order || order.amount_paise !== payment.amount || order.currency !== payment.currency || payment.currency !== 'INR') return json({ error: 'Payment does not match a Clearcut order.' }, 409);
+    if (!order || order.amount_paise !== payment.amount || order.currency !== payment.currency || payment.currency !== 'INR') return json({ error: 'Payment does not match a Clearcutt order.' }, 409);
     const statements = [
       env.DB.prepare('INSERT INTO webhook_events (event_id, received_at) VALUES (?, unixepoch())').bind(eventId),
       env.DB.prepare("UPDATE orders SET status = 'paid', payment_id = ? WHERE order_id = ? AND status = 'pending' AND amount_paise = ?").bind(payment.id, payment.order_id, payment.amount),

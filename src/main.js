@@ -78,7 +78,7 @@ $('download').onclick=async()=>{
   let bounds={x:0,y:0,width:canvas.width,height:canvas.height};
   if($('crop').checked){const maskData=new Uint8ClampedArray(alpha.length*4);for(let i=0;i<alpha.length;i++)maskData[i*4+3]=alpha[i];bounds=alphaBounds(maskData,canvas.width,canvas.height);}
   exportCanvas.width=bounds.width;exportCanvas.height=bounds.height;exportCanvas.getContext('2d').drawImage(canvas,bounds.x,bounds.y,bounds.width,bounds.height,0,0,bounds.width,bounds.height);
-  const blob=await new Promise(resolve=>exportCanvas.toBlob(resolve,'image/png'));if(!blob)throw Error();const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='clearcut.png';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);$('edit-status').textContent='Your PNG is ready. Check your downloads.';
+  const blob=await new Promise(resolve=>exportCanvas.toBlob(resolve,'image/png'));if(!blob)throw Error();const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='clearcutt.png';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);$('edit-status').textContent='Your PNG is ready. Check your downloads.';
  }catch{fail('The PNG could not be created. Please try again.');}finally{button.disabled=false;}
 };
 window.addEventListener('pagehide',()=>{controller?.abort();release();});

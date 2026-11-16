@@ -10,7 +10,7 @@
 
 ## 1. Repository Capability Sources (`REPO-*`)
 
-Every Clearcut product claim in `docs/seo/india-page-content.json` is constrained to behavior verified in commit `bef5689b8d79e722f89341ea1b8b9ed6a487c7fc` and on live `https://clearcutt.in/`.
+Every Clearcutt product claim in `docs/seo/india-page-content.json` is constrained to behavior verified in commit `bef5689b8d79e722f89341ea1b8b9ed6a487c7fc` and on live `https://clearcutt.in/`.
 
 ### `REPO-INPUT-LIMITS`
 - **Primary paths:** `src/image-utils.js`, `src/main.js`, `index.html`, `vendor/bg0/image.ts`
@@ -42,7 +42,7 @@ Every Clearcut product claim in `docs/seo/india-page-content.json` is constraine
   - `Undo` (`#undo`, `src/main.js:6,72,78`) stores **one previous mask state only** (single-step undo, not multi-step history). `Reset cutout` (`#reset-mask`) restores `initialAlpha` (and saves the pre-reset state into the single undo slot). `New photo ↗` (`#reset`) discards the session.
   - Background options (`index.html:9`, `src/main.js:63-66`): Transparent checkerboard (`transparent`, visual guide only), pure White (`#ffffff`, verified RGBA `[255,255,255,255]` in `VERIFICATION.md`), Dark green (`#20372f`), Pink (`#f1c6c1`), Custom background color (`#color`), and Add background photo (`#bg-file`, cover-scaled).
   - `Trim empty edges` (`#crop`, `src/main.js:82-85`, `src/image-utils.js:11-16`) computes tight bounding coordinates where subject `alpha > 4` and crops `exportCanvas` to those bounds with zero margin **even when White (`#ffffff`), a solid color, or a background photo is selected**.
-  - Export (`src/main.js:85-86`) creates `image/png` (`clearcut.png`) only, without watermark. Clearcut has no JPG/JPEG, SVG, PDF, or TIFF export, no cm/pixel template cropping, no DPI metadata control, and no KB file-size compression.
+  - Export (`src/main.js:85-86`) creates `image/png` (`clearcutt.png`) only, without watermark. Clearcutt has no JPG/JPEG, SVG, PDF, or TIFF export, no cm/pixel template cropping, no DPI metadata control, and no KB file-size compression.
 - **Used in slugs:** `photo-ka-background-kaise-hataye`, `passport-exam-form-white-background`, `amazon-flipkart-meesho-product-white-background`, `remove-background-from-signature-png`
 
 ### `REPO-PLATFORM-LIMITS`
@@ -58,9 +58,9 @@ Every Clearcut product claim in `docs/seo/india-page-content.json` is constraine
 - **Primary paths:** `src/main.js`, `scripts/seo.mjs`, `SECURITY-REVIEW.md`, `VERIFICATION.md`, `README.md`
 - **Applicability date:** Security review dated `2026-10-21`; privacy policy text in `scripts/seo.mjs` dated `2026-10-23`; verified `2026-11-13`.
 - **Claims supported:**
-  - Selected photos, masks, and brush edits remain in browser memory on the user's device and are never uploaded to Clearcut's Cloudflare Worker/D1 backend or any image server.
+  - Selected photos, masks, and brush edits remain in browser memory on the user's device and are never uploaded to Clearcutt's Cloudflare Worker/D1 backend or any image server.
   - Closing the tab or clicking `New photo ↗` discards the editing session in the application, though closing a browser tab is not a forensic RAM-erasure guarantee.
-  - Clearcut is not zero-network: model/config GET requests go to Hugging Face (`huggingface.co` / `*.hf.co`), the pinned ONNX WASM runtime loads from jsDelivr (`cdn.jsdelivr.net`), the site is served via GitHub Pages / Cloudflare, and optional sign-in/reviews/checkout connect to Google Firebase and Razorpay (which receive ordinary HTTP request metadata such as IP address and headers, never user photos).
+  - Clearcutt is not zero-network: model/config GET requests go to Hugging Face (`huggingface.co` / `*.hf.co`), the pinned ONNX WASM runtime loads from jsDelivr (`cdn.jsdelivr.net`), the site is served via GitHub Pages / Cloudflare, and optional sign-in/reviews/checkout connect to Google Firebase and Razorpay (which receive ordinary HTTP request metadata such as IP address and headers, never user photos).
 - **Used in slugs:** `photo-ka-background-kaise-hataye`, `passport-exam-form-white-background`, `amazon-flipkart-meesho-product-white-background`, `remove-background-from-signature-png`
 
 ### `REPO-PLANS-LIMITS`
@@ -68,7 +68,7 @@ Every Clearcut product claim in `docs/seo/india-page-content.json` is constraine
 - **Applicability date:** Repository state verified `2026-11-13`.
 - **Claims supported:**
   - Single-photo workflow only (one image per run); no batch/bulk processing, no catalog CSV tool, no public API, and no automatic shadow generation.
-  - Background removal works free without sign-in; Clearcut Plus is a manual 30-day pass (`₹90`, no auto-renewal) whose daily guidance is not strictly enforced in-browser and does not unlock batch processing today.
+  - Background removal works free without sign-in; Clearcutt Plus is a manual 30-day pass (`₹90`, no auto-renewal) whose daily guidance is not strictly enforced in-browser and does not unlock batch processing today.
 - **Used in slugs:** `amazon-flipkart-meesho-product-white-background`
 
 ---
@@ -234,7 +234,7 @@ Citation note (2026-11-13): the authoritative Seller Central Help page (G1881, h
 - **Exact URL:** `https://developers.google.com/search/docs/appearance/structured-data/faqpage`
 - **Publication / Applicability Date:** Policy updated August/September 2023; active Google Search Central documentation verified `2026-11-13`.
 - **Claims supported:**
-  - Google Search displays FAQ rich results **only for well-known, authoritative government and health websites**. Implementing `FAQPage` JSON-LD on `clearcutt.in` maintains clean 1:1 structured-data parity with visible page FAQs, but does **not** make Clearcut eligible for Google FAQ rich results.
+  - Google Search displays FAQ rich results **only for well-known, authoritative government and health websites**. Implementing `FAQPage` JSON-LD on `clearcutt.in` maintains clean 1:1 structured-data parity with visible page FAQs, but does **not** make Clearcutt eligible for Google FAQ rich results.
 - **Used in slugs:** Referenced in `editorialNotes.faqSchemaEligibility` across all four pages.
 
 ---
@@ -243,9 +243,9 @@ Citation note (2026-11-13): the authoritative Seller Central Help page (G1881, h
 
 When Z.ai wires `docs/seo/india-page-content.json` into `scripts/seo.mjs` and the build pipeline:
 
-1. **Title & Meta Length Guidance (Not Ranking Guarantees):** Each approved `renderedTitle` (`<60` chars including ` | Clearcut`) and `description` (`<155` chars) is editorial length hygiene to reduce visual truncation—not a ranking factor, ranking timeline promise, or guarantee against Google rewriting titles/snippets.
+1. **Title & Meta Length Guidance (Not Ranking Guarantees):** Each approved `renderedTitle` (`<60` chars including ` | Clearcutt`) and `description` (`<155` chars) is editorial length hygiene to reduce visual truncation—not a ranking factor, ranking timeline promise, or guarantee against Google rewriting titles/snippets.
 2. **1:1 `FAQPage` Schema Without Rich-Result Claims:** Render the 5 `faqs` per page in visible HTML and serialize the exact same `question`/`answer` strings into `FAQPage.mainEntity` JSON-LD, while recognizing `clearcutt.in` is not a government/health site and is therefore ineligible for Google Search FAQ rich results (`SRC-GOOGLE-FAQPAGE`). Never emit `AggregateRating` or `Review` schema.
-3. **CSP & Real Visual Evidence Only:** `scripts/seo.mjs` currently sets `default-src 'none'` without `img-src 'self'` on generated guides, which blocks images. Add `img-src 'self'` only when embedding genuine, unretouched Clearcut output images (with recorded input dimensions, model, date, and brush/trim state). Never publish AI-generated or edited mockups as model outputs.
+3. **CSP & Real Visual Evidence Only:** `scripts/seo.mjs` currently sets `default-src 'none'` without `img-src 'self'` on generated guides, which blocks images. Add `img-src 'self'` only when embedding genuine, unretouched Clearcutt output images (with recorded input dimensions, model, date, and brush/trim state). Never publish AI-generated or edited mockups as model outputs.
 4. **Sitemap, `llms.txt`, and Search Console Scope:** Adding these four slugs expands `dist/sitemap.xml` from `10` to `14` URLs (requiring matching updates in `scripts/verify-dist.mjs` and `scripts/verify-live.mjs`, plus guide links in `public/llms.txt`). After deployment, resubmit `https://clearcutt.in/sitemap.xml` and use URL Inspection / Request Indexing **only for canonical HTML pages**—do **not** submit `/llms.txt` to Request Indexing.
 
 

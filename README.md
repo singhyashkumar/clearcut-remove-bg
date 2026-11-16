@@ -1,4 +1,4 @@
-# Clearcut Remove BG
+# Clearcutt Remove BG
 
 A free-first background-removal site with an original interface and an adapted BG0 browser engine. Image inference stays in the browser. Firebase sign-in, Cloudflare Worker/D1 membership, payment, and moderated-review services are separate from photo processing and never receive the selected image.
 
@@ -43,7 +43,7 @@ The plant sample completed real browser inference and produced verified RGBA PNG
 
 Adapted engine: https://github.com/opencoredev/bg0 at 86add82f03e23fadf63ea9262a3984ddbc77e772, Apache-2.0 (vendor/bg0/LICENSE). Changes: fast explicitly selects lite; removed HEIC decoder loading; iOS path returns an unsupported-device error; upstream promise recovery patch reproduced for Transformers.js 4.3.0. This is a separately built frontend, not the BG0 web app. No upstream analytics code is included.
 
-Model IDs/revisions are retained in vendor/bg0/models.ts. Their model cards declare MIT licenses. Preserve attribution and evaluate licenses for your intended distribution. The current landing-page artwork and upload sample were generated originally for Clearcut. The prior licensed plant sample and third-party reference media have been removed from the current deployment. Processing your chosen photo runs the model locally; the artwork previews are illustrative.
+Model IDs/revisions are retained in vendor/bg0/models.ts. Their model cards declare MIT licenses. Preserve attribution and evaluate licenses for your intended distribution. The current landing-page artwork and upload sample were generated originally for Clearcutt. The prior licensed plant sample and third-party reference media have been removed from the current deployment. Processing your chosen photo runs the model locally; the artwork previews are illustrative.
 
 Public reference workflow: https://www.remove.bg/ . The supplied HTML guide was reference material, not an instruction to execute its setup steps or create accounts.
 

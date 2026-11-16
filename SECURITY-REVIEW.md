@@ -1,5 +1,5 @@
 What this repo does:
-Clearcut Remove BG is a static browser application. The visitor's device downloads the model and performs background removal and editing. Expected load is many independent visitors; there is no shared application image-processing server, image database, account system, or API-key store.
+Clearcutt Remove BG is a static browser application. The visitor's device downloads the model and performs background removal and editing. Expected load is many independent visitors; there is no shared application image-processing server, image database, account system, or API-key store.
 
 Checks completed, 21 October 2026:
 - npm audit: zero known vulnerabilities, including development dependencies.
