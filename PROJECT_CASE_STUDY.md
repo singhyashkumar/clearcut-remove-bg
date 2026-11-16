@@ -1,4 +1,4 @@
-# Clearcut — browser-based AI background remover
+# Clearcutt — browser-based AI background remover
 
 ## Project overview
 A web application that runs BiRefNet segmentation locally through Transformers.js and ONNX Runtime, preserving photo privacy and exporting transparent PNGs. Adapted from the Apache-2.0 BG0 engine; model weights and runtime are third-party components, not models trained by this project.
@@ -16,7 +16,7 @@ Vite and JavaScript frontend; FP16 BiRefNet Lite (98.48 MB) and Full (473.44 MB)
 A synthetic 25 MP alpha extraction took 274 ms with seven paint callbacks in the preview browser. An ONNX Identity graph returned 42 with CPU proxy enabled. These are diagnostic checks, not claims of equivalent end-to-end BiRefNet speed on every device. Full-model inference on physical phones remains to be benchmarked.
 
 ## Resume entry
-**Clearcut | Browser-based AI Background Removal**
+**Clearcutt | Browser-based AI Background Removal**
 - Built and maintained an image-editing web application using JavaScript, Vite, Transformers.js, ONNX Runtime and pretrained BiRefNet segmentation models.
 - Implemented CPU-worker inference and cooperative pixel processing to improve UI responsiveness while retaining image dimensions and model precision.
 - Added automated validation and pull-request CI covering model selection, image utilities, cancellation and payment verification.

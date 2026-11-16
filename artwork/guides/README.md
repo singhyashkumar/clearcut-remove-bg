@@ -1,11 +1,11 @@
 # Guide artwork
 
-These files support the ten public Clearcut how-to guides. They are controlled illustrations, not screenshots or measured AI-removal results.
+These files support the ten public Clearcutt how-to guides. They are controlled illustrations, not screenshots or measured AI-removal results.
 
 ## Sources and rights
 
-- The terracotta shoe is original AI-generated artwork produced for Clearcut and already used by the homepage walkthrough.
-- The portrait, squirrel and car use Clearcut's existing owned AI gallery artwork.
+- The terracotta shoe is original AI-generated artwork produced for Clearcutt and already used by the homepage walkthrough.
+- The portrait, squirrel and car use Clearcutt's existing owned AI gallery artwork.
 - Layout, labels, checkerboards, colour chips, crop marks and the `SAMPLE` demonstration are rendered locally by `render.mjs`.
 - No marketplace, government, competitor or third-party brand assets are included.
 

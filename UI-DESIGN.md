@@ -1,6 +1,6 @@
-# Clearcut UI refinement
+# Clearcutt UI refinement
 
-Direction: preserve the approved white, charcoal and deep green homepage, Poppins headings, full-column animated hero, original artwork and existing product behaviour. Apply Premium UI Engine's software-tool principles: one clear primary action, legible supporting details, reachable navigation and a consistent reading experience. The approved Clearcut composition is the visual reference; guide pages adapt its type hierarchy and spacing for longer reading.
+Direction: preserve the approved white, charcoal and deep green homepage, Poppins headings, full-column animated hero, original artwork and existing product behaviour. Apply Premium UI Engine's software-tool principles: one clear primary action, legible supporting details, reachable navigation and a consistent reading experience. The approved Clearcutt composition is the visual reference; guide pages adapt its type hierarchy and spacing for longer reading.
 
 Scope: homepage header/navigation, upload supporting text, pricing/support text sizes, guide directory, and the shared static guide/about/privacy/contact template. Keep current homepage fonts; use the licensed existing Poppins file for article headings and the existing Arial body fallback. No new media, dependencies, backend, pricing or model changes.
 

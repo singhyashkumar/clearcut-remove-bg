@@ -220,7 +220,7 @@ function reviewDb() {
   };
 }
 
-const validReview = { display_name: 'Clearcut user', rating: 5, body: 'The cutout was quick and the editor was easy to refine.' };
+const validReview = { display_name: 'Clearcutt user', rating: 5, body: 'The cutout was quick and the editor was easy to refine.' };
 const reviewRequest = (path, options = {}) => worker.fetch(new Request(`https://api.example${path}`, {
   method: options.method || 'GET',
   headers: options.auth === false ? { ...(options.origin === false ? {} : { origin: 'https://clearcutt.in' }), 'content-type': 'application/json' }

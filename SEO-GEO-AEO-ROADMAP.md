@@ -1,10 +1,10 @@
-# Clearcut SEO, GEO and AEO roadmap
+# Clearcutt SEO, GEO and AEO roadmap
 
 Updated: 13 November 2026
 
 ## Goal
 
-Build qualified organic discovery for Clearcut around image background removal while keeping every claim accurate. The initial focus is English-language search intent in India and globally for:
+Build qualified organic discovery for Clearcutt around image background removal while keeping every claim accurate. The initial focus is English-language search intent in India and globally for:
 
 - background remover
 - remove background from image
@@ -31,7 +31,7 @@ The homepage remains the only page targeting the broad commercial phrase. New pa
 ## Phase 1 — search appearance and crawlability
 
 - Publish a stable, crawlable favicon in ICO and PNG sizes.
-- Keep the preferred site name consistently “Clearcut” in page metadata and `WebSite` structured data.
+- Keep the preferred site name consistently “Clearcutt” in page metadata and `WebSite` structured data.
 - Provide `Organization`, `WebApplication`, breadcrumb and factual FAQ structured data.
 - Maintain one canonical URL per page, a complete XML sitemap and an unrestricted robots file.
 - Verify every important URL returns 200 without login and that the built HTML contains its content.
@@ -48,7 +48,7 @@ The homepage remains the only page targeting the broad commercial phrase. New pa
 
 ## Phase 3 — authority and links
 
-- Claim and fully complete the genuine Clearcut Trustpilot profile, then link it only after its exact public URL is verified.
+- Claim and fully complete the genuine Clearcutt Trustpilot profile, then link it only after its exact public URL is verified.
 - Ask real users for honest reviews without payment, required wording or pressure for a positive rating.
 - Publish the open-source implementation, technical explanations and reproducible quality tests that other sites can cite.
 - Seek relevant links from photography, ecommerce, privacy, browser-AI and open-source communities. Avoid bulk directory submissions and paid link packages.

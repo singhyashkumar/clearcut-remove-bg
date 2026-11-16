@@ -1,4 +1,4 @@
-name: Build and deploy Clearcut Remove BG
+name: Build and deploy Clearcutt Remove BG
 on:
   push:
     branches: [main]
