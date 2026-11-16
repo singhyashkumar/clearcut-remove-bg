@@ -59,8 +59,8 @@ export function initLanding(doc) {
     before.loading = after.loading = 'eager';
     before.src = previewUrl(category);
     after.src = previewUrl(category);
-    before.alt = `Original ${category} Clearcut artwork on a studio backdrop`;
-    after.alt = `Original ${category} Clearcut artwork on transparency`;
+    before.alt = `Original ${category} Clearcutt artwork on a studio backdrop`;
+    after.alt = `Original ${category} Clearcutt artwork on transparency`;
     panel.setAttribute('aria-labelledby', tab.id);
     slider.value = '50';
     updateSlider();
