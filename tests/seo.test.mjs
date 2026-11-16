@@ -27,13 +27,13 @@ test('home SEO exposes linked guides, instant reviews and complete honest social
  assert.match(html,/class="migration-notice"/,'homepage must expose the dated remove.bg migration notice');
  assert.match(html,/href="\/remove-bg-shutting-down\/"/,'migration notice must link to the sourced explainer');
  assert.equal(html.includes('chatgpt.site'),false);
- assert.equal(schema['@graph'][0].name,'Clearcut');assert.deepEqual(schema['@graph'][0].alternateName,['Clearcut Remove BG','clearcutt.in']);
+ assert.equal(schema['@graph'][0].name,'Clearcutt');assert.deepEqual(schema['@graph'][0].alternateName,['Clearcutt Remove BG','clearcutt.in']);
  assert.equal(schema['@graph'][2]['@type'],'FAQPage');assert.equal(schema['@graph'][2].mainEntity.length,4);
  assert.equal(schema['@graph'][3].offers.price,'0');assert.equal(JSON.stringify(schema).includes('aggregateRating'),false);
  assert.ok(html.includes('href="/favicon.ico"'));assert.ok(html.includes('href="/favicon-48.png"'));assert.ok(html.includes('href="/apple-touch-icon.png"'));
 });
 test('every generated page has production social metadata without fake ratings',()=>{
- for(const p of pages){const html=renderPage(p);assert.ok(html.includes(`property="og:url" content="https://clearcutt.in/${p.slug}/"`));assert.ok(html.includes('property="og:image" content="https://clearcutt.in/artwork/clearcut-social-card.png"'));assert.ok(html.includes('name="twitter:card" content="summary_large_image"'));assert.ok(html.includes('name="twitter:description"'));assert.ok(html.includes('href="/favicon.ico"'));assert.ok(html.includes('property="og:site_name" content="Clearcut"'));assert.equal(/AggregateRating|"@type":"Review"/.test(html),false);}
+ for(const p of pages){const html=renderPage(p);assert.ok(html.includes(`property="og:url" content="https://clearcutt.in/${p.slug}/"`));assert.ok(html.includes('property="og:image" content="https://clearcutt.in/artwork/clearcut-social-card.png"'));assert.ok(html.includes('name="twitter:card" content="summary_large_image"'));assert.ok(html.includes('name="twitter:description"'));assert.ok(html.includes('href="/favicon.ico"'));assert.ok(html.includes('property="og:site_name" content="Clearcutt"'));assert.equal(/AggregateRating|"@type":"Review"/.test(html),false);}
 });
 test('generated pages have unique descriptions and a single canonical URL each',()=>{
  assert.equal(new Set(pages.map(p=>p.description)).size,pages.length);
@@ -178,20 +178,20 @@ test('privacy, authorship and editorial signals match the live implementation',(
  assert.match(privacy,/<!--email_off-->yxsingh2@gmail\.com<!--\/email_off-->/,'Cloudflare must leave the privacy-request address readable');
  const contact=renderPage(pages.find(page=>page.slug==='contact'));
  assert.match(contact,/<!--email_off-->yxsingh2@gmail\.com<!--\/email_off-->/,'Cloudflare must leave the support address readable');
- assert.match(contact,/<!--email_off--><a href="mailto:yxsingh2@gmail\.com\?subject=Clearcut%20feedback">Send private feedback<\/a><!--\/email_off-->/,'Cloudflare must leave the contact action clickable');
+ assert.match(contact,/<!--email_off--><a href="mailto:yxsingh2@gmail\.com\?subject=Clearcutt%20feedback">Send private feedback<\/a><!--\/email_off-->/,'Cloudflare must leave the contact action clickable');
  const about=renderPage(pages.find(page=>page.slug==='about'));
  assert.match(about,/<section id="editorial-standards"><h2>Editorial standards<\/h2>/);
  assert.match(about,/reviewed at least every 90 days/);
  for(const p of pages){
   const html=renderPage(p);
   const data=JSON.parse([...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/gs)].map(m=>m[1])[0]);
-  assert.equal(data.author.name,'Clearcut',`${p.slug} schema author`);
+  assert.equal(data.author.name,'Clearcutt',`${p.slug} schema author`);
   assert.equal(data.author.url,'https://clearcutt.in/',`${p.slug} author URL`);
   assert.equal(data.publisher['@id'],'https://clearcutt.in/#organization',`${p.slug} publisher identity`);
   assert.equal(data.dateModified,p.lastModified,`${p.slug} schema modification date`);
   if(p.isGuide){
    assert.match(html,new RegExp(`<time datetime="${p.lastModified}">`),`${p.slug} visible update date`);
-   assert.match(html,/Maintained by <a href="\/about\/#editorial-standards">Clearcut<\/a>/,`${p.slug} visible authorship`);
+   assert.match(html,/Maintained by <a href="\/about\/#editorial-standards">Clearcutt<\/a>/,`${p.slug} visible authorship`);
   }else assert.equal(html.includes('class="page-meta"'),false,`${p.slug} policy page should not use the guide byline`);
  }
  const org=schema['@graph'].find(node=>node['@type']==='Organization');
@@ -210,7 +210,7 @@ test('remove.bg migration explainer is factual, sourced and uses Article schema'
  assert.equal(data['@type'],'Article');
  assert.equal(data.datePublished,'2026-11-14');
  assert.equal(data.dateModified,'2026-11-14');
- assert.equal(data.author.name,'Clearcut');
+ assert.equal(data.author.name,'Clearcutt');
  assert.equal(data.mainEntityOfPage,'https://clearcutt.in/remove-bg-shutting-down/');
 });
 test('legacy pages without optional fields render no optional markup and keep title equal to H1',()=>{
@@ -223,7 +223,7 @@ test('legacy pages without optional fields render no optional markup and keep ti
   assert.equal(html.includes('primaryImageOfPage'),false,`${p.slug} must not emit primaryImageOfPage without images`);
   assert.equal(p.metaTitle,p.title,`${p.slug} metaTitle must default to title`);
   assert.equal(p.h1,p.title,`${p.slug} h1 must default to title`);
-  assert.ok(html.includes(`<title>${p.title} | Clearcut</title>`),`${p.slug} title must use the title field`);
+  assert.ok(html.includes(`<title>${p.title} | Clearcutt</title>`),`${p.slug} title must use the title field`);
   assert.ok(html.includes(`<h1>${p.title}</h1>`),`${p.slug} H1 must use the title field`);
   assert.equal(html.match(/<html lang="([^"]*)"/)[1],'en',`${p.slug} must default to lang en`);
  }
@@ -261,11 +261,11 @@ test('optional metaTitle and h1 override the meta title and heading independentl
  const base=pages.find(page=>page.slug==='about');
  const variant={...base,metaTitle:'Meta Title Variant',h1:'Visible Heading Variant'};
  const html=renderPage(variant);
- assert.ok(html.includes('<title>Meta Title Variant | Clearcut</title>'),'metaTitle must drive the <title>');
- assert.ok(html.includes('property="og:title" content="Meta Title Variant | Clearcut"'),'metaTitle must drive the og:title');
- assert.ok(html.includes('name="twitter:title" content="Meta Title Variant | Clearcut"'),'metaTitle must drive the twitter:title');
+ assert.ok(html.includes('<title>Meta Title Variant | Clearcutt</title>'),'metaTitle must drive the <title>');
+ assert.ok(html.includes('property="og:title" content="Meta Title Variant | Clearcutt"'),'metaTitle must drive the og:title');
+ assert.ok(html.includes('name="twitter:title" content="Meta Title Variant | Clearcutt"'),'metaTitle must drive the twitter:title');
  assert.ok(html.includes('<h1>Visible Heading Variant</h1>'),'h1 must drive the visible heading');
- assert.equal(html.includes(`<title>${base.title} | Clearcut</title>`),false,'original title must not leak into the meta title');
+ assert.equal(html.includes(`<title>${base.title} | Clearcutt</title>`),false,'original title must not leak into the meta title');
  assert.ok(html.includes(`<span aria-hidden="true"> / </span>${base.title}</p>`),'breadcrumb must keep the full title');
  const data=JSON.parse([...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/gs)].map(m=>m[1])[0]);
  assert.equal(data.name,base.title,'JSON-LD name must keep the full title');
@@ -399,7 +399,7 @@ test('the four india landing pages are built from the verified content spec with
   assert.equal(p.lang,source.lang);
   assert.equal(p.editorialDate,spec.verifiedDate);
   const html=renderPage(p);
-  assert.ok(html.includes(`<title>${source.title} | Clearcut</title>`),`${p.slug} rendered title`);
+  assert.ok(html.includes(`<title>${source.title} | Clearcutt</title>`),`${p.slug} rendered title`);
   assert.ok(html.includes(`<h1>${source.h1}</h1>`),`${p.slug} H1`);
   assert.ok(html.includes(`rel="canonical" href="https://clearcutt.in/${p.slug}/"`));
   assert.equal(html.match(/<html lang="([^"]*)"/)[1],source.lang);
@@ -479,7 +479,7 @@ test('india pages publish no internal implementation details or forbidden claims
    assert.ok(negated||question,`${p.slug} guarantee mention must be negated or a question, found: ...${before.slice(-40)}${after.slice(0,60)}...`);
   }
   assert.doesNotMatch(text,/HEIC (is )?supported/i);
-  assert.doesNotMatch(text,/resiz(e|es|ing) (your |the )?(photo|image|cutout)s? (in|with|using) Clearcut/i);
+  assert.doesNotMatch(text,/resiz(e|es|ing) (your |the )?(photo|image|cutout)s? (in|with|using) Clearcutt/i);
   const questionTexts=[...html.matchAll(/<h3>(.*?)<\/h3>/g)].map(m=>m[1]);
   for(const match of visibleText.matchAll(/batch|bulk/gi)){
    const before=visibleText.slice(Math.max(0,match.index-70),match.index);
@@ -497,7 +497,7 @@ test('legacy pages render byte-identical apart from the shared guide navigation 
   assert.equal(html.includes('callout'),false,`${p.slug} must not render callouts`);
   assert.equal(html.includes('class="sources"'),false,`${p.slug} must not render sources rows`);
   assert.equal(html.includes('editorial-note'),false,`${p.slug} must not render editorial notes`);
-  const aside=html.match(/<aside aria-label="Related guides"><h2>Explore Clearcut<\/h2><ul>([\s\S]*?)<\/ul>/)[1];
+  const aside=html.match(/<aside aria-label="Related guides"><h2>Explore Clearcutt<\/h2><ul>([\s\S]*?)<\/ul>/)[1];
   const listed=[...aside.matchAll(/href="https:\/\/clearcutt\.in\/([a-z-]+)\/"/g)].map(m=>m[1]);
   assert.equal(listed.length,pages.length,`${p.slug} guide navigation must list every generated page`);
   for(const target of pages)assert.ok(listed.includes(target.slug),`${p.slug} navigation must link ${target.slug}`);

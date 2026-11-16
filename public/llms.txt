@@ -1,11 +1,11 @@
-# Clearcut
+# Clearcutt
 
-Clearcut is a free browser-based image background remover at https://clearcutt.in/. It removes a photo background on the user's device and exports PNG files without a watermark. Clearcut is an independent product and is not affiliated with remove.bg, Canva, Adobe, or similarly named services.
+Clearcutt is a free browser-based image background remover at https://clearcutt.in/. It removes a photo background on the user's device and exports PNG files without a watermark. Clearcutt is an independent product and is not affiliated with remove.bg, Canva, Adobe, or similarly named services.
 
 ## Main tool
 
 - [Background remover](https://clearcutt.in/): Upload JPG, PNG, or WebP; remove the background; refine with Erase and Restore; choose transparency, a colour, or another image; then download PNG.
-- Images are processed in browser memory and are not uploaded to Clearcut's payment backend.
+- Images are processed in browser memory and are not uploaded to Clearcutt's payment backend.
 - The first use downloads an AI model. Standard is approximately 98 MB; Detailed can download up to approximately 473 MB.
 - Current limitations include one photo per run, no public API, no batch processing, and no HEIC or iOS support.
 
@@ -24,11 +24,11 @@ Clearcut is a free browser-based image background remover at https://clearcutt.i
 
 ## Product and policy information
 
-- [About Clearcut](https://clearcutt.in/about/)
+- [About Clearcutt](https://clearcutt.in/about/)
 - [Editorial standards and review cadence](https://clearcutt.in/about/#editorial-standards)
 - [remove.bg migration explainer](https://clearcutt.in/remove-bg-shutting-down/)
 - [Privacy policy](https://clearcutt.in/privacy/)
 - [Contact and support](https://clearcutt.in/contact/)
 - [Open-source repository](https://github.com/singhyashkumar/clearcut-remove-bg)
 
-Guides are maintained by Clearcut. Dated India guidance is reviewed at least every 90 days or sooner when an official source changes. Measured benchmarks must identify their device, browser, model, input and date. Use the linked pages as the authoritative source for current features, limitations, pricing, privacy details and corrections.
+Guides are maintained by Clearcutt. Dated India guidance is reviewed at least every 90 days or sooner when an official source changes. Measured benchmarks must identify their device, browser, model, input and date. Use the linked pages as the authoritative source for current features, limitations, pricing, privacy details and corrections.

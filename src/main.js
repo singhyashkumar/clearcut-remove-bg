@@ -120,7 +120,7 @@ checkoutButton.onclick=async()=>{
  try{
   const revision=authRevision;const token=await getGoogleAuthToken();await loadRazorpay();
   const order=await paymentRequest('createOrder',{plan:'plus-monthly'},token);if(revision!==authRevision)throw Error('Your account changed. Please start checkout again.');
-  const checkout=new window.Razorpay({key:order.key_id,order_id:order.order_id,amount:order.amount,currency:order.currency,name:'Clearcut Remove BG',description:'Clearcut Plus · 30-day access · renew manually',modal:{ondismiss:()=>{paymentStatus.textContent="Checkout closed. If payment went through, we'll confirm it before activating access.";}},handler:async result=>{
+  const checkout=new window.Razorpay({key:order.key_id,order_id:order.order_id,amount:order.amount,currency:order.currency,name:'Clearcutt Remove BG',description:'Clearcutt Plus · 30-day access · renew manually',modal:{ondismiss:()=>{paymentStatus.textContent="Checkout closed. If payment went through, we'll confirm it before activating access.";}},handler:async result=>{
    paymentStatus.textContent='Verifying payment securely…';
    try{const verified=await paymentRequest('verifyPayment',result,await getGoogleAuthToken());if(revision===authRevision)renderMembership(document,currentUser,verified.entitlement,paymentMode);}
    catch{if(revision===authRevision)paymentStatus.textContent='We could not verify this payment yet. Do not pay again; check your Razorpay payment status and contact support if it was charged.';}
