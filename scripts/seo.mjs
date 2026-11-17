@@ -1,6 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { carPage } from './content/car-page.ts';
+import { transparentPage } from './content/transparent-page.ts';
 const site = 'https://clearcutt.in/';
 const releaseDate = '2026-11-14';
 const policyDates = {about:'2026-11-13',privacy:releaseDate,contact:'2026-11-13'};
@@ -59,18 +60,7 @@ const legacyPages = [
  ['Can I make a cutout of my dog or cat for a print or invitation?','Yes. Keep the transparent background and place the PNG into your layout, or choose a solid color in the editor. The [transparent background guide](/transparent-background/) explains how to check the transparency in other apps.'],
  ['Does Clearcutt blur or replace the background behind my pet automatically?','No. Clearcutt removes the background and lets you choose the replacement yourself: transparency, a solid color, or a photo you add. It does not blur backgrounds or generate new ones.']]],
  carPage,
- ['transparent-background','Make a Transparent Background PNG for Free','Remove a photo background and keep alpha transparency when exporting a PNG with Clearcutt.',[
- ['The short answer: a real transparent PNG','Upload a JPG, PNG or WebP up to 20 MB and 25 megapixels, run background removal on your device, and leave the checkerboard selected. Download the PNG to keep real alpha transparency at full output size and without a watermark. The complete workflow, including edge refinement, is in the [background removal guide](/how-to-remove-background/).'],
- ['How PNG transparency works','PNG stores an opacity value for each pixel, so a pixel can be fully transparent, fully opaque, or partly transparent at the edge of your cutout. The editor’s checkerboard is a visual guide and is not included in the downloaded image. Partly transparent edge pixels can help the cutout blend into a layout.'],
- ['Verify the transparency before you download','Compare Original and Result to check the cutout, and use Erase and Restore to correct the mask where it went wrong. Some image viewers display transparent areas against white or black, which can look like a solid background. Place the exported file over a colored page or background to confirm the transparency is really there.'],
- ['What Trim empty edges does','Trim empty edges crops the unused transparent canvas around the subject, so the download contains just the cutout. Leave it off to keep the photo’s original dimensions when your layout expects them. Trimming changes the canvas size only, not the level of transparency in the pixels themselves. Trimming helps most when the subject fills only part of the frame, such as a vehicle shot with a lot of empty driveway around it; the [car background remover](/remove-background-cars/) covers what to check on a vehicle cutout first.'],
- ['Why PNG and not JPG','The JPEG format cannot store per-pixel transparency, so a transparent cutout has to be a PNG. Clearcutt exports PNG only, at full output size and without a watermark. If you need a solid background instead, choose white, a color, or a background photo in the editor.'],
- ['Graphics and logos','You can try graphics with a clear foreground, but fine lettering and internal spaces may need correction with the brushes. The AI identifies subjects rather than selecting every logo color precisely. Clearcutt does not vectorize artwork or export SVG. For cutouts you plan to place on white in a catalog, see the [product photo guide](/remove-background-products/).']],
- [['Is the checkerboard included in my downloaded PNG?','No. The checkerboard is only a visual indicator of transparency in the editor. The downloaded PNG contains alpha transparency wherever the background was removed.'],
- ['Can I save a transparent JPG?','No. The JPEG format cannot store per-pixel transparency, so a transparent cutout has to be exported as a PNG. Clearcutt’s download button exports a PNG at full output size.'],
- ['What does the Trim empty edges option do?','It crops the empty transparent canvas around the subject so the PNG contains just the cutout. Leave it unchecked if you need the original image dimensions, for example for a layout that expects them.'],
- ['My PNG looks like it has a white or black background in another app. Is the transparency gone?','Probably not. Many viewers render transparent pixels against white or black by default. Place the file over a colored background or a web page to confirm the alpha channel is present.'],
- ['Do partly transparent edge pixels survive the export?','Yes. Edge pixels can be partly transparent, which helps the cutout blend into a new background. Over-erasing hardens the edge, so use the Restore brush to bring back soft areas you removed by mistake.']]],
+ transparentPage,
  ['about','About Clearcutt Remove BG','Learn what Clearcutt supports, how local image processing works, and what the free editor and Plus membership provide.',[
  ['An independent image editor','Clearcutt removes backgrounds in your browser with an open-source BG0/BiRefNet-based engine. The website is hosted through GitHub Pages and Cloudflare. Clearcutt is independent and is not affiliated with remove.bg or Canva.'],
  ['What works today','The editor supports JPG, PNG and WebP up to 20 MB and 25 megapixels, original/result comparison, Erase and Restore, background replacement, trimming and PNG export without a watermark. Desktop Chrome or Edge is recommended. iOS and HEIC are unsupported.'],
