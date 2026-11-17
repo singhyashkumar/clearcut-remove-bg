@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /THIRD_PARTY_NOTICES.md
+
+Sitemap: https://clearcutt.in/sitemap.xml
