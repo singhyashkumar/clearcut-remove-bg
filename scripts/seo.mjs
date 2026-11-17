@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { carPage } from './content/car-page.ts';
 import { transparentPage } from './content/transparent-page.ts';
+import { renderTransparentPage } from './content/transparent-renderer.ts';
 const site = 'https://clearcutt.in/';
 const releaseDate = '2026-11-14';
 const policyDates = {about:'2026-11-13',privacy:releaseDate,contact:'2026-11-13'};
@@ -232,9 +233,17 @@ function renderPageBase(p) {
  return `<!doctype html><html lang="${p.lang||'en'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escape(pageTitle)} | Clearcutt</title><meta name="description" content="${escape(p.description)}"><meta name="robots" content="index,follow,max-image-preview:large"><meta name="referrer" content="no-referrer"><meta property="og:site_name" content="Clearcutt Remove BG"><meta property="og:title" content="${escape(pageTitle)} | Clearcutt"><meta property="og:description" content="${escape(p.description)}"><meta property="og:type" content="website"><meta property="og:url" content="${url}"><meta property="og:image" content="${socialImage}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Clearcutt Remove BG — private, on-device image background removal"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${escape(pageTitle)} | Clearcutt"><meta name="twitter:description" content="${escape(p.description)}"><meta name="twitter:image" content="${socialImage}"><meta name="twitter:image:alt" content="Clearcutt Remove BG — private, on-device image background removal"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; font-src 'self'; img-src 'self' data:; script-src https://static.cloudflareinsights.com; connect-src 'self'; base-uri 'none'; object-src 'none'; form-action 'none'"><link rel="canonical" href="${url}"><link rel="stylesheet" href="/seo.css"><script type="application/ld+json">${JSON.stringify(data)}</script></head><body><a class="skip" href="#content">Skip to content</a><header><a class="brand" href="/">◩ clearcutt.</a><nav aria-label="Main"><a href="/#workspace">Remove background</a><a href="/how-to-remove-background/">How to use</a><a href="/#plans">Pricing</a></nav></header><main id="content"><p class="breadcrumb"><a href="/">Home</a><span aria-hidden="true"> / </span>${escape(p.title)}</p><h1>${escape(p.h1||p.title)}</h1><p class="lead">${p.india?p.lead:escape(p.description)}</p>${pageMeta}${visualBeforeSections}${contentBody}${p.faqs.length?`<section class="faq" aria-labelledby="faq-heading"><h2 id="faq-heading">Frequently asked questions</h2>${p.faqs.map(([q,a])=>`<h3>${escape(q)}</h3><p>${p.india?mdProse(a):md(a)}</p>`).join('')}</section>`:''}<p><a class="cta" href="/#workspace">Open the free background remover →</a></p>${p.slug==='contact'?'<p><a href="mailto:yxsingh2@gmail.com?subject=Clearcutt%20feedback">Send private feedback</a> · <a href="https://github.com/singhyashkumar/clearcut-remove-bg/issues">Open the public issue tracker</a></p>':''}<aside aria-label="Related guides"><h2>Explore Clearcutt</h2><ul>${links()}</ul></aside></main><footer><a href="/about/">About</a><a href="/privacy/">Privacy</a><a href="/contact/">Contact</a><a href="/THIRD_PARTY_NOTICES.md">Open-source notices</a></footer></body></html>`;
 }
 export function renderPage(p) {
- return protectEmails(renderPageBase(p))
+ const legacyHtml=protectEmails(renderPageBase(p))
   .replace('property="og:site_name" content="Clearcutt Remove BG"','property="og:site_name" content="Clearcutt"')
   .replace('<link rel="stylesheet" href="/seo.css">',`${faviconLinks}<link rel="stylesheet" href="/seo.css">`);
+ if(p.slug!=='transparent-background')return legacyHtml;
+ const typedHtml=renderTransparentPage({linksHtml:links(),lastModified:p.lastModified});
+ if(typedHtml!==legacyHtml){
+  let mismatch=0;
+  while(mismatch<typedHtml.length&&mismatch<legacyHtml.length&&typedHtml[mismatch]===legacyHtml[mismatch])mismatch++;
+  throw new Error(`Transparent page TypeScript parity failed at byte ${mismatch} (typed ${typedHtml.length}, legacy ${legacyHtml.length})`);
+ }
+ return typedHtml;
 }
 export const robots=`User-agent: *\nAllow: /\n\nSitemap: ${site}sitemap.xml\n`;
 export const sitemap=`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${site}</loc><lastmod>${releaseDate}</lastmod></url>${pages.map(p=>`<url><loc>${site}${p.slug}/</loc><lastmod>${p.lastModified}</lastmod></url>`).join('')}</urlset>\n`;
