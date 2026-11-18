@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { pages } from './seo.ts';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -25,7 +26,6 @@ for (const icon of ['favicon.ico', 'favicon-48.png', 'favicon-512.png', 'favicon
 }
 
 const urls = [...sitemap.matchAll(/<loc>(https:\/\/clearcutt\.in\/[^<]*)<\/loc>/g)].map(match => new URL(match[1]));
-const { pages } = await import(new URL('../scripts/seo.mjs', import.meta.url).pathname);
 assert.equal(urls.length, pages.length + 1, `Sitemap must include the homepage and every generated page (${pages.length + 1} URLs)`);
 for (const url of urls) {
   const relative = url.pathname === '/' ? 'index.html' : `${url.pathname.slice(1)}index.html`;

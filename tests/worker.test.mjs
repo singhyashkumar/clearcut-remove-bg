@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHmac, generateKeyPairSync, sign } from 'node:crypto';
-import worker from '../worker/index.js';
+import worker from '../worker/index.ts';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
 

@@ -1,13 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { stripTypeScriptTypes } from 'node:module';
 import { createHash } from 'node:crypto';
 
 // Use the production module, substituting only Vite's build-time base URL.
-const source = readFileSync(new URL('../src/landing.js', import.meta.url), 'utf8')
+const source = readFileSync(new URL('../src/landing.ts', import.meta.url), 'utf8')
   .replace("import useCases from './use-cases.json' with { type: 'json' };", `const useCases = ${readFileSync(new URL('../src/use-cases.json', import.meta.url), 'utf8')};`)
   .replaceAll('import.meta.env.BASE_URL', "'/test-base/'");
-const { initLanding, initHeroAnimation, initMobileMenu, initFinishPreview } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
+const { initLanding, initHeroAnimation, initMobileMenu, initFinishPreview } = await import(`data:text/javascript;base64,${Buffer.from(stripTypeScriptTypes(source)).toString('base64')}`);
 
 class Element extends EventTarget {
   constructor(id, dataset = {}) {
@@ -216,7 +217,7 @@ test('primary GIF loops forever and has no pause control or gallery preference b
 });
 
 test('sample photo uses the lightweight WebP instead of the source PNG',()=>{
- const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+ const main=readFileSync(new URL('../src/main.ts',import.meta.url),'utf8');
  assert.match(main,/artwork\/hero-sample\.webp/);
  assert.doesNotMatch(main,/artwork\/hero\.png/);
  assert.ok(readFileSync(new URL('../public/artwork/hero-sample.webp',import.meta.url)).length<150000);

@@ -4,7 +4,7 @@
 - **Audited Base Commit:** `bef5689b8d79e722f89341ea1b8b9ed6a487c7fc` (`main`)
 - **Verification Date:** `2026-11-13`
 - **Companion Content File:** `docs/seo/india-page-content.json`
-- **Scope Boundary:** Content-only handoff for four planned routes (`/photo-ka-background-kaise-hataye/`, `/passport-exam-form-white-background/`, `/amazon-flipkart-meesho-product-white-background/`, `/remove-background-from-signature-png/`). Shared template infrastructure (`scripts/seo.mjs`), CSS (`public/seo.css`), test suites, verification scripts, and existing pages remain owned by Z.ai.
+- **Scope Boundary:** Content-only handoff for four planned routes (`/photo-ka-background-kaise-hataye/`, `/passport-exam-form-white-background/`, `/amazon-flipkart-meesho-product-white-background/`, `/remove-background-from-signature-png/`). Shared template infrastructure (`scripts/seo.ts`), CSS (`public/seo.css`), test suites, verification scripts, and existing pages remain owned by Z.ai.
 
 ---
 
@@ -13,12 +13,12 @@
 Every Clearcutt product claim in `docs/seo/india-page-content.json` is constrained to behavior verified in commit `bef5689b8d79e722f89341ea1b8b9ed6a487c7fc` and on live `https://clearcutt.in/`.
 
 ### `REPO-INPUT-LIMITS`
-- **Primary paths:** `src/image-utils.js`, `src/main.js`, `index.html`, `vendor/bg0/image.ts`
+- **Primary paths:** `src/image-utils.ts`, `src/main.ts`, `index.html`, `vendor/bg0/image.ts`
 - **Applicability date:** Repository state verified `2026-11-13` (base commit `bef5689b8d79e722f89341ea1b8b9ed6a487c7fc`).
 - **Claims supported:**
-  - `validateFile()` (`src/image-utils.js:1-10`) enforces non-empty files up to `MAX_BYTES = 20_000_000` (20 MB decimal) and magic-byte signatures for JPEG (`255,216,255`), PNG (`137,80,78,71,13,10,26,10`), and WebP (`RIFF....WEBP`) only.
-  - `src/main.js:28,66` enforces `MAX_PIXELS = 25_000_000` (25 megapixels) after `createImageBitmap` on both main uploads and custom background photos (`#bg-file`).
-  - Intake methods in `src/main.js:54-60` and `index.html:7`: `Upload Image` file chooser, drag-and-drop, and `Ctrl + V` clipboard paste.
+  - `validateFile()` (`src/image-utils.ts:1-10`) enforces non-empty files up to `MAX_BYTES = 20_000_000` (20 MB decimal) and magic-byte signatures for JPEG (`255,216,255`), PNG (`137,80,78,71,13,10,26,10`), and WebP (`RIFF....WEBP`) only.
+  - `src/main.ts:28,66` enforces `MAX_PIXELS = 25_000_000` (25 megapixels) after `createImageBitmap` on both main uploads and custom background photos (`#bg-file`).
+  - Intake methods in `src/main.ts:54-60` and `index.html:7`: `Upload Image` file chooser, drag-and-drop, and `Ctrl + V` clipboard paste.
   - HEIC/HEIF is rejected at `validateFile()` and throws an unsupported-image error in `vendor/bg0/image.ts:251`; SVG, PDF, GIF, and TIFF are rejected.
 - **Used in slugs:** `photo-ka-background-kaise-hataye`, `passport-exam-form-white-background`, `amazon-flipkart-meesho-product-white-background`, `remove-background-from-signature-png`
 
@@ -34,15 +34,15 @@ Every Clearcutt product claim in `docs/seo/india-page-content.json` is constrain
 - **Used in slugs:** `photo-ka-background-kaise-hataye`, `passport-exam-form-white-background`, `amazon-flipkart-meesho-product-white-background`, `remove-background-from-signature-png`
 
 ### `REPO-EDITOR-EXPORT`
-- **Primary paths:** `index.html`, `src/main.js`, `src/image-utils.js`, `VERIFICATION.md`
+- **Primary paths:** `index.html`, `src/main.ts`, `src/image-utils.ts`, `VERIFICATION.md`
 - **Applicability date:** Repository state verified `2026-11-13` (browser export verification dated `2026-10-21` in `VERIFICATION.md`).
 - **Claims supported:**
   - View controls toggle between `Result` (`#result-view`) and `Original` (`#original-view`).
-  - Pointer tools provide `View` (`#move`), `Erase` (`#erase`), and `Restore` (`#restore`) with brush size `5–150` px (`#brush`, default `40`), feathering alpha toward `0` on erase or toward original `sourceAlpha` on restore (`src/image-utils.js:17-24`).
-  - `Undo` (`#undo`, `src/main.js:6,72,78`) stores **one previous mask state only** (single-step undo, not multi-step history). `Reset cutout` (`#reset-mask`) restores `initialAlpha` (and saves the pre-reset state into the single undo slot). `New photo ↗` (`#reset`) discards the session.
-  - Background options (`index.html:9`, `src/main.js:63-66`): Transparent checkerboard (`transparent`, visual guide only), pure White (`#ffffff`, verified RGBA `[255,255,255,255]` in `VERIFICATION.md`), Dark green (`#20372f`), Pink (`#f1c6c1`), Custom background color (`#color`), and Add background photo (`#bg-file`, cover-scaled).
-  - `Trim empty edges` (`#crop`, `src/main.js:82-85`, `src/image-utils.js:11-16`) computes tight bounding coordinates where subject `alpha > 4` and crops `exportCanvas` to those bounds with zero margin **even when White (`#ffffff`), a solid color, or a background photo is selected**.
-  - Export (`src/main.js:85-86`) creates `image/png` (`clearcutt.png`) only, without watermark. Clearcutt has no JPG/JPEG, SVG, PDF, or TIFF export, no cm/pixel template cropping, no DPI metadata control, and no KB file-size compression.
+  - Pointer tools provide `View` (`#move`), `Erase` (`#erase`), and `Restore` (`#restore`) with brush size `5–150` px (`#brush`, default `40`), feathering alpha toward `0` on erase or toward original `sourceAlpha` on restore (`src/image-utils.ts:17-24`).
+  - `Undo` (`#undo`, `src/main.ts:6,72,78`) stores **one previous mask state only** (single-step undo, not multi-step history). `Reset cutout` (`#reset-mask`) restores `initialAlpha` (and saves the pre-reset state into the single undo slot). `New photo ↗` (`#reset`) discards the session.
+  - Background options (`index.html:9`, `src/main.ts:63-66`): Transparent checkerboard (`transparent`, visual guide only), pure White (`#ffffff`, verified RGBA `[255,255,255,255]` in `VERIFICATION.md`), Dark green (`#20372f`), Pink (`#f1c6c1`), Custom background color (`#color`), and Add background photo (`#bg-file`, cover-scaled).
+  - `Trim empty edges` (`#crop`, `src/main.ts:82-85`, `src/image-utils.ts:11-16`) computes tight bounding coordinates where subject `alpha > 4` and crops `exportCanvas` to those bounds with zero margin **even when White (`#ffffff`), a solid color, or a background photo is selected**.
+  - Export (`src/main.ts:85-86`) creates `image/png` (`clearcutt.png`) only, without watermark. Clearcutt has no JPG/JPEG, SVG, PDF, or TIFF export, no cm/pixel template cropping, no DPI metadata control, and no KB file-size compression.
 - **Used in slugs:** `photo-ka-background-kaise-hataye`, `passport-exam-form-white-background`, `amazon-flipkart-meesho-product-white-background`, `remove-background-from-signature-png`
 
 ### `REPO-PLATFORM-LIMITS`
@@ -55,8 +55,8 @@ Every Clearcutt product claim in `docs/seo/india-page-content.json` is constrain
 - **Used in slugs:** `photo-ka-background-kaise-hataye`, `passport-exam-form-white-background`, `amazon-flipkart-meesho-product-white-background`, `remove-background-from-signature-png`
 
 ### `REPO-PRIVACY-NETWORK`
-- **Primary paths:** `src/main.js`, `scripts/seo.mjs`, `SECURITY-REVIEW.md`, `VERIFICATION.md`, `README.md`
-- **Applicability date:** Security review dated `2026-10-21`; privacy policy text in `scripts/seo.mjs` dated `2026-10-23`; verified `2026-11-13`.
+- **Primary paths:** `src/main.ts`, `scripts/seo.ts`, `SECURITY-REVIEW.md`, `VERIFICATION.md`, `README.md`
+- **Applicability date:** Security review dated `2026-10-21`; privacy policy text in `scripts/seo.ts` dated `2026-10-23`; verified `2026-11-13`.
 - **Claims supported:**
   - Selected photos, masks, and brush edits remain in browser memory on the user's device and are never uploaded to Clearcutt's Cloudflare Worker/D1 backend or any image server.
   - Closing the tab or clicking `New photo ↗` discards the editing session in the application, though closing a browser tab is not a forensic RAM-erasure guarantee.
@@ -64,7 +64,7 @@ Every Clearcutt product claim in `docs/seo/india-page-content.json` is constrain
 - **Used in slugs:** `photo-ka-background-kaise-hataye`, `passport-exam-form-white-background`, `amazon-flipkart-meesho-product-white-background`, `remove-background-from-signature-png`
 
 ### `REPO-PLANS-LIMITS`
-- **Primary paths:** `index.html`, `src/use-cases.json`, `scripts/seo.mjs`, `worker/index.js`, `README.md`
+- **Primary paths:** `index.html`, `src/use-cases.json`, `scripts/seo.ts`, `worker/index.ts`, `README.md`
 - **Applicability date:** Repository state verified `2026-11-13`.
 - **Claims supported:**
   - Single-photo workflow only (one image per run); no batch/bulk processing, no catalog CSV tool, no public API, and no automatic shadow generation.
@@ -241,12 +241,12 @@ Citation note (2026-11-13): the authoritative Seller Central Help page (G1881, h
 
 ## 3. Corrected Integration Notes for Z.ai Infrastructure Merge
 
-When Z.ai wires `docs/seo/india-page-content.json` into `scripts/seo.mjs` and the build pipeline:
+When Z.ai wires `docs/seo/india-page-content.json` into `scripts/seo.ts` and the build pipeline:
 
 1. **Title & Meta Length Guidance (Not Ranking Guarantees):** Each approved `renderedTitle` (`<60` chars including ` | Clearcutt`) and `description` (`<155` chars) is editorial length hygiene to reduce visual truncation—not a ranking factor, ranking timeline promise, or guarantee against Google rewriting titles/snippets.
 2. **1:1 `FAQPage` Schema Without Rich-Result Claims:** Render the 5 `faqs` per page in visible HTML and serialize the exact same `question`/`answer` strings into `FAQPage.mainEntity` JSON-LD, while recognizing `clearcutt.in` is not a government/health site and is therefore ineligible for Google Search FAQ rich results (`SRC-GOOGLE-FAQPAGE`). Never emit `AggregateRating` or `Review` schema.
-3. **CSP & Real Visual Evidence Only:** `scripts/seo.mjs` currently sets `default-src 'none'` without `img-src 'self'` on generated guides, which blocks images. Add `img-src 'self'` only when embedding genuine, unretouched Clearcutt output images (with recorded input dimensions, model, date, and brush/trim state). Never publish AI-generated or edited mockups as model outputs.
-4. **Sitemap, `llms.txt`, and Search Console Scope:** Adding these four slugs expands `dist/sitemap.xml` from `10` to `14` URLs (requiring matching updates in `scripts/verify-dist.mjs` and `scripts/verify-live.mjs`, plus guide links in `public/llms.txt`). After deployment, resubmit `https://clearcutt.in/sitemap.xml` and use URL Inspection / Request Indexing **only for canonical HTML pages**—do **not** submit `/llms.txt` to Request Indexing.
+3. **CSP & Real Visual Evidence Only:** `scripts/seo.ts` currently sets `default-src 'none'` without `img-src 'self'` on generated guides, which blocks images. Add `img-src 'self'` only when embedding genuine, unretouched Clearcutt output images (with recorded input dimensions, model, date, and brush/trim state). Never publish AI-generated or edited mockups as model outputs.
+4. **Sitemap, `llms.txt`, and Search Console Scope:** Adding these four slugs expands `dist/sitemap.xml` from `10` to `14` URLs (requiring matching updates in `scripts/verify-dist.ts` and `scripts/verify-live.ts`, plus guide links in `public/llms.txt`). After deployment, resubmit `https://clearcutt.in/sitemap.xml` and use URL Inspection / Request Indexing **only for canonical HTML pages**—do **not** submit `/llms.txt` to Request Indexing.
 
 
 Illustrative-cycle note: SRC-SSC-CAPF-2026 (application window 10.09.2026-30.09.2026), SRC-UPSC-CAF-2026 (notices dated 11.02.2026 and 20.02.2026), SRC-UPSC-ESE-2026 (26.09.2025) and SRC-IBPS-REGIONAL-SCAN (September 2025) are cited to show that photo and signature rules differ by commission, workflow and even notice. Each of those cycles may be closed by the time this page is read; applicants must read the notification for their own exam cycle.

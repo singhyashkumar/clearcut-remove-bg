@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
+import { pages } from './seo.ts';
 
 const site = new URL(process.argv[2] || 'https://clearcutt.in/');
-const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-async function request(url, attempts = 4) {
+async function request(url: URL, attempts = 4) {
   let last;
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
@@ -31,7 +32,6 @@ for (const asset of assets) await request(asset);
 
 const sitemap = await (await request(new URL('/sitemap.xml', site))).text();
 const urls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match => new URL(match[1]));
-const { pages } = await import(new URL('../scripts/seo.mjs', import.meta.url).pathname);
 const expected = [new URL('/', site), ...pages.map(p => new URL(`/${p.slug}/`, site))];
 assert.equal(urls.length, expected.length, `Live sitemap must include the homepage and every generated page (${expected.length} URLs)`);
 assert.deepEqual(urls.map(url => url.href).sort(), expected.map(url => url.href).sort(), 'Live sitemap URLs must exactly match the generated page list');

@@ -17,4 +17,4 @@ These files support the ten public Clearcutt how-to guides. They are controlled 
 - The GIF has a static WebP fallback for `prefers-reduced-motion`.
 - HTML reserves every image's dimensions to avoid layout shift.
 
-Run `node artwork/guides/render.mjs` to rebuild the stills. Re-optimise the GIF after changing its frames and run `npm test` to enforce the byte budgets.
+Run `node artwork/guides/render.ts` to rebuild the stills. Re-optimise the GIF after changing its frames and run `npm test` to enforce the byte budgets.

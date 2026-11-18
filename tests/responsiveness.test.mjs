@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {configureCpuProxy} from '../vendor/bg0/responsiveness.js';
-import {readAlphaChannels,yieldToBrowser} from '../src/ui-scheduling.js';
+import {configureCpuProxy} from '../vendor/bg0/responsiveness.ts';
+import {readAlphaChannels,yieldToBrowser} from '../src/ui-scheduling.ts';
 
 test('CPU-only inference uses a worker; WebGPU queues never enable proxy',()=>{
  const onnx={wasm:{}};

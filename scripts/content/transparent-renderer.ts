@@ -29,11 +29,11 @@ const protectEmails = (html: string): string => html.replace(
 
 /**
  * Complete static renderer for the transparent-background canary route.
- * Its output is checked byte-for-byte against the legacy renderer at build time.
+ * Its output is checked byte-for-byte against the shared renderer at build time.
  */
 export function renderTransparentPage({ linksHtml, lastModified }: RenderOptions): string {
   const page: LegacyGuideSource = transparentPage;
-  const [slug, title, description, sections, faqs, rawFields] = page;
+  const [slug, title, description, sections, faqs = [], rawFields] = page;
   const fields: GuidePageFields = rawFields ?? {};
   const pageTitle = fields.metaTitle ?? title;
   const h1 = fields.h1 ?? title;

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { renderMembership } from '../src/membership.js';
+import { renderMembership } from '../src/membership.ts';
 
 const now = Date.now();
 const user = { uid: 'paid-user', email: 'member@example.com' };

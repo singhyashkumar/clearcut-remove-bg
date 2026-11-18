@@ -1,3 +1,33 @@
+type SqlValue = string | number | null;
+interface Statement {
+  bind(...values: SqlValue[]): Statement;
+  first<Row extends object = Record<string, unknown>>(): Promise<Row | null>;
+  all(): Promise<{ results?: Record<string, unknown>[] }>;
+  run(): Promise<unknown>;
+}
+interface Database {
+  prepare(query: string): Statement;
+  batch(statements: Statement[]): Promise<unknown>;
+}
+interface Env {
+  ALLOWED_ORIGINS?: string;
+  REVIEW_ADMIN_UIDS?: string;
+  PAYMENT_MODE?: string;
+  PLAN_AMOUNT_PAISE: string;
+  RAZORPAY_KEY_ID: string;
+  RAZORPAY_KEY_SECRET: string;
+  RAZORPAY_WEBHOOK_SECRET?: string;
+  FIREBASE_PROJECT_ID: string;
+  DB: Database;
+  __testFetch?: typeof fetch;
+}
+type HeaderFields = Record<string, string>;
+type OrderRow = { uid: string; amount_paise: number; currency: string; status: string; payment_id: string | null };
+type FirebaseClaims = {
+  iss?: string; aud?: string; sub?: string; exp: number; iat: number; auth_time: number;
+  email?: string; email_verified?: boolean;
+};
+
 const FIREBASE_JWKS_URL = 'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com';
 const RAZORPAY_API = 'https://api.razorpay.com/v1';
 const ACCESS_SECONDS = 30 * 24 * 60 * 60;
@@ -5,39 +35,39 @@ const DAILY_LIMIT = 20;
 const BATCH_LIMIT = 5;
 const REVIEW_UPDATE_SECONDS = 60 * 60;
 
-const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), {
+const json = (body: unknown, status = 200, headers: HeaderFields = {}) => new Response(JSON.stringify(body), {
   status,
   headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff', ...headers }
 });
 
-function corsHeaders(origin, env) {
+function corsHeaders(origin: string | null, env: Env): HeaderFields | null {
   const allowed = (env.ALLOWED_ORIGINS || '').split(',').map(value => value.trim()).filter(Boolean);
   if (!origin || !allowed.includes(origin)) return null;
   return { 'access-control-allow-origin': origin, 'access-control-allow-methods': 'GET, POST, OPTIONS', 'access-control-allow-headers': 'Authorization, Content-Type', 'vary': 'Origin' };
 }
 
-function b64urlBytes(value) {
+function b64urlBytes(value: string) {
   const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
   const binary = atob(normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '='));
   return Uint8Array.from(binary, char => char.charCodeAt(0));
 }
 
-function decodeSegment(value) {
+function decodeSegment(value: string) {
   return JSON.parse(new TextDecoder().decode(b64urlBytes(value)));
 }
 
-export async function verifyFirebaseIdToken(token, projectId, fetchImpl = fetch, now = Math.floor(Date.now() / 1000)) {
+export async function verifyFirebaseIdToken(token: unknown, projectId: unknown, fetchImpl = fetch, now = Math.floor(Date.now() / 1000)) {
   if (typeof token !== 'string' || token.length > 8192 || typeof projectId !== 'string' || !projectId) return null;
   const parts = token.split('.');
   if (parts.length !== 3) return null;
-  let header, claims;
+  let header: { alg?: string; kid?: string }, claims: FirebaseClaims;
   try { header = decodeSegment(parts[0]); claims = decodeSegment(parts[1]); } catch { return null; }
   if (header.alg !== 'RS256' || typeof header.kid !== 'string' || claims.iss !== `https://securetoken.google.com/${projectId}`
     || claims.aud !== projectId || typeof claims.sub !== 'string' || !claims.sub || claims.sub.length > 128
     || !Number.isInteger(claims.exp) || claims.exp <= now || !Number.isInteger(claims.iat) || claims.iat > now + 60
     || !Number.isInteger(claims.auth_time) || claims.auth_time > now + 60) return null;
   try {
-    const keySet = await fetchImpl(FIREBASE_JWKS_URL, { signal: AbortSignal.timeout(10000) }).then(response => response.ok ? response.json() : null);
+    const keySet: { keys?: (JsonWebKey & { kid?: string })[] } | null = await fetchImpl(FIREBASE_JWKS_URL, { signal: AbortSignal.timeout(10000) }).then(response => response.ok ? response.json() : null);
     const jwk = keySet?.keys?.find(key => key.kid === header.kid && key.kty === 'RSA');
     if (!jwk) return null;
     const key = await crypto.subtle.importKey('jwk', jwk, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['verify']);
@@ -49,19 +79,19 @@ export async function verifyFirebaseIdToken(token, projectId, fetchImpl = fetch,
   } catch { return null; }
 }
 
-async function hmacValid(secret, message, signature) {
+async function hmacValid(secret: string, message: string, signature: unknown) {
   if (typeof signature !== 'string' || !/^[a-f\d]{64}$/i.test(signature)) return false;
   try {
     const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']);
-    return crypto.subtle.verify('HMAC', key, Uint8Array.from(signature.match(/.{2}/g), byte => Number.parseInt(byte, 16)), new TextEncoder().encode(message));
+    return crypto.subtle.verify('HMAC', key, Uint8Array.from(signature.match(/.{2}/g) ?? [], byte => Number.parseInt(byte, 16)), new TextEncoder().encode(message));
   } catch { return false; }
 }
 
-function basicAuth(keyId, keySecret) {
+function basicAuth(keyId: string, keySecret: string) {
   return `Basic ${btoa(`${keyId}:${keySecret}`)}`;
 }
 
-function configured(env) {
+function configured(env: Env) {
   const expectedPrefix = env.PAYMENT_MODE === 'live' ? 'rzp_live_' : 'rzp_test_';
   return typeof env.RAZORPAY_KEY_ID === 'string' && env.RAZORPAY_KEY_ID.startsWith(expectedPrefix)
     && typeof env.RAZORPAY_KEY_SECRET === 'string' && env.RAZORPAY_KEY_SECRET.length > 0
@@ -69,13 +99,13 @@ function configured(env) {
     && env.DB && typeof env.FIREBASE_PROJECT_ID === 'string';
 }
 
-async function requireUser(request, env, fetchImpl = fetch) {
+async function requireUser(request: Request, env: Env, fetchImpl = fetch) {
   const match = /^Bearer ([^\s]+)$/.exec(request.headers.get('authorization') || '');
   if (!match) return null;
   return verifyFirebaseIdToken(match[1], env.FIREBASE_PROJECT_ID, fetchImpl);
 }
 
-async function readJson(request) {
+async function readJson(request: Request): Promise<Record<string, unknown> | null> {
   try {
     const text = await request.text();
     if (text.length > 16384) return null;
@@ -83,28 +113,28 @@ async function readJson(request) {
   } catch { return null; }
 }
 
-function responseWithHeaders(response, headers) {
+function responseWithHeaders(response: Response, headers: HeaderFields | null) {
   const responseHeaders = new Headers(response.headers);
   for (const [name, value] of Object.entries(headers || {})) responseHeaders.set(name, value);
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers: responseHeaders });
 }
 
-function adminUids(env) {
+function adminUids(env: Env) {
   return new Set((env.REVIEW_ADMIN_UIDS || '').split(',').map(value => value.trim()).filter(Boolean));
 }
 
-function reviewInput(body) {
+function reviewInput(body: Record<string, unknown> | null) {
   const displayName = typeof body?.display_name === 'string' ? body.display_name.trim() : '';
   const reviewBody = typeof body?.body === 'string' ? body.body.trim() : '';
   const rating = body?.rating;
   const controls = /[\u0000-\u001f\u007f]/u;
   if (Array.from(displayName).length < 2 || Array.from(displayName).length > 50 || controls.test(displayName)) return null;
   if (Array.from(reviewBody).length < 20 || Array.from(reviewBody).length > 1000 || controls.test(reviewBody)) return null;
-  if (!Number.isInteger(rating) || rating < 1 || rating > 5) return null;
+  if (typeof rating !== 'number' || !Number.isInteger(rating) || rating < 1 || rating > 5) return null;
   return { displayName, reviewBody, rating };
 }
 
-async function publicReviews(env) {
+async function publicReviews(env: Env) {
   if (!env.DB) return json({ error: 'Reviews are temporarily unavailable.' }, 503);
   try {
     const [list, aggregate] = await Promise.all([
@@ -116,7 +146,7 @@ async function publicReviews(env) {
   } catch { return json({ error: 'Reviews are temporarily unavailable.' }, 503); }
 }
 
-async function ownReview(env, uid) {
+async function ownReview(env: Env, uid: string) {
   try {
     const review = await env.DB.prepare(`SELECT id, display_name, rating, body, status, created_at, updated_at
       FROM reviews WHERE uid = ?`).bind(uid).first();
@@ -124,7 +154,7 @@ async function ownReview(env, uid) {
   } catch { return json({ error: 'Could not load your review.' }, 503); }
 }
 
-async function saveReview(request, env, uid) {
+async function saveReview(request: Request, env: Env, uid: string) {
   const input = reviewInput(await readJson(request));
   if (!input) return json({ error: 'Use a display name of 2–50 characters, a rating from 1–5, and a review of 20–1000 characters.' }, 400);
   try {
@@ -147,14 +177,14 @@ async function saveReview(request, env, uid) {
   } catch { return json({ error: 'Could not save your review. Please retry.' }, 503); }
 }
 
-async function deleteReview(env, uid) {
+async function deleteReview(env: Env, uid: string) {
   try {
     await env.DB.prepare('DELETE FROM reviews WHERE uid = ?').bind(uid).run();
     return json({ deleted: true });
   } catch { return json({ error: 'Could not delete your review. Please retry.' }, 503); }
 }
 
-async function reviewQueue(env, uid, status) {
+async function reviewQueue(env: Env, uid: string, status: string) {
   if (!adminUids(env).has(uid)) return json({ error: 'Administrator access required.' }, 403);
   if (!['pending', 'approved', 'rejected'].includes(status)) return json({ error: 'Unknown review status.' }, 400);
   try {
@@ -164,14 +194,14 @@ async function reviewQueue(env, uid, status) {
   } catch { return json({ error: 'Could not load the moderation queue.' }, 503); }
 }
 
-async function moderateReview(request, env, uid) {
+async function moderateReview(request: Request, env: Env, uid: string) {
   if (!adminUids(env).has(uid)) return json({ error: 'Administrator access required.' }, 403);
   const body = await readJson(request);
   const reviewId = typeof body?.review_id === 'string' ? body.review_id : '';
   const action = body?.action;
   const reason = typeof body?.reason === 'string' ? body.reason.trim() : '';
   if (!/^[a-f\d]{8}-[a-f\d]{4}-[1-5][a-f\d]{3}-[89ab][a-f\d]{3}-[a-f\d]{12}$/i.test(reviewId)
-    || !['approve', 'reject'].includes(action) || Array.from(reason).length > 300
+    || (action !== 'approve' && action !== 'reject') || Array.from(reason).length > 300
     || /[\u0000-\u001f\u007f]/u.test(reason)) return json({ error: 'Moderation request is invalid.' }, 400);
   try {
     const review = await env.DB.prepare('SELECT id FROM reviews WHERE id = ?').bind(reviewId).first();
@@ -189,12 +219,12 @@ async function moderateReview(request, env, uid) {
   } catch { return json({ error: 'Could not moderate this review.' }, 503); }
 }
 
-async function createOrder(request, env, uid, fetchImpl = fetch) {
+async function createOrder(request: Request, env: Env, uid: string, fetchImpl = fetch) {
   const body = await readJson(request);
   if (!body || body.plan !== 'plus-monthly') return json({ error: 'Choose the Clearcutt Plus monthly plan.' }, 400);
   if (!configured(env)) return json({ error: 'Payment service is not configured for this mode.' }, 503);
   const recentOrders = await env.DB.prepare("SELECT COUNT(*) AS count FROM orders WHERE uid = ? AND created_at >= unixepoch() - 600").bind(uid).first();
-  if ((recentOrders?.count || 0) >= 5) return json({ error: 'Too many checkout attempts. Wait a few minutes and try again.' }, 429);
+  if ((Number(recentOrders?.count || 0)) >= 5) return json({ error: 'Too many checkout attempts. Wait a few minutes and try again.' }, 429);
   const receipt = `cc_${crypto.randomUUID().replaceAll('-', '')}`;
   let response, result;
   try {
@@ -215,7 +245,7 @@ async function createOrder(request, env, uid, fetchImpl = fetch) {
   return json({ order_id: result.id, amount: result.amount, currency: result.currency, key_id: env.RAZORPAY_KEY_ID, plan: 'plus-monthly' });
 }
 
-async function recordPaidOrder(db, orderId, paymentId, uid, amount) {
+async function recordPaidOrder(db: Database, orderId: string, paymentId: string, uid: string, amount: number) {
   const statements = [
     db.prepare("UPDATE orders SET status = 'paid', payment_id = ? WHERE order_id = ? AND uid = ? AND amount_paise = ? AND currency = 'INR' AND status = 'pending'").bind(paymentId, orderId, uid, amount),
     db.prepare(`INSERT INTO entitlements (uid, plan_id, expires_at, daily_limit, batch_limit, updated_at)
@@ -229,13 +259,13 @@ async function recordPaidOrder(db, orderId, paymentId, uid, amount) {
   return db.prepare('SELECT plan_id, expires_at, daily_limit, batch_limit FROM entitlements WHERE uid = ?').bind(uid).first();
 }
 
-async function verifyPayment(request, env, uid, fetchImpl = fetch) {
+async function verifyPayment(request: Request, env: Env, uid: string, fetchImpl = fetch) {
   if (!configured(env)) return json({ error: 'Payment service is not configured for this mode.' }, 503);
   const body = await readJson(request);
   const { razorpay_order_id: orderId, razorpay_payment_id: paymentId, razorpay_signature: signature } = body || {};
-  if (![orderId, paymentId, signature].every(value => typeof value === 'string' && value.length > 0)
+  if (typeof orderId !== 'string' || typeof paymentId !== 'string' || typeof signature !== 'string' || !signature
     || !/^order_[a-z\d]+$/i.test(orderId) || !/^pay_[a-z\d]+$/i.test(paymentId)) return json({ error: 'Payment verification fields are missing or invalid.' }, 400);
-  const stored = await env.DB.prepare('SELECT uid, amount_paise, currency, status, payment_id FROM orders WHERE order_id = ?').bind(orderId).first();
+  const stored = await env.DB.prepare('SELECT uid, amount_paise, currency, status, payment_id FROM orders WHERE order_id = ?').bind(orderId).first<OrderRow>();
   if (!stored || stored.uid !== uid) return json({ error: 'This order does not belong to the signed-in account.' }, 403);
   if (!await hmacValid(env.RAZORPAY_KEY_SECRET, `${orderId}|${paymentId}`, signature)) return json({ error: 'Payment signature is invalid.' }, 400);
   try {
@@ -258,12 +288,12 @@ async function verifyPayment(request, env, uid, fetchImpl = fetch) {
   } catch { return json({ error: 'Could not confirm payment status. Please contact support before retrying.' }, 502); }
 }
 
-async function getEntitlement(env, uid) {
+async function getEntitlement(env: Env, uid: string) {
   const entitlement = await env.DB.prepare('SELECT plan_id, expires_at, daily_limit, batch_limit FROM entitlements WHERE uid = ? AND expires_at > unixepoch()').bind(uid).first();
   return json({ entitlement: entitlement || null });
 }
 
-async function webhook(request, env) {
+async function webhook(request: Request, env: Env) {
   if (!env.RAZORPAY_WEBHOOK_SECRET || !env.DB) return json({ error: 'Webhook is not configured.' }, 503);
   const signature = request.headers.get('x-razorpay-signature') || '';
   const eventId = request.headers.get('x-razorpay-event-id') || '';
@@ -277,7 +307,7 @@ async function webhook(request, env) {
   try {
     const prior = await env.DB.prepare('SELECT event_id FROM webhook_events WHERE event_id = ?').bind(eventId).first();
     if (prior) return json({ received: true, duplicate: true });
-    const order = await env.DB.prepare('SELECT uid, amount_paise, currency, status FROM orders WHERE order_id = ?').bind(payment.order_id).first();
+    const order = await env.DB.prepare('SELECT uid, amount_paise, currency, status FROM orders WHERE order_id = ?').bind(payment.order_id).first<OrderRow>();
     if (!order || order.amount_paise !== payment.amount || order.currency !== payment.currency || payment.currency !== 'INR') return json({ error: 'Payment does not match a Clearcutt order.' }, 409);
     const statements = [
       env.DB.prepare('INSERT INTO webhook_events (event_id, received_at) VALUES (?, unixepoch())').bind(eventId),
@@ -295,7 +325,7 @@ async function webhook(request, env) {
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request: Request, env: Env) {
     const url = new URL(request.url);
     const origin = request.headers.get('origin');
     const headers = corsHeaders(origin, env);

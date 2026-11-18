@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import config from '../vite.config.js';
+import config from '../vite.config.ts';
 
 test('payment API is permitted by CSP in production and local development', () => {
   const previous = process.env.VITE_PAYMENT_API_BASE_URL;

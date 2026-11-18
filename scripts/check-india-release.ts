@@ -8,12 +8,12 @@
  * the strings that the corrections intentionally remove).
  *
  * Usage:
- *   node scripts/check-india-release.mjs --offline
- *   node scripts/check-india-release.mjs [origin] [--offline]
+ *   node scripts/check-india-release.ts --offline
+ *   node scripts/check-india-release.ts [origin] [--offline]
  *
- *   node scripts/check-india-release.mjs                       # https://clearcutt.in
- *   node scripts/check-india-release.mjs https://clearcutt.in
- *   node scripts/check-india-release.mjs --offline             # local files only, no network
+ *   node scripts/check-india-release.ts                       # https://clearcutt.in
+ *   node scripts/check-india-release.ts https://clearcutt.in
+ *   node scripts/check-india-release.ts --offline             # local files only, no network
  *
  * Exit codes: 0 = no failures (warnings allowed), 1 = at least one FAIL, 2 = cannot run.
  *
@@ -22,8 +22,8 @@
  *   - Request indexing for canonical HTML URLs only. /llms.txt is a content
  *     check, never a Request Indexing target.
  *
- * This file is independent of scripts/seo.mjs, scripts/verify-dist.mjs and
- * scripts/verify-live.mjs: it imports nothing from them and duplicates none of
+ * This file is independent of scripts/seo.ts, scripts/verify-dist.ts and
+ * scripts/verify-live.ts: it imports nothing from them and duplicates none of
  * their logic.
  */
 
@@ -33,6 +33,39 @@ import { resolve, join } from 'node:path';
 const ROOT = new URL('../', import.meta.url);
 const CONTENT_PATH = new URL('docs/seo/india-page-content.json', ROOT);
 const CORRECTIONS_PATH = new URL('docs/seo/release-corrections.json', ROOT);
+
+type Level = 'PASS' | 'FAIL' | 'WARN' | 'INFO';
+type SchemaNode = {
+  '@type'?: string | string[];
+  mainEntity?: SchemaNode | SchemaNode[];
+  name?: string;
+  acceptedAnswer?: { text?: string };
+};
+type Content = {
+  schemaVersion?: string | number;
+  verifiedDate?: string;
+  pages?: {
+    slug: string; title: string; renderedTitle: string; description: string; h1: string; lang: string; canonicalUrl: string;
+    sections: { id: string; heading: string; callout?: { level: string; text: string }; bullets?: string[] }[];
+    faqs: { question: string; answer: string }[];
+    contextualLinks?: { href: string }[];
+  }[];
+};
+type Correction = {
+  id: string; rank: number; slug: string; target: string; action: string; claimType: string; field: string;
+  status?: string; appliedText?: string; proposedText: string; currentText: string; claimDetail?: string;
+  verification?: unknown;
+};
+type Corrections = {
+  contentCommit?: string;
+  corrections?: Correction[];
+  releaseGate?: { runtimeTestsRequiredBeforePublishingBehaviourClaims?: string[] };
+  preserve?: {
+    slug: string; id: string; mustContainAll?: string[]; mustContainAny?: string[]; mustContain?: string[];
+    mustNotContain?: string[]; mustPrecede?: { before: string; after: string };
+  }[];
+};
+type PageResponse = { url: string; status: number; body: string; location: string; error?: string };
 
 const args = process.argv.slice(2);
 const OFFLINE = args.includes('--offline');
@@ -74,24 +107,24 @@ const OBSOLETE_STRINGS = [
 const PROHIBITED_SCHEMA_TYPES = ['AggregateRating', 'Review'];
 const TYPE_WARNING = /(^|[a-z])Rating$/;
 
-const results = [];
-const record = (level, name, detail = '') => results.push({ level, name, detail });
-const check = (cond, name, detail = '') => record(cond ? 'PASS' : 'FAIL', name, detail);
-const warn = (cond, name, detail = '') => record(cond ? 'PASS' : 'WARN', name, detail);
-const info = (name, detail = '') => record('INFO', name, detail);
+const results: { level: Level; name: string; detail: string }[] = [];
+const record = (level: Level, name: string, detail = '') => results.push({ level, name, detail });
+const check = (cond: unknown, name: string, detail = '') => record(cond ? 'PASS' : 'FAIL', name, detail);
+const warn = (cond: unknown, name: string, detail = '') => record(cond ? 'PASS' : 'WARN', name, detail);
+const info = (name: string, detail = '') => record('INFO', name, detail);
 
 /* ------------------------------------------------------------------ helpers */
 
-function readJson(url, label) {
+function readJson<T>(url: URL, label: string): T {
   try {
     return JSON.parse(readFileSync(url, 'utf8'));
   } catch (error) {
-    console.error(`Cannot read ${label} (${url.pathname}): ${error.message}`);
+    console.error(`Cannot read ${label} (${url.pathname}): ${error instanceof Error ? error.message : String(error)}`);
     process.exit(2);
   }
 }
 
-function decodeEntities(input) {
+function decodeEntities(input: unknown) {
   return String(input)
     .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
     .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(Number(d)))
@@ -104,10 +137,10 @@ function decodeEntities(input) {
     .replace(/&amp;/g, '&');
 }
 
-const norm = (s) => decodeEntities(s).replace(/\s+/g, ' ').trim();
+const norm = (s: unknown) => decodeEntities(s).replace(/\s+/g, ' ').trim();
 
 /** Strip scripts and tags, decode entities, collapse whitespace: the visible text of a page. */
-function visibleText(html) {
+function visibleText(html: string) {
   return norm(
     decodeEntities(html)
       .replace(/<script[\s\S]*?<\/script>/gi, ' ')
@@ -117,19 +150,19 @@ function visibleText(html) {
   );
 }
 
-const typeArray = (value) => (Array.isArray(value) ? value : value ? [value] : []);
+const typeArray = (value: string | string[] | undefined) => (Array.isArray(value) ? value : value ? [value] : []);
 
-function flatten(node, out = []) {
+function flatten(node: unknown, out: SchemaNode[] = []) {
   if (Array.isArray(node)) node.forEach((n) => flatten(n, out));
   else if (node && typeof node === 'object') {
-    out.push(node);
+    out.push(node as SchemaNode);
     Object.values(node).forEach((v) => flatten(v, out));
   }
   return out;
 }
 
-function jsonLdNodes(html) {
-  const nodes = [];
+function jsonLdNodes(html: string) {
+  const nodes: SchemaNode[] = [];
   let parseErrors = 0;
   for (const m of html.matchAll(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi)) {
     try {
@@ -141,19 +174,18 @@ function jsonLdNodes(html) {
   return { nodes, parseErrors };
 }
 
-function resolveField(content, field) {
+function resolveField(content: Content, field: string) {
   const match = /^pages\[(\d+)\]\.(.+)$/.exec(field);
   if (!match) return { ok: false, reason: 'field does not start with pages[i]' };
   const page = content.pages?.[Number(match[1])];
   if (!page) return { ok: false, reason: `pages[${match[1]}] does not exist` };
-  let node = page;
+  let node: unknown = page;
   for (const token of match[2].split('.')) {
     const indexed = /^([A-Za-z]+)\[(\d+)\]$/.exec(token);
-    if (indexed) {
-      node = node?.[indexed[1]]?.[Number(indexed[2])];
-    } else {
-      node = node?.[token];
-    }
+    const record = node as Record<string, unknown> | null | undefined;
+    node = indexed
+      ? (record?.[indexed[1]] as unknown[] | undefined)?.[Number(indexed[2])]
+      : record?.[token];
     if (node === undefined) return { ok: false, reason: `path stops at "${token}"` };
   }
   return { ok: true, value: typeof node === 'string' ? node : JSON.stringify(node) };
@@ -161,8 +193,8 @@ function resolveField(content, field) {
 
 /* -------------------------------------------------------------------- input */
 
-const content = readJson(CONTENT_PATH, 'content file');
-const corrections = readJson(CORRECTIONS_PATH, 'corrections file');
+const content = readJson<Content>(CONTENT_PATH, 'content file');
+const corrections = readJson<Corrections>(CORRECTIONS_PATH, 'corrections file');
 
 let ledgerText = '';
 try {
@@ -172,7 +204,7 @@ try {
 }
 
 /** The body of one `### \`SRC-ID\`` ledger entry, or '' when the heading is absent. */
-function ledgerSection(id) {
+function ledgerSection(id: string) {
   const parts = ledgerText.split(/^### /m);
   const hit = parts.find((p) => p.startsWith(`\`${id}\``));
   return hit ?? '';
@@ -181,7 +213,7 @@ function ledgerSection(id) {
 const pages = content.pages ?? [];
 const newSlugs = pages.map((p) => p.slug);
 const allSlugs = [...EXISTING_SLUGS, ...newSlugs];
-const routeOf = (slug) => (slug === '' ? '/' : `/${slug}/`);
+const routeOf = (slug: string) => (slug === '' ? '/' : `/${slug}/`);
 
 console.log(`\nClearcut India release checker — ${OFFLINE ? 'OFFLINE (local files only, no network)' : DIST ? 'BUILT FILES (no network)' : ORIGIN}`);
 console.log(`content:     docs/seo/india-page-content.json (schema ${content.schemaVersion ?? '?'} · verified ${content.verifiedDate ?? '?'})`);
@@ -239,7 +271,7 @@ console.log(`routes:      ${allSlugs.length} (${EXISTING_SLUGS.length} existing 
   }
   const needsTest = (corrections.releaseGate?.runtimeTestsRequiredBeforePublishingBehaviourClaims ?? []);
   check(
-    needsTest.every((id) => (list.find((c) => c.id === id || c.id.startsWith(`${id}-`)) ?? {}).verification),
+    needsTest.every((id) => list.find((c) => c.id === id || c.id.startsWith(`${id}-`))?.verification),
     'every behaviour claim that needs a runtime test records how to run it',
     needsTest.join(', '),
   );
@@ -255,17 +287,18 @@ if (OFFLINE) {
 
 /* -------------------------------------------------------------- live checks */
 
-const cache = new Map();
-async function get(path) {
+const cache = new Map<string, PageResponse>();
+async function get(path: string): Promise<PageResponse> {
   const url = path.startsWith('http') ? path : `${ORIGIN}${path}`;
-  if (cache.has(url)) return cache.get(url);
+  const cached = cache.get(url);
+  if (cached) return cached;
   if (DIST_ROOT) {
     const target = new URL(url);
     if (target.origin !== new URL(ORIGIN).origin) throw new Error('Built-file mode only reads local site routes');
     const pathname = decodeURIComponent(target.pathname);
     const file = resolve(DIST_ROOT, '.' + pathname, pathname.endsWith('/') ? 'index.html' : '');
     if (!file.startsWith(DIST_ROOT + '/')) throw new Error('Path escaped the build directory');
-    let entry;
+    let entry: PageResponse;
     try { entry = { url, status: 200, body: readFileSync(file, 'utf8'), location: '' }; }
     catch { entry = { url, status: 404, body: '', location: '' }; }
     cache.set(url, entry);
@@ -281,7 +314,7 @@ async function get(path) {
       location: response.headers.get('location') || '',
     };
   } catch (error) {
-    entry = { url, status: 0, body: '', location: '', error: String(error?.message || error) };
+    entry = { url, status: 0, body: '', location: '', error: error instanceof Error ? error.message : String(error) };
   }
   cache.set(url, entry);
   return entry;
@@ -321,7 +354,8 @@ for (const page of pages) {
   const missingHeadings = page.sections.map((s) => s.heading).filter((h) => !h2s.includes(norm(h)));
   check(missingHeadings.length === 0, `${page.slug}: all ${page.sections.length} section <h2>s rendered`, missingHeadings.join(' | '));
 
-  for (const section of page.sections.filter((s) => s.callout)) {
+  for (const section of page.sections) {
+    if (!section.callout) continue;
     const present = text.includes(norm(section.callout.text));
     if (section.callout.level === 'warning') {
       check(present, `${page.slug}: ${section.callout.level} callout rendered (${section.id})`, present ? '' : section.callout.text.slice(0, 70) + '…');

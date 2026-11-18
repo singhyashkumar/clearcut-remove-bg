@@ -44,8 +44,8 @@ import {
 } from './models'
 import { createMaskRefinement, type InferenceMask } from './refinement'
 import { canUseOnnxWebGpu, shouldUseSingleThreadedWasm } from './runtime'
-import { configureCpuProxy } from './responsiveness.js'
-import { yieldToBrowser } from '../../src/ui-scheduling.js'
+import { configureCpuProxy } from './responsiveness.ts'
+import { yieldToBrowser } from '../../src/ui-scheduling.ts'
 
 function useIosModel() {
   return (

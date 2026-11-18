@@ -4,13 +4,13 @@ A free-first background-removal site with an original interface and an adapted B
 
 ## Run locally
 
-Use Node.js 22.12+ (verified build here: Node 24.18.0).
+Use Node.js 24, which runs the TypeScript build scripts and test imports directly.
 
     npm ci --ignore-scripts
     npm run build
     npm run preview
 
-Open the Local URL printed by Vite. `npm test` runs the image safety/editor utility checks. `npm audit` checks both production and development dependencies. The deterministic build script applies the upstream Transformers.js recovery fix before bundling. It fails if the pinned runtime no longer matches.
+Open the Local URL printed by Vite. `npm run typecheck` checks the frontend, SEO generator, and Worker. `npm test` runs the editor, SEO, and Worker tests. `npm audit` checks both production and development dependencies. The deterministic build script applies the upstream Transformers.js recovery fix before bundling. It fails if the pinned runtime no longer matches.
 
 ## Included
 
@@ -59,7 +59,7 @@ The live landing page now uses nine original AI-generated artwork assets under `
 
 ## Paid accounts and membership
 
-The payment backend is a Cloudflare Worker (`worker/index.js`) with D1. Razorpay orders are priced server-side at INR 90 for 30 days; renewal is a one-time manual payment, not an automatic subscription. Secrets stay in Worker secrets. Firebase Google sign-in remains on the free plan, and image processing stays in the browser.
+The payment backend is a Cloudflare Worker (`worker/index.ts`) with D1. Razorpay orders are priced server-side at INR 90 for 30 days; renewal is a one-time manual payment, not an automatic subscription. Secrets stay in Worker secrets. Firebase Google sign-in remains on the free plan, and image processing stays in the browser.
 
 The `entitlements` table persists the account UID, plan, expiry and limits. The `accounts` table stores the verified Google email alongside that UID. The backend extracts the email only from a validated Firebase token with `email_verified: true`. A matching email alone does not grant or transfer access. Existing paid users are linked to their verified email on their next authenticated membership request. Signing out clears the visible badge, not the saved membership; signing back into the same Google account restores it.
 

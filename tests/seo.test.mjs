@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, statSync } from 'node:fs';
-import { pages, enhanceHome, renderPage, robots, sitemap, schema } from '../scripts/seo.mjs';
+import { pages, enhanceHome, renderPage, robots, sitemap, schema } from '../scripts/seo.ts';
 /** Guides that intentionally carry more than the default five FAQs. */
 const expectedFaqs = slug => (slug === 'remove-background-cars' ? 7 : 5);
 test('search pages have unique canonical URLs, crawlable content and matching sitemap entries',()=>{

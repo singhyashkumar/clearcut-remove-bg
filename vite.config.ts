@@ -1,7 +1,7 @@
 import { defineConfig, loadEnv } from 'vite';
 import { rmSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { seoPlugin } from './scripts/seo.mjs';
+import { seoPlugin } from './scripts/seo.ts';
 const runtimeBase='https://cdn.jsdelivr.net/npm/onnxruntime-web@1.31.0-dev.20260914-8d85527a0/dist/';
 const artworkMasters=['animals.png','cars.png','efficiency.png','feature.png','graphics.png','hero.png','inspiration.png','people.png','products.png','hero-demo.mp4'];
 export default defineConfig(({mode})=>{

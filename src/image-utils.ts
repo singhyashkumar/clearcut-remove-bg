@@ -1,6 +1,6 @@
 export const MAX_BYTES = 20_000_000;
 export const MAX_PIXELS = 25_000_000;
-export async function validateFile(file) {
+export async function validateFile(file: Blob | null) {
  if (!file || !file.size) throw new Error('Choose a non-empty JPG, PNG or WebP image.');
  if (file.size > MAX_BYTES) throw new Error('That photo is too large. Please choose a file under 20 MB.');
  const b = new Uint8Array(await file.slice(0,12).arrayBuffer());
@@ -9,12 +9,12 @@ export async function validateFile(file) {
  const webp = String.fromCharCode(...b.slice(0,4))==='RIFF' && String.fromCharCode(...b.slice(8,12))==='WEBP';
  if (!(png || jpg || webp)) throw new Error('Unsupported file. Choose a real JPG, PNG or WebP image.');
 }
-export function alphaBounds(data,width,height) {
+export function alphaBounds(data: ArrayLike<number>, width: number, height: number) {
  let left=width,top=height,right=-1,bottom=-1;
  for(let y=0;y<height;y++) for(let x=0;x<width;x++) if(data[(y*width+x)*4+3]>4){left=Math.min(left,x);top=Math.min(top,y);right=Math.max(right,x);bottom=Math.max(bottom,y);}
  return right<0?{x:0,y:0,width,height}:{x:left,y:top,width:right-left+1,height:bottom-top+1};
 }
-export function brushAlpha(alpha, original, width, height, x, y, radius, restore) {
+export function brushAlpha(alpha: Uint8Array, original: Uint8Array, width: number, height: number, x: number, y: number, radius: number, restore: boolean) {
  for(let py=Math.max(0,Math.floor(y-radius));py<Math.min(height,Math.ceil(y+radius));py++)
   for(let px=Math.max(0,Math.floor(x-radius));px<Math.min(width,Math.ceil(x+radius));px++){
    const distance=Math.hypot(px-x,py-y);if(distance>radius)continue;

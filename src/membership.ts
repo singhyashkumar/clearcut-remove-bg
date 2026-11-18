@@ -1,6 +1,10 @@
-export function renderMembership(doc, user, entitlement, mode = 'live', now = Date.now()) {
-  const get = id => doc.getElementById(id);
-  const active = Boolean(user && entitlement?.plan_id === 'plus-monthly' && entitlement.expires_at * 1000 > now);
+export type MembershipUser = { email?: string | null };
+export type Entitlement = { plan_id: string; expires_at: number };
+export type PaymentMode = 'test' | 'live';
+
+export function renderMembership(doc: Document, user: MembershipUser | null, entitlement: Entitlement | null, mode: PaymentMode = 'live', now = Date.now()) {
+  const get = (id: string) => doc.getElementById(id)!;
+  const active = user !== null && entitlement?.plan_id === 'plus-monthly' && entitlement.expires_at * 1000 > now;
   get('account-email').textContent = user?.email || '';
   get('account-email').title = user?.email || '';
   get('membership-badge').hidden = !active;

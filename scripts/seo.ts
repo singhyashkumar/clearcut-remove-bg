@@ -1,3 +1,34 @@
+import type { Plugin } from 'vite';
+import type { EvidenceImage, EvidenceTable, GuideFaq, GuideSection, LegacyGuideSource } from './content/types.ts';
+
+type ContextualLink = { href: string; anchorText: string; placement: string };
+type IndiaSection = {
+ id: string;
+ heading: string;
+ callout?: { level: string; text: string };
+ paragraphs?: string[];
+ bullets?: string[];
+ sourceIds?: string[];
+ contextualLinks?: ContextualLink[];
+};
+type IndiaSource = {
+ slug: string; canonicalUrl: string; title: string; description: string; h1: string; lang: string; lead: string;
+ sections: IndiaSection[];
+ contextualLinks?: ContextualLink[];
+ faqs?: { question: string; answer: string }[];
+};
+type PageFields = {
+ slug: string; title: string; description: string; metaTitle: string; h1: string; lang: string;
+ faqs: readonly GuideFaq[]; lastModified: string; explicitLang: boolean; isGuide: boolean;
+ article?: boolean; datePublished?: string;
+ images?: readonly EvidenceImage[]; tables?: readonly EvidenceTable[];
+};
+type Page = PageFields & (
+ { india?: false; sections: readonly GuideSection[] } |
+ { india: true; sections: readonly IndiaSection[]; lead: string; indiaBody: string; editorialDate: string; indiaCta: string }
+);
+type GuideMedia = { name: string; width: number; height: number; alt: string; caption: string; afterFirstSection?: boolean };
+
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { carPage } from './content/car-page.ts';
@@ -7,14 +38,14 @@ import { renderGuideComparison } from './content/guide-comparison.ts';
 import { comparisonStylesheet } from './content/guide-styles.ts';
 const site = 'https://clearcutt.in/';
 const releaseDate = '2026-11-14';
-const policyDates = {about:'2026-11-13',privacy:releaseDate,contact:'2026-11-13'};
+const policyDates: Record<string, string> = {about:'2026-11-13',privacy:releaseDate,contact:'2026-11-13'};
 const policySlugs = new Set(Object.keys(policyDates));
 const socialImage = `${site}artwork/clearcut-social-card.png`;
 const faviconLinks = '<link rel="icon" type="image/png" sizes="512x512" href="/favicon-512.png"><link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="icon" href="/favicon-48.png" type="image/png" sizes="48x48"><link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">';
-const escape = value => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('"', '&quot;');
-const md = value => escape(value).replace(/\[([^\]]+)\]\(([^)\s]+)\)/g,'<a href="$2">$1</a>');
-const protectEmails = html => html.replace(/<a href="mailto:[^"]+"[^>]*>.*?<\/a>|yxsingh2@gmail\.com/g, match => `<!--email_off-->${match}<!--/email_off-->`);
-const legacyPages = [
+const escape = (value: string) => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('"', '&quot;');
+const md = (value: string) => escape(value).replace(/\[([^\]]+)\]\(([^)\s]+)\)/g,'<a href="$2">$1</a>');
+const protectEmails = (html: string) => html.replace(/<a href="mailto:[^"]+"[^>]*>.*?<\/a>|yxsingh2@gmail\.com/g, match => `<!--email_off-->${match}<!--/email_off-->`);
+const legacySources: readonly LegacyGuideSource[] = [
  ['how-to-remove-background','How to Remove an Image Background for Free','Learn to remove backgrounds, refine edges and export transparent PNGs with Clearcutt.',[
  ['The short answer','Clearcutt removes a photo background directly in your browser at no cost. Open the editor in desktop Chrome or Edge, select, drop or paste a JPG, PNG or WebP photo, and the AI model runs on your device. Compare the result with your original, correct the edges with the Erase and Restore brushes, then download a PNG without a watermark. No installation is needed, and background removal works without signing in.'],
  ['Step 1 — Choose your photo','Open the editor and select, drop or paste a JPG, PNG or WebP. The limit is 20 MB and 25 megapixels, and a sharp image with a clearly visible subject is easier to inspect and refine. If you want to try the workflow before using one of your own photos, load the sample photo in the editor first.'],
@@ -81,35 +112,36 @@ const legacyPages = [
  ['Charged but Plus is missing','Do not pay again. Sign into the same Google account used at checkout and return to the site so membership can refresh. Keep the Razorpay payment receipt for private support. A different Google account does not inherit the original account’s membership.'],
  ['Private support and data requests','Email yxsingh2@gmail.com for membership, payment activation, account correction or deletion requests. For a payment problem, include the Google account used at checkout, the payment date and Razorpay reference. Never send card numbers, CVVs, passwords, OTPs or UPI PINs. For technical bugs, describe your browser, operating system, error and steps to reproduce. The GitHub issue tracker is public: keep personal data out of reports.'],
  ['Renewal and paid-launch status','Access lasts 30 days and renewal requires another deliberate payment; there is no automatic subscription charge. Refund terms still need to be finalized before a broader paid launch. Contact support before paying again if a transaction is unclear.']]]
-].map(([slug,title,description,sections,faqs,fields]) => {
+];
+const legacyPages = legacySources.map(([slug,title,description,sections,faqs,fields]): Page => {
  const o=typeof fields==='object'&&fields!==null?fields:{};
  return {slug,title,description,sections,faqs:faqs||[],metaTitle:o.metaTitle||title,h1:o.h1||title,lang:o.lang||'en',images:o.images||[],tables:o.tables||[],explicitLang:!!o.lang,lastModified:o.lastModified||policyDates[slug]||releaseDate,isGuide:!policySlugs.has(slug)};
 });
 const links = () => pages.map(p => `<li><a href="${site}${p.slug}/">${escape(p.title)}</a></li>`).join('');
 // Editorial sanitizers: strip internal implementation details (alpha thresholds, forensic RAM erasure)
 // from published india-page prose; practical limits (512px masks, single-step undo, model sizes) stay.
-const sanitizeProse = value => value
+const sanitizeProse = (value: string) => value
  .replace(/\s*\(alpha\s*>\s*\d+\)/g,'')
  .replace(/\s*\(halaanki tab band karna forensic RAM erasure ki guarantee nahi hota\)/g,'')
  .replace(/\s*\(closing a tab is not a forensic RAM-erasure guarantee\)/g,'');
-const mdProse = value => {
+const mdProse = (value: string) => {
  const sanitized=sanitizeProse(value);
  if(!sanitized.trim())throw new Error('Prose sanitizer produced empty text');
  return md(sanitized);
 };
 // India landing pages from docs/seo/india-page-content.json (content verified in PR #13, commit 8954e63).
-const indiaDoc=JSON.parse(readFileSync(new URL('../docs/seo/india-page-content.json',import.meta.url),'utf8'));
+const indiaDoc: { siteOrigin: string; verifiedDate: string; pages: IndiaSource[] } = JSON.parse(readFileSync(new URL('../docs/seo/india-page-content.json',import.meta.url),'utf8'));
 if(indiaDoc.siteOrigin!==site)throw new Error('india-page-content.json siteOrigin must match the site origin');
-const indiaReferenceLinks={'REPO-INPUT-LIMITS':['Clearcutt input requirements','/how-to-remove-background/'],'REPO-MODELS-RUNTIME':['Clearcutt model and runtime notes','/how-to-remove-background/'],'REPO-EDITOR-EXPORT':['Clearcutt editor and export notes','/how-to-remove-background/'],'REPO-PLATFORM-LIMITS':['Clearcutt platform support notes','/about/'],'REPO-PRIVACY-NETWORK':['Clearcutt privacy policy','/privacy/'],'REPO-PLANS-LIMITS':['Clearcutt pricing and plans','/#plans']};
-const indiaExternalLinks={'SRC-PASSPORT-ICAO':['Passport Seva ICAO photograph guidelines','https://mportal.passportindia.gov.in/pdf/Guidelines_for_ICAO_Compliant_Photographs_for_Passport_Applications.pdf'],'SRC-PASSPORT-BOOKLET':['Passport Seva application instruction booklet','https://www.passportindia.gov.in/AppOnlineProject/pdf/ApplicationformInstructionBooklet-V3.0.pdf'],'SRC-UPSC-CAF-2026':['UPSC 2026 examination notices','https://www.upsc.gov.in/sites/default/files/ExamNotifi_CAPF_AC_Exam_2026_Eng_20022026.pdf'],'SRC-UPSC-ESE-2026':['UPSC Engineering Services 2026 notice','https://www.upsc.gov.in/sites/default/files/Notif-ESEP-26-Engl.pdf'],'SRC-SSC-CAPF-2026':['SSC SI in Delhi Police and CAPF 2026 notice','https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/Notice_of_adv_capf_2026.pdf'],'SRC-SSC-SCRIBE-OTR':['SSC scribe one-time registration','https://ssc.gov.in/candidate-portal/one-time-registration/scribe-otr-details'],'SRC-IBPS-PO-XVI-2026':['IBPS CRP PO/MT-XVI notification','https://www.ibps.in/wp-content/uploads/Detailed-Notification_CRP-PO-XVI_Final_V1_30.06.2026.pdf'],'SRC-IBPS-REGIONAL-SCAN':['IBPS photograph and signature scanning guidelines','https://ibpsreg.ibps.in/riicosep25/uploads/loadpdf.php?file=k7m5p+fQ15e6w9TW0NzK2pubmdWyp5rXppSo3aRx&t=1LHArOLA2di0yczXwNDa083LmNWypw%3D%3D'],'SRC-NTA-UGCNET-2025':['NTA UGC-NET June 2025 bulletin','https://ugcnet.nta.ac.in/images/information-bulletin-for-ugc-net-june-2025-16042025.pdf'],'SRC-AMAZON-IN-IMAGES':['Amazon India product image requirements','https://sellercentral.amazon.in/seller-forums/discussions/t/41489053-40d6-493e-b5c1-dd8611082354'],'SRC-FLIPKART-LISTING':['Flipkart Seller Hub listing guide','https://seller.flipkart.com/seller-blog/how-to-list-products-on-flipkart'],'SRC-FLIPKART-FASHION':['Flipkart fashion photography guide','https://seller.flipkart.com/seller-blog/ecommerce-fashion-photography'],'SRC-MEESHO-CATALOG':['Meesho supplier catalog guides','https://supplier.meesho.com/sell-online/accessories'],'SRC-MYNTRA-CATALOG':['Myntra Seller University cataloging guidelines','https://seller-university.myntra.com/listing-and-cataloging/']};
-const citationFor=id=>{
+const indiaReferenceLinks: Record<string, readonly [string, string]> ={'REPO-INPUT-LIMITS':['Clearcutt input requirements','/how-to-remove-background/'],'REPO-MODELS-RUNTIME':['Clearcutt model and runtime notes','/how-to-remove-background/'],'REPO-EDITOR-EXPORT':['Clearcutt editor and export notes','/how-to-remove-background/'],'REPO-PLATFORM-LIMITS':['Clearcutt platform support notes','/about/'],'REPO-PRIVACY-NETWORK':['Clearcutt privacy policy','/privacy/'],'REPO-PLANS-LIMITS':['Clearcutt pricing and plans','/#plans']};
+const indiaExternalLinks: Record<string, readonly [string, string]> ={'SRC-PASSPORT-ICAO':['Passport Seva ICAO photograph guidelines','https://mportal.passportindia.gov.in/pdf/Guidelines_for_ICAO_Compliant_Photographs_for_Passport_Applications.pdf'],'SRC-PASSPORT-BOOKLET':['Passport Seva application instruction booklet','https://www.passportindia.gov.in/AppOnlineProject/pdf/ApplicationformInstructionBooklet-V3.0.pdf'],'SRC-UPSC-CAF-2026':['UPSC 2026 examination notices','https://www.upsc.gov.in/sites/default/files/ExamNotifi_CAPF_AC_Exam_2026_Eng_20022026.pdf'],'SRC-UPSC-ESE-2026':['UPSC Engineering Services 2026 notice','https://www.upsc.gov.in/sites/default/files/Notif-ESEP-26-Engl.pdf'],'SRC-SSC-CAPF-2026':['SSC SI in Delhi Police and CAPF 2026 notice','https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/Notice_of_adv_capf_2026.pdf'],'SRC-SSC-SCRIBE-OTR':['SSC scribe one-time registration','https://ssc.gov.in/candidate-portal/one-time-registration/scribe-otr-details'],'SRC-IBPS-PO-XVI-2026':['IBPS CRP PO/MT-XVI notification','https://www.ibps.in/wp-content/uploads/Detailed-Notification_CRP-PO-XVI_Final_V1_30.06.2026.pdf'],'SRC-IBPS-REGIONAL-SCAN':['IBPS photograph and signature scanning guidelines','https://ibpsreg.ibps.in/riicosep25/uploads/loadpdf.php?file=k7m5p+fQ15e6w9TW0NzK2pubmdWyp5rXppSo3aRx&t=1LHArOLA2di0yczXwNDa083LmNWypw%3D%3D'],'SRC-NTA-UGCNET-2025':['NTA UGC-NET June 2025 bulletin','https://ugcnet.nta.ac.in/images/information-bulletin-for-ugc-net-june-2025-16042025.pdf'],'SRC-AMAZON-IN-IMAGES':['Amazon India product image requirements','https://sellercentral.amazon.in/seller-forums/discussions/t/41489053-40d6-493e-b5c1-dd8611082354'],'SRC-FLIPKART-LISTING':['Flipkart Seller Hub listing guide','https://seller.flipkart.com/seller-blog/how-to-list-products-on-flipkart'],'SRC-FLIPKART-FASHION':['Flipkart fashion photography guide','https://seller.flipkart.com/seller-blog/ecommerce-fashion-photography'],'SRC-MEESHO-CATALOG':['Meesho supplier catalog guides','https://supplier.meesho.com/sell-online/accessories'],'SRC-MYNTRA-CATALOG':['Myntra Seller University cataloging guidelines','https://seller-university.myntra.com/listing-and-cataloging/']};
+const citationFor=(id: string)=>{
  const internal=indiaReferenceLinks[id];
  if(internal)return `<a class="citation" href="${internal[1]}">${escape(internal[0])}</a>`;
  const external=indiaExternalLinks[id];
  if(!external)throw new Error(`Unknown source id: ${id}`);
  return `<a class="citation" href="${escape(external[1])}" rel="noopener nofollow">${escape(external[0])}</a>`;
 };
-const renderIndiaSection=section=>{
+const renderIndiaSection=(section: IndiaSection)=>{
  const parts=[`<section${section.id?` id="${escape(section.id)}"`:''}><h2>${escape(section.heading)}</h2>`];
  if(section.callout)parts.push(`<aside class="callout callout-${escape(section.callout.level)}" role="note"><p>${mdProse(section.callout.text)}</p></aside>`);
  for(const paragraph of section.paragraphs||[])parts.push(`<p>${mdProse(paragraph)}</p>`);
@@ -120,12 +152,12 @@ const renderIndiaSection=section=>{
  parts.push('</section>');
  return parts.join('');
 };
-const indiaPages=indiaDoc.pages.map(page=>{
+const indiaPages=indiaDoc.pages.map((page): Page =>{
  const existingSlugs=new Set(legacyPages.map(p=>p.slug));
  if(existingSlugs.has(page.slug))throw new Error(`India page ${page.slug} collides with an existing page`);
  if(new URL(page.canonicalUrl).href!==`${site}${page.slug}/`)throw new Error(`India page ${page.slug} canonicalUrl mismatch`);
  const allSlugs=[...existingSlugs,...indiaDoc.pages.map(p=>p.slug)];
- const bySection=new Map();
+ const bySection=new Map<string, ContextualLink[]>();
  for(const link of page.contextualLinks||[]){
   if(link.placement==='primary-cta')continue;
   const target=new URL(link.href,site).pathname.replace(/\/$/,'').slice(1);
@@ -134,12 +166,12 @@ const indiaPages=indiaDoc.pages.map(page=>{
   if(sectionId)bySection.set(sectionId,[...(bySection.get(sectionId)||[]),link]);
  }
  const renderedSections=page.sections.map(section=>renderIndiaSection({...section,contextualLinks:bySection.get(section.id)||[]})).join('');
- const faqs=(page.faqs||[]).map(f=>[f.question,sanitizeProse(f.answer)]);
+ const faqs=(page.faqs||[]).map((f): GuideFaq =>[f.question,sanitizeProse(f.answer)]);
  if(faqs.length!==5)throw new Error(`India page ${page.slug} must expose exactly five FAQs`);
  const primaryCta=(page.contextualLinks||[]).find(l=>l.placement==='primary-cta');
  return {slug:page.slug,title:page.title,metaTitle:page.title,description:page.description,h1:page.h1,lead:mdProse(page.lead),lang:page.lang,explicitLang:true,faqs,india:true,sections:page.sections,indiaBody:renderedSections,indiaCta:primaryCta?primaryCta.anchorText:'Open the free background remover',editorialDate:indiaDoc.verifiedDate,lastModified:releaseDate,isGuide:true};
 });
-const newsPages=[{
+const newsPages: Page[] = [{
  slug:'remove-bg-shutting-down',
  title:'Is remove.bg Shutting Down? What Changes on 1 December 2026',
  metaTitle:'remove.bg Is Moving to Canva: What Changes on 1 December 2026',
@@ -162,7 +194,7 @@ const newsPages=[{
  ]
 }];
 export const pages=[...legacyPages,...indiaPages,...newsPages];
-const guideMedia={
+const guideMedia: Record<string, GuideMedia> = {
  'how-to-remove-background':{name:'workflow',width:960,height:340,alt:'Illustrated three-step Clearcutt workflow showing upload, edge refinement and PNG download',caption:'Illustrated walkthrough — your own photo and result will be different.'},
  'photo-ka-background-kaise-hataye':{name:'workflow',width:960,height:340,alt:'Clearcutt mein upload, edge refine aur PNG download ka illustrated three-step workflow',caption:'Illustrated walkthrough — aapki photo aur result alag honge.'},
  'remove-background-products':{name:'products',width:960,height:600,alt:'Illustration of a shoe product photo on white with background colour choices',caption:'Illustration: check the current listing rules for the marketplace and product category you use.'},
@@ -172,14 +204,14 @@ const guideMedia={
  'passport-exam-form-white-background':{name:'passport',width:960,height:600,alt:'Illustrative portrait beside a warning to check current official photo instructions before editing',caption:'Illustrative portrait, not an accepted ID-photo example. Editing may be prohibited and acceptance is never guaranteed.',afterFirstSection:true},
  'remove-background-from-signature-png':{name:'signature',width:960,height:600,alt:'Demonstration sheet marked SAMPLE with a reminder that ink-only transparency is not guaranteed',caption:'Controlled demonstration, not a real signature or model-output claim. Inspect the exported PNG on a dark background.'}
 };
-const renderGuideVisual=p=>{
+const renderGuideVisual=(p: Page)=>{
  if(p.slug==='transparent-background')return renderGuideComparison('transparency');
  if(p.slug==='remove-background-cars')return renderGuideComparison('cars');
  const media=guideMedia[p.slug];
  if(!media)return '';
  return `<figure class="guide-visual"><img class="guide-visual-image" src="/artwork/guides/${media.name}-960.webp" srcset="/artwork/guides/${media.name}-480.webp 480w, /artwork/guides/${media.name}-960.webp 960w" sizes="(max-width: 767px) calc(100vw - 48px), 756px" width="${media.width}" height="${media.height}" alt="${escape(media.alt)}" decoding="async" fetchpriority="high"><figcaption>${escape(media.caption)}</figcaption></figure>`;
 };
-const renderWorkflowDemo=p=>p.slug==='how-to-remove-background'?`<details class="guide-demo"><summary>Watch the 3-step illustrated walkthrough</summary><figure><picture><source media="(prefers-reduced-motion: reduce)" srcset="/artwork/how-to/download.webp"><img src="/artwork/guides/workflow.gif" width="480" height="360" loading="lazy" decoding="async" alt="Three illustrated Clearcutt steps: upload a photo, refine the cutout, then download a PNG"></picture><figcaption>This short illustration plays once. It is not a recording of model output.</figcaption></figure></details>`:'';
+const renderWorkflowDemo=(p: Page)=>p.slug==='how-to-remove-background'?`<details class="guide-demo"><summary>Watch the 3-step illustrated walkthrough</summary><figure><picture><source media="(prefers-reduced-motion: reduce)" srcset="/artwork/how-to/download.webp"><img src="/artwork/guides/workflow.gif" width="480" height="360" loading="lazy" decoding="async" alt="Three illustrated Clearcutt steps: upload a photo, refine the cutout, then download a PNG"></picture><figcaption>This short illustration plays once. It is not a recording of model output.</figcaption></figure></details>`:'';
 const description = 'Remove image backgrounds for free with Clearcutt. Create transparent PNGs, add white or colored backgrounds, and refine cutouts privately on your device.';
 export const schema = {'@context':'https://schema.org','@graph':[
  {'@type':'WebSite','@id':`${site}#website`,name:'Clearcutt',alternateName:['Clearcutt Remove BG','clearcutt.in'],url:site,inLanguage:'en'},
@@ -192,7 +224,7 @@ export const schema = {'@context':'https://schema.org','@graph':[
  ]},
  {'@type':'WebApplication',name:'Clearcutt Remove BG',url:site,applicationCategory:'MultimediaApplication',operatingSystem:'Windows, macOS, Linux',browserRequirements:'Current desktop Chrome or Edge; JavaScript and WebAssembly required',description,offers:{'@type':'Offer',price:'0',priceCurrency:'INR',description:'Free single-image background removal and PNG export'}}
 ]};
-export function enhanceHome(html) {
+export function enhanceHome(html: string) {
  const guides = `<section class="seo-guides reference-container" aria-labelledby="guides-heading"><h2 id="guides-heading">Background removal guides and help</h2><p>Find practical steps for your photo and learn how Clearcutt handles your images.</p><nav aria-label="Guides"><ul>${links()}</ul></nav><p><a href="https://github.com/singhyashkumar/clearcut-remove-bg/issues">Report a technical issue</a> · Keep private account and payment information out of public reports.</p></section>`;
  const migrationNotice = `<aside class="migration-notice" aria-label="remove.bg service update"><p><strong>remove.bg is moving to Canva on 1 December 2026.</strong> <a href="/remove-bg-shutting-down/">See what is changing and whether Clearcutt fits your workflow →</a></p></aside>`;
  const feedback = `<section class="reviews-section reference-container" id="reviews" aria-labelledby="reviews-heading"><header class="reviews-heading"><div><span class="eyebrow">REAL USER FEEDBACK</span><h2 id="reviews-heading">Clearcutt reviews</h2><p>Reviews come from signed-in users and are published immediately. They are not verified purchases or Google reviews.</p></div><p class="reviews-summary" id="reviews-summary" role="status">Loading published reviews…</p></header><ul class="reviews-list" id="reviews-list" aria-label="Published Clearcutt reviews"></ul><p class="reviews-empty" id="reviews-empty">No published reviews yet.</p><div class="review-compose"><div><h3>Share your experience</h3><p>One review per Google account. Be specific and honest; do not include private information.</p><p><a href="mailto:yxsingh2@gmail.com?subject=Private%20Clearcut%20feedback">Send private feedback instead</a></p></div><form id="review-form"><fieldset class="review-rating"><legend>Your rating</legend>${[1,2,3,4,5].map(value=>`<label><input type="radio" name="rating" value="${value}" required><span aria-hidden="true">★</span><span class="sr-only">${value} star${value===1?'':'s'}</span></label>`).join('')}</fieldset><label for="review-name">Public display name</label><input id="review-name" name="display_name" type="text" minlength="2" maxlength="50" autocomplete="nickname" required><label for="review-body">Your review</label><textarea id="review-body" name="body" minlength="20" maxlength="1000" rows="5" required></textarea><span class="review-count" id="review-count">0 / 1000</span><div class="review-actions"><button class="section-cta" id="review-signin" type="button">Sign in to review</button><button class="section-cta" id="review-submit" type="submit">Submit review</button><button class="review-delete" id="review-delete" type="button" hidden>Delete my review</button></div><p class="review-status" id="review-status" role="status" aria-live="polite">Checking sign-in…</p></form></div><section class="review-admin" id="review-admin" hidden aria-labelledby="review-admin-heading"><div class="review-admin-heading"><h3 id="review-admin-heading">Review moderation</h3><button id="review-admin-refresh" type="button">Refresh queue</button></div><ul id="review-admin-list"></ul><p id="review-admin-status" role="status" aria-live="polite"></p></section></section>`;
@@ -204,7 +236,7 @@ export function enhanceHome(html) {
  .replace('<section class="final-cta">',`${feedback}${guides}<section class="final-cta">`)
  .replace('</footer>','<a href="/about/">About</a><a href="/privacy/">Privacy</a><a href="/contact/">Contact</a><a href="mailto:yxsingh2@gmail.com">Support</a></footer>'));
 }
-const evidenceImage=image=>{
+const evidenceImage=(image: EvidenceImage)=>{
  if(!image||typeof image.src!=='string'||!image.src)throw new Error('Evidence images need a src');
  if(typeof image.alt!=='string'||!image.alt)throw new Error(`Evidence image ${image.src} needs alt text`);
  if(!Number.isInteger(image.width)||image.width<=0||!Number.isInteger(image.height)||image.height<=0)throw new Error(`Evidence image ${image.src} needs positive integer width and height`);
@@ -212,10 +244,10 @@ const evidenceImage=image=>{
  const sizes=typeof image.sizes==='string'&&image.sizes?` sizes="${escape(image.sizes)}"`:'';
  return {html:`<img src="${escape(image.src)}" alt="${escape(image.alt)}" loading="lazy" decoding="async" width="${image.width}" height="${image.height}"${srcset}${sizes}>`};
 };
-function renderPageBase(p) {
+function renderPageBase(p: Page) {
  const url=`${site}${p.slug}/`;
  const pageTitle=p.metaTitle||p.title;
- const data={'@context':'https://schema.org','@type':p.article?'Article':'WebPage',name:p.title,description:p.description,url,isPartOf:{'@id':`${site}#website`},breadcrumb:{'@type':'BreadcrumbList',itemListElement:[{'@type':'ListItem',position:1,name:'Clearcutt Remove BG',item:site},{'@type':'ListItem',position:2,name:p.title,item:url}]}};
+ const data: Record<string, unknown> = {'@context':'https://schema.org','@type':p.article?'Article':'WebPage',name:p.title,description:p.description,url,isPartOf:{'@id':`${site}#website`},breadcrumb:{'@type':'BreadcrumbList',itemListElement:[{'@type':'ListItem',position:1,name:'Clearcutt Remove BG',item:site},{'@type':'ListItem',position:2,name:p.title,item:url}]}};
  data.author={'@type':'Organization','@id':`${site}#organization`,name:'Clearcutt',url:site};
  data.publisher={'@id':`${site}#organization`};
  data.dateModified=p.lastModified;
@@ -227,28 +259,28 @@ function renderPageBase(p) {
  const tables=(p.tables||[]).map(({caption,head,rows})=>`<div class="table-wrap"${caption?` role="group" aria-label="${escape(caption)}"`:''}><table>${caption?`<caption>${escape(caption)}</caption>`:''}<thead><tr>${head.map(h=>`<th scope="col">${escape(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${escape(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`).join('');
  const visual=renderGuideVisual(p);
  const visualBeforeSections=guideMedia[p.slug]?.afterFirstSection?'':visual;
- const insertAfterFirstSection=body=>guideMedia[p.slug]?.afterFirstSection?body.replace('</section>',`</section>${visual}`):body;
+ const insertAfterFirstSection=(body: string)=>guideMedia[p.slug]?.afterFirstSection?body.replace('</section>',`</section>${visual}`):body;
  const legacyBody=p.india?'':insertAfterFirstSection(p.sections.map(([h,t])=>`<section${p.slug==='about'&&h==='Editorial standards'?' id="editorial-standards"':''}><h2>${escape(h)}</h2><p>${md(t)}</p>${figures}${tables}</section>`).join(''));
  const indiaBody=p.india?insertAfterFirstSection(p.indiaBody):'';
  const contentBody=p.india?`${indiaBody}<p class="editorial-note">Editorially checked on ${p.editorialDate}. Product behaviour can change; this guide is reviewed against the current editor and the official sources listed on this page.</p><p><a class="cta" href="/#workspace">${escape(p.indiaCta)} →</a></p>`:`${legacyBody}${renderWorkflowDemo(p)}`;
  const pageMeta=p.isGuide?`<p class="page-meta">Maintained by <a href="/about/#editorial-standards">Clearcutt</a> · Last updated <time datetime="${p.lastModified}">${new Date(`${p.lastModified}T00:00:00Z`).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'})}</time></p>`:'';
  return `<!doctype html><html lang="${p.lang||'en'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escape(pageTitle)} | Clearcutt</title><meta name="description" content="${escape(p.description)}"><meta name="robots" content="index,follow,max-image-preview:large"><meta name="referrer" content="no-referrer"><meta property="og:site_name" content="Clearcutt Remove BG"><meta property="og:title" content="${escape(pageTitle)} | Clearcutt"><meta property="og:description" content="${escape(p.description)}"><meta property="og:type" content="website"><meta property="og:url" content="${url}"><meta property="og:image" content="${socialImage}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Clearcutt Remove BG — private, on-device image background removal"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${escape(pageTitle)} | Clearcutt"><meta name="twitter:description" content="${escape(p.description)}"><meta name="twitter:image" content="${socialImage}"><meta name="twitter:image:alt" content="Clearcutt Remove BG — private, on-device image background removal"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; font-src 'self'; img-src 'self' data:; script-src https://static.cloudflareinsights.com; connect-src 'self'; base-uri 'none'; object-src 'none'; form-action 'none'"><link rel="canonical" href="${url}"><link rel="stylesheet" href="/seo.css"><script type="application/ld+json">${JSON.stringify(data)}</script></head><body><a class="skip" href="#content">Skip to content</a><header><a class="brand" href="/">◩ clearcutt.</a><nav aria-label="Main"><a href="/#workspace">Remove background</a><a href="/how-to-remove-background/">How to use</a><a href="/#plans">Pricing</a></nav></header><main id="content"><p class="breadcrumb"><a href="/">Home</a><span aria-hidden="true"> / </span>${escape(p.title)}</p><h1>${escape(p.h1||p.title)}</h1><p class="lead">${p.india?p.lead:escape(p.description)}</p>${pageMeta}${visualBeforeSections}${contentBody}${p.faqs.length?`<section class="faq" aria-labelledby="faq-heading"><h2 id="faq-heading">Frequently asked questions</h2>${p.faqs.map(([q,a])=>`<h3>${escape(q)}</h3><p>${p.india?mdProse(a):md(a)}</p>`).join('')}</section>`:''}<p><a class="cta" href="/#workspace">Open the free background remover →</a></p>${p.slug==='contact'?'<p><a href="mailto:yxsingh2@gmail.com?subject=Clearcutt%20feedback">Send private feedback</a> · <a href="https://github.com/singhyashkumar/clearcut-remove-bg/issues">Open the public issue tracker</a></p>':''}<aside aria-label="Related guides"><h2>Explore Clearcutt</h2><ul>${links()}</ul></aside></main><footer><a href="/about/">About</a><a href="/privacy/">Privacy</a><a href="/contact/">Contact</a><a href="/THIRD_PARTY_NOTICES.md">Open-source notices</a></footer></body></html>`;
 }
-export function renderPage(p) {
+export function renderPage(p: Page) {
  const stylesheet = ['transparent-background','remove-background-cars'].includes(p.slug) ? comparisonStylesheet : '/seo.css';
- const legacyHtml=protectEmails(renderPageBase(p))
+ const sharedHtml=protectEmails(renderPageBase(p))
   .replace('property="og:site_name" content="Clearcutt Remove BG"','property="og:site_name" content="Clearcutt"')
   .replace('<link rel="stylesheet" href="/seo.css">',`${faviconLinks}<link rel="stylesheet" href="${stylesheet}">`);
- if(p.slug!=='transparent-background')return legacyHtml;
+ if(p.slug!=='transparent-background')return sharedHtml;
  const typedHtml=renderTransparentPage({linksHtml:links(),lastModified:p.lastModified});
- if(typedHtml!==legacyHtml){
+ if(typedHtml!==sharedHtml){
   let mismatch=0;
-  while(mismatch<typedHtml.length&&mismatch<legacyHtml.length&&typedHtml[mismatch]===legacyHtml[mismatch])mismatch++;
-  throw new Error(`Transparent page TypeScript parity failed at byte ${mismatch} (typed ${typedHtml.length}, legacy ${legacyHtml.length})`);
+  while(mismatch<typedHtml.length&&mismatch<sharedHtml.length&&typedHtml[mismatch]===sharedHtml[mismatch])mismatch++;
+  throw new Error(`Transparent page TypeScript parity failed at byte ${mismatch} (typed ${typedHtml.length}, legacy ${sharedHtml.length})`);
  }
  return typedHtml;
 }
 export const robots=`User-agent: *\nAllow: /\n\nSitemap: ${site}sitemap.xml\n`;
 export const sitemap=`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${site}</loc><lastmod>${releaseDate}</lastmod></url>${pages.map(p=>`<url><loc>${site}${p.slug}/</loc><lastmod>${p.lastModified}</lastmod></url>`).join('')}</urlset>\n`;
-export function seoPlugin(){let outDir;return {name:'clearcut-seo',configResolved(config){outDir=resolve(config.root,config.build.outDir);},transformIndexHtml:enhanceHome,closeBundle(){for(const p of pages){const directory=resolve(outDir,p.slug);mkdirSync(directory,{recursive:true});writeFileSync(resolve(directory,'index.html'),renderPage(p));}writeFileSync(resolve(outDir,'robots.txt'),robots);writeFileSync(resolve(outDir,'sitemap.xml'),sitemap);}};}
+export function seoPlugin(): Plugin {let outDir: string;return {name:'clearcut-seo',configResolved(config){outDir=resolve(config.root,config.build.outDir);},transformIndexHtml:enhanceHome,closeBundle(){for(const p of pages){const directory=resolve(outDir,p.slug);mkdirSync(directory,{recursive:true});writeFileSync(resolve(directory,'index.html'),renderPage(p));}writeFileSync(resolve(outDir,'robots.txt'),robots);writeFileSync(resolve(outDir,'sitemap.xml'),sitemap);}};}
 

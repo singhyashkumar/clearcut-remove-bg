@@ -1,8 +1,12 @@
-import { getGoogleAuthToken, signInWithGoogle, watchGoogleAuth } from './firebase-auth.js';
+import { getGoogleAuthToken, signInWithGoogle, watchGoogleAuth, type GoogleUser } from './firebase-auth.ts';
 
 const configuredApiBase = (import.meta.env?.VITE_API_BASE_URL || import.meta.env?.VITE_PAYMENT_API_BASE_URL || '').replace(/\/$/, '');
 
-async function request(apiBase, path, { method = 'GET', body, token } = {}) {
+type RequestOptions = { method?: string; body?: object; token?: string };
+type PublicReview = { id: string; display_name: string; rating: number; body: string; published_at: number };
+type SavedReview = Pick<PublicReview, 'id' | 'display_name' | 'rating' | 'body'> & { status: string };
+
+async function request<Result>(apiBase: string, path: string, { method = 'GET', body, token }: RequestOptions = {}): Promise<Result> {
   const response = await fetch(`${apiBase}${path}`, {
     method,
     headers: {
@@ -13,10 +17,10 @@ async function request(apiBase, path, { method = 'GET', body, token } = {}) {
   });
   const result = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(result.error || 'Reviews could not be loaded.');
-  return result;
+  return result as Result;
 }
 
-export function renderApprovedReviews(list, reviews, doc = document) {
+export function renderApprovedReviews(list: HTMLElement, reviews: readonly PublicReview[], doc = document) {
   list.replaceChildren();
   for (const review of reviews) {
     const card = doc.createElement('li');
@@ -41,22 +45,22 @@ export function renderApprovedReviews(list, reviews, doc = document) {
   }
 }
 
-export function initReviews(section, { apiBase = configuredApiBase, doc = document } = {}) {
+export function initReviews(section: Element | null, { apiBase = configuredApiBase, doc = document } = {}) {
   if (!section) return;
-  const get = id => section.querySelector(`#${id}`);
+  const get = <T extends HTMLElement = HTMLElement>(id: string) => section.querySelector<T>(`#${id}`)!;
   const list = get('reviews-list'), summary = get('reviews-summary'), empty = get('reviews-empty');
-  const form = get('review-form'), name = get('review-name'), body = get('review-body');
-  const count = get('review-count'), status = get('review-status'), signIn = get('review-signin');
-  const submit = get('review-submit'), remove = get('review-delete');
+  const form = get<HTMLFormElement>('review-form'), name = get<HTMLInputElement>('review-name'), body = get<HTMLTextAreaElement>('review-body');
+  const count = get('review-count'), status = get('review-status'), signIn = get<HTMLButtonElement>('review-signin');
+  const submit = get<HTMLButtonElement>('review-submit'), remove = get<HTMLButtonElement>('review-delete');
   const admin = get('review-admin'), adminList = get('review-admin-list');
   const adminRefresh = get('review-admin-refresh'), adminStatus = get('review-admin-status');
-  let currentUser = null, mine = null, authRevision = 0;
+  let currentUser: GoogleUser | null = null, mine: SavedReview | null = null, authRevision = 0;
 
-  const setStatus = message => { status.textContent = message; };
-  const setFormEnabled = enabled => {
+  const setStatus = (message: string) => { status.textContent = message; };
+  const setFormEnabled = (enabled: boolean) => {
     for (const control of form.elements) {
       if (control === signIn) continue;
-      control.disabled = !enabled;
+      if ('disabled' in control) control.disabled = !enabled;
     }
   };
   const updateCounter = () => { count.textContent = `${body.value.length} / 1000`; };
@@ -73,7 +77,7 @@ export function initReviews(section, { apiBase = configuredApiBase, doc = docume
 
   async function loadPublic() {
     try {
-      const result = await request(apiBase, '/api/reviews');
+      const result = await request<{ reviews: PublicReview[]; count: number; average: number | null }>(apiBase, '/api/reviews');
       const reviews = Array.isArray(result.reviews) ? result.reviews : [];
       renderApprovedReviews(list, reviews, doc);
       empty.hidden = reviews.length > 0;
@@ -85,7 +89,7 @@ export function initReviews(section, { apiBase = configuredApiBase, doc = docume
     }
   }
 
-  function fillMine(review) {
+  function fillMine(review: SavedReview | null) {
     mine = review || null;
     if (!review) {
       form.reset();
@@ -97,7 +101,7 @@ export function initReviews(section, { apiBase = configuredApiBase, doc = docume
     }
     name.value = review.display_name;
     body.value = review.body;
-    const rating = form.querySelector(`input[name="rating"][value="${review.rating}"]`);
+    const rating = form.querySelector<HTMLInputElement>(`input[name="rating"][value="${review.rating}"]`);
     if (rating) rating.checked = true;
     updateCounter();
     remove.hidden = false;
@@ -109,10 +113,10 @@ export function initReviews(section, { apiBase = configuredApiBase, doc = docume
         : 'Your review is awaiting moderation.');
   }
 
-  async function loadMine(revision) {
+  async function loadMine(revision: number) {
     try {
       const token = await getGoogleAuthToken();
-      const result = await request(apiBase, '/api/reviews/mine', { token });
+      const result = await request<{ review: SavedReview | null; is_admin: boolean }>(apiBase, '/api/reviews/mine', { token });
       if (revision === authRevision) {
         fillMine(result.review);
         admin.hidden = !result.is_admin;
@@ -128,7 +132,7 @@ export function initReviews(section, { apiBase = configuredApiBase, doc = docume
     adminStatus.textContent = 'Loading pending reviews…';
     try {
       const token = await getGoogleAuthToken();
-      const result = await request(apiBase, '/api/admin/reviews?status=pending', { token });
+      const result = await request<{ reviews: SavedReview[] }>(apiBase, '/api/admin/reviews?status=pending', { token });
       adminList.replaceChildren();
       for (const review of result.reviews || []) {
         const item = doc.createElement('li');
@@ -155,7 +159,7 @@ export function initReviews(section, { apiBase = configuredApiBase, doc = docume
                 review_id: review.id, action, reason: reason.value.trim()
               } });
               await Promise.all([loadAdminQueue(), loadPublic()]);
-            } catch (error) { adminStatus.textContent = error.message; }
+            } catch (error) { adminStatus.textContent = error instanceof Error ? error.message : 'Reviews could not be loaded.'; }
             finally { button.disabled = false; }
           });
           actions.append(button);
@@ -164,7 +168,7 @@ export function initReviews(section, { apiBase = configuredApiBase, doc = docume
         adminList.append(item);
       }
       adminStatus.textContent = result.reviews?.length ? `${result.reviews.length} pending review${result.reviews.length === 1 ? '' : 's'}.` : 'No reviews are waiting for moderation.';
-    } catch (error) { adminStatus.textContent = error.message; }
+    } catch (error) { adminStatus.textContent = error instanceof Error ? error.message : 'Reviews could not be loaded.'; }
   }
 
   setFormEnabled(false);
@@ -208,7 +212,7 @@ export function initReviews(section, { apiBase = configuredApiBase, doc = docume
       await loadMine(authRevision);
       setStatus('Thank you. Your review is published.');
       await loadPublic();
-    } catch (error) { setStatus(error.message); }
+    } catch (error) { setStatus(error instanceof Error ? error.message : 'Reviews could not be loaded.'); }
     finally { submit.disabled = false; remove.disabled = false; }
   });
 
@@ -224,7 +228,7 @@ export function initReviews(section, { apiBase = configuredApiBase, doc = docume
       fillMine(null);
       setStatus('Your review was deleted.');
       await loadPublic();
-    } catch (error) { setStatus(error.message); }
+    } catch (error) { setStatus(error instanceof Error ? error.message : 'Reviews could not be loaded.'); }
     finally { remove.disabled = false; submit.disabled = false; }
   });
 

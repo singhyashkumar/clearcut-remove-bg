@@ -25,14 +25,31 @@ jobs:
       - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
       - run: npm ci --ignore-scripts
       - run: npm audit --audit-level=high
+      - run: npm run typecheck
       - run: npm test
       - run: npm run build
-        env:
+        env: &pages-build-env
           PUBLIC_BASE_PATH: /
           PUBLIC_SITE_URL: https://clearcutt.in/
           VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL || vars.VITE_PAYMENT_API_BASE_URL }}
           VITE_PAYMENT_API_BASE_URL: ${{ vars.VITE_PAYMENT_API_BASE_URL }}
           VITE_PAYMENT_MODE: ${{ vars.VITE_PAYMENT_MODE }}
+      # Keep the JavaScript build's hashed assets reachable for cached homepages.
+      - name: Check out the pre-TypeScript release
+        if: github.event.before == '17657adc4325ebd94bd5e0be2485b33467e85383'
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: '17657adc4325ebd94bd5e0be2485b33467e85383'
+          path: .previous-release
+          persist-credentials: false
+      - name: Retain the previous build's hashed assets
+        if: github.event.before == '17657adc4325ebd94bd5e0be2485b33467e85383'
+        working-directory: .previous-release
+        env: *pages-build-env
+        run: |
+          npm ci --ignore-scripts
+          npm run build
+          cp -an dist/assets/. ../dist/assets/
       - run: npm run verify:dist
       - uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
         with:
@@ -63,4 +80,4 @@ jobs:
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '24'
-      - run: node scripts/verify-live.mjs https://clearcutt.in/
+      - run: node scripts/verify-live.ts https://clearcutt.in/
