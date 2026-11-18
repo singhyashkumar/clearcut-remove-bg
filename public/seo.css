@@ -28,7 +28,7 @@
  .guide-comparison-wide{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
  .guide-comparison-stack{display:grid;gap:10px;padding:10px;border:1px solid #e5e9e3;border-radius:14px;background:#f4f6f0}
  .guide-comparison-panel{overflow:hidden;border:1px solid #e5e9e3;border-radius:10px;background:#fff}
- .guide-comparison-crop{aspect-ratio:5/3;max-height:220px;background:var(--comparison-art) 9.3% 36% / 240% auto no-repeat}
+ .guide-comparison-crop{aspect-ratio:5/3;background:var(--comparison-art) 9.3% 36% / 240% auto no-repeat}
  .guide-comparison-panel + .guide-comparison-panel .guide-comparison-crop{background-position:90.7% 36%}
  .guide-comparison-panel p{margin:0;padding:7px 12px;text-align:center;font-size:13px;font-weight:600}
 }
