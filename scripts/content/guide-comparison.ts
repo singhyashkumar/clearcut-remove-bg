@@ -24,5 +24,5 @@ export function renderGuideComparison(name: keyof typeof comparisons): string {
   ).join('');
 
   // The source and both mobile crops share one WebP request.
-  return `<figure class="guide-visual"><div class="guide-comparison guide-comparison--${name}"><picture class="guide-comparison-wide"><source media="(max-width: 767px)" srcset="${base}-960.webp"><img class="guide-visual-image" src="${base}-960.webp" srcset="${base}-480.webp 480w, ${base}-960.webp 960w" sizes="(max-width: 767px) calc(100vw - 48px), 756px" width="960" height="600" alt="${escape(alt)}" decoding="async" fetchpriority="high"></picture><div class="guide-comparison-stack" aria-hidden="true">${panels}</div></div><figcaption>${escape(caption)}</figcaption></figure>`;
+  return `<figure class="guide-visual"><div class="guide-comparison guide-comparison--${name}"><picture class="guide-comparison-wide"><source media="(max-width: 767px)" srcset="${base}-960.webp"><img class="guide-visual-image" src="${base}-960.webp" srcset="${base}-480.webp 480w, ${base}-960.webp 960w" sizes="(max-width: 767px) calc(100vw - 48px), 756px" width="960" height="600" alt="${escape(alt)}" decoding="async" fetchpriority="high"></picture><div class="guide-comparison-stack" hidden aria-hidden="true">${panels}</div></div><figcaption>${escape(caption)}</figcaption></figure>`;
 }

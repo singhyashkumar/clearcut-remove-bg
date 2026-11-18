@@ -239,9 +239,11 @@ test('the transparent PNG guide targets the tool query and both comparisons incl
  assert.match(html,/<h1>Make a Transparent PNG for Free<\/h1>/);
  assert.match(html,/<h2>How to make a transparent background PNG<\/h2><p><a href="\/#workspace">/);
  assert.match(html,/class="guide-comparison guide-comparison--transparency"/);
+ assert.match(html,/href="\/seo\.css\?v=[a-f0-9]{12}"/);
  assert.match(html,/<source media="\(max-width: 767px\)" srcset="\/artwork\/guides\/transparency-960\.webp">/);
  const car=renderPage(pages.find(page=>page.slug==='remove-background-cars'));
  assert.match(car,/class="guide-comparison guide-comparison--cars"/);
+ assert.match(car,/href="\/seo\.css\?v=[a-f0-9]{12}"/);
  assert.match(car,/<source media="\(max-width: 767px\)" srcset="\/artwork\/guides\/cars-960\.webp">/);
 });
 test('guide pages render responsive lightweight visuals while policy pages stay media-free',()=>{
