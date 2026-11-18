@@ -36,20 +36,23 @@ jobs:
           VITE_PAYMENT_MODE: ${{ vars.VITE_PAYMENT_MODE }}
       # Keep the JavaScript build's hashed assets reachable for cached homepages.
       - name: Check out the pre-TypeScript release
-        if: github.event.before == '17657adc4325ebd94bd5e0be2485b33467e85383'
+        if: contains(fromJSON('["17657adc4325ebd94bd5e0be2485b33467e85383","c10c36bd6f4dcc23f9e49809ae53d3dc21a33f04"]'), github.event.before)
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           ref: '17657adc4325ebd94bd5e0be2485b33467e85383'
           path: .previous-release
           persist-credentials: false
       - name: Retain the previous build's hashed assets
-        if: github.event.before == '17657adc4325ebd94bd5e0be2485b33467e85383'
-        working-directory: .previous-release
+        if: contains(fromJSON('["17657adc4325ebd94bd5e0be2485b33467e85383","c10c36bd6f4dcc23f9e49809ae53d3dc21a33f04"]'), github.event.before)
         env: *pages-build-env
         run: |
+          # Vite can load an ancestor's tsconfig, so rebuild in a separate directory.
+          cp -a .previous-release "$RUNNER_TEMP/clearcutt-previous-release"
+          cd "$RUNNER_TEMP/clearcutt-previous-release"
           npm ci --ignore-scripts
           npm run build
-          cp -an dist/assets/. ../dist/assets/
+          test -f dist/assets/index-BVmXH3Zx.js
+          cp -an dist/assets/. "$GITHUB_WORKSPACE/dist/assets/"
       - run: npm run verify:dist
       - uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
         with:
