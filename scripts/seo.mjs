@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { carPage } from './content/car-page.ts';
 import { transparentPage } from './content/transparent-page.ts';
 import { renderTransparentPage } from './content/transparent-renderer.ts';
+import { renderGuideComparison } from './content/guide-comparison.ts';
 const site = 'https://clearcutt.in/';
 const releaseDate = '2026-11-14';
 const policyDates = {about:'2026-11-13',privacy:releaseDate,contact:'2026-11-13'};
@@ -163,16 +164,16 @@ export const pages=[...legacyPages,...indiaPages,...newsPages];
 const guideMedia={
  'how-to-remove-background':{name:'workflow',width:960,height:340,alt:'Illustrated three-step Clearcutt workflow showing upload, edge refinement and PNG download',caption:'Illustrated walkthrough — your own photo and result will be different.'},
  'photo-ka-background-kaise-hataye':{name:'workflow',width:960,height:340,alt:'Clearcutt mein upload, edge refine aur PNG download ka illustrated three-step workflow',caption:'Illustrated walkthrough — aapki photo aur result alag honge.'},
- 'transparent-background':{name:'transparency',width:960,height:600,alt:'Illustration comparing the same shoe on a transparent checkerboard and a white background',caption:'Illustration: a checkerboard represents transparency; it is not included in the exported PNG.'},
  'remove-background-products':{name:'products',width:960,height:600,alt:'Illustration of a shoe product photo on white with background colour choices',caption:'Illustration: check the current listing rules for the marketplace and product category you use.'},
  'amazon-flipkart-meesho-product-white-background':{name:'products',width:960,height:600,alt:'Illustration of a product photo on a white background with alternative colour choices',caption:'Illustration only — marketplace rules vary by platform and category, so check the current listing requirements.'},
  'remove-background-portraits':{name:'portraits',width:960,height:600,alt:'Illustrated portrait cutout shown on two background colours with hair and glasses highlighted for inspection',caption:'AI-generated illustrative portrait. Inspect hair, glasses and shoulders against more than one background.'},
  'remove-background-animals':{name:'animals',width:960,height:600,alt:'Illustrated animal cutout showing a squirrel on a solid background and a transparency checkerboard',caption:'AI-generated illustration. Fine fur and whiskers are areas to inspect before downloading.'},
- 'remove-background-cars':{name:'cars',width:960,height:600,alt:'Illustrated car cutout shown on neutral and white backgrounds',caption:'AI-generated illustration. Check glass, reflections, wheel gaps and the area beneath the vehicle.'},
  'passport-exam-form-white-background':{name:'passport',width:960,height:600,alt:'Illustrative portrait beside a warning to check current official photo instructions before editing',caption:'Illustrative portrait, not an accepted ID-photo example. Editing may be prohibited and acceptance is never guaranteed.',afterFirstSection:true},
  'remove-background-from-signature-png':{name:'signature',width:960,height:600,alt:'Demonstration sheet marked SAMPLE with a reminder that ink-only transparency is not guaranteed',caption:'Controlled demonstration, not a real signature or model-output claim. Inspect the exported PNG on a dark background.'}
 };
 const renderGuideVisual=p=>{
+ if(p.slug==='transparent-background')return renderGuideComparison('transparency');
+ if(p.slug==='remove-background-cars')return renderGuideComparison('cars');
  const media=guideMedia[p.slug];
  if(!media)return '';
  return `<figure class="guide-visual"><img class="guide-visual-image" src="/artwork/guides/${media.name}-960.webp" srcset="/artwork/guides/${media.name}-480.webp 480w, /artwork/guides/${media.name}-960.webp 960w" sizes="(max-width: 767px) calc(100vw - 48px), 756px" width="${media.width}" height="${media.height}" alt="${escape(media.alt)}" decoding="async" fetchpriority="high"><figcaption>${escape(media.caption)}</figcaption></figure>`;

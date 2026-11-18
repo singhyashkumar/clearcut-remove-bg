@@ -219,8 +219,8 @@ test('remove.bg migration explainer is factual, sourced and uses Article schema'
  assert.equal(data.mainEntityOfPage,'https://clearcutt.in/remove-bg-shutting-down/');
 });
 test('legacy pages without optional fields render no optional markup and keep title equal to H1',()=>{
- const legacy=pages.filter(p=>!p.india&&!p.article&&p.slug!=='remove-background-cars');
- assert.equal(legacy.length,8,'the eight pre-existing pages without optional fields must stay legacy');
+ const legacy=pages.filter(p=>!p.india&&!p.article&&!['remove-background-cars','transparent-background'].includes(p.slug));
+ assert.equal(legacy.length,7,'the seven remaining pages without optional fields must stay legacy');
  for(const p of legacy){
   const html=renderPage(p);
   assert.equal(html.includes('<figure class="evidence">'),false,`${p.slug} must not render evidence figures when no images are defined`);
@@ -232,6 +232,17 @@ test('legacy pages without optional fields render no optional markup and keep ti
   assert.ok(html.includes(`<h1>${p.title}</h1>`),`${p.slug} H1 must use the title field`);
   assert.equal(html.match(/<html lang="([^"]*)"/)[1],'en',`${p.slug} must default to lang en`);
  }
+});
+test('the transparent PNG guide targets the tool query and both comparisons include mobile layouts',()=>{
+ const html=renderPage(pages.find(page=>page.slug==='transparent-background'));
+ assert.match(html,/<title>Free Transparent Background Maker \| Clearcutt<\/title>/);
+ assert.match(html,/<h1>Make a Transparent PNG for Free<\/h1>/);
+ assert.match(html,/<h2>How to make a transparent background PNG<\/h2><p><a href="\/#workspace">/);
+ assert.match(html,/class="guide-comparison guide-comparison--transparency"/);
+ assert.match(html,/<source media="\(max-width: 767px\)" srcset="\/artwork\/guides\/transparency-960\.webp">/);
+ const car=renderPage(pages.find(page=>page.slug==='remove-background-cars'));
+ assert.match(car,/class="guide-comparison guide-comparison--cars"/);
+ assert.match(car,/<source media="\(max-width: 767px\)" srcset="\/artwork\/guides\/cars-960\.webp">/);
 });
 test('guide pages render responsive lightweight visuals while policy pages stay media-free',()=>{
  const visualSlugs=['how-to-remove-background','remove-background-products','remove-background-portraits','remove-background-animals','remove-background-cars','transparent-background','photo-ka-background-kaise-hataye','passport-exam-form-white-background','amazon-flipkart-meesho-product-white-background','remove-background-from-signature-png'];

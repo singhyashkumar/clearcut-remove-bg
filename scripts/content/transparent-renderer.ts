@@ -1,4 +1,5 @@
 import { transparentPage } from './transparent-page.ts';
+import { renderGuideComparison } from './guide-comparison.ts';
 import type { GuidePageFields, LegacyGuideSource } from './types.ts';
 
 type RenderOptions = Readonly<{
@@ -11,14 +12,6 @@ type StructuredPage = Record<string, unknown>;
 const site = 'https://clearcutt.in/';
 const socialImage = `${site}artwork/clearcut-social-card.png`;
 const faviconLinks = '<link rel="icon" type="image/png" sizes="512x512" href="/favicon-512.png"><link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="icon" href="/favicon-48.png" type="image/png" sizes="48x48"><link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">';
-
-const media = {
-  name: 'transparency',
-  width: 960,
-  height: 600,
-  alt: 'Illustration comparing the same shoe on a transparent checkerboard and a white background',
-  caption: 'Illustration: a checkerboard represents transparency; it is not included in the exported PNG.',
-} as const;
 
 const escape = (value: string): string => value
   .replaceAll('&', '&amp;')
@@ -73,7 +66,7 @@ export function renderTransparentPage({ linksHtml, lastModified }: RenderOptions
     })),
   }];
 
-  const visual = `<figure class="guide-visual"><img class="guide-visual-image" src="/artwork/guides/${media.name}-960.webp" srcset="/artwork/guides/${media.name}-480.webp 480w, /artwork/guides/${media.name}-960.webp 960w" sizes="(max-width: 767px) calc(100vw - 48px), 756px" width="${media.width}" height="${media.height}" alt="${escape(media.alt)}" decoding="async" fetchpriority="high"><figcaption>${escape(media.caption)}</figcaption></figure>`;
+  const visual = renderGuideComparison('transparency');
   const body = sections.map(([heading, text]) => `<section><h2>${escape(heading)}</h2><p>${md(text)}</p></section>`).join('');
   const faq = `<section class="faq" aria-labelledby="faq-heading"><h2 id="faq-heading">Frequently asked questions</h2>${faqs.map(([question, answer]) => `<h3>${escape(question)}</h3><p>${md(answer)}</p>`).join('')}</section>`;
   const pageMeta = `<p class="page-meta">Maintained by <a href="/about/#editorial-standards">Clearcutt</a> · Last updated <time datetime="${lastModified}">${new Date(`${lastModified}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}</time></p>`;

@@ -19,6 +19,19 @@
 .editorial-note{color:var(--muted);border-top:1px solid var(--line);margin-top:40px;padding-top:16px;max-width:68ch}
 .guide-visual{margin:0 0 48px}
 .guide-visual-image{display:block;width:100%;height:auto;border:1px solid #e5e9e3;border-radius:20px;background:#f4f6f0;box-shadow:0 12px 36px rgba(28,55,46,.08)}
+.guide-comparison-wide{display:block}
+.guide-comparison-stack{display:none}
+@media (max-width:767px){
+ .guide-comparison{position:relative}
+ .guide-comparison--transparency{--comparison-art:url('/artwork/guides/transparency-960.webp')}
+ .guide-comparison--cars{--comparison-art:url('/artwork/guides/cars-960.webp')}
+ .guide-comparison-wide{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+ .guide-comparison-stack{display:grid;gap:10px;padding:10px;border:1px solid #e5e9e3;border-radius:14px;background:#f4f6f0}
+ .guide-comparison-panel{overflow:hidden;border:1px solid #e5e9e3;border-radius:10px;background:#fff}
+ .guide-comparison-crop{aspect-ratio:5/3;max-height:220px;background:var(--comparison-art) 9.3% 36% / 240% auto no-repeat}
+ .guide-comparison-panel + .guide-comparison-panel .guide-comparison-crop{background-position:90.7% 36%}
+ .guide-comparison-panel p{margin:0;padding:7px 12px;text-align:center;font-size:13px;font-weight:600}
+}
 .guide-visual figcaption,.guide-demo figcaption{font-size:13px;line-height:1.6;color:var(--muted);margin-top:10px;max-width:68ch}
 .guide-demo{margin:44px 0 0;border:1px solid #dfe7e2;border-radius:16px;background:#f4f6f0;overflow:hidden}
 .guide-demo summary{cursor:pointer;padding:18px 22px;font-family:Poppins,Arial,sans-serif;font-weight:700;color:#31564c;list-style-position:inside}
