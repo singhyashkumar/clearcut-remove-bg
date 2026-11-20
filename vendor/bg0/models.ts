@@ -40,10 +40,6 @@ interface AdapterCapabilities {
   features: { has: (feature: string) => boolean }
   limits: { maxBufferSize: number; maxStorageBufferBindingSize: number }
   isFallbackAdapter?: boolean
-  requestDevice: (descriptor: {
-    requiredFeatures: ['shader-f16']
-    requiredLimits: { maxBufferSize: number; maxStorageBufferBindingSize: number }
-  }) => Promise<unknown>
 }
 
 interface HardwareNavigator {

@@ -102,7 +102,7 @@ export interface BrowserCapabilities {
 }
 
 // Retry previous failures after changing how the WebGPU adapter is selected.
-const WEBGPU_FAILURE_KEY = `bg0:webgpu-failure:v7:${LITE_MODEL.revision}`
+const WEBGPU_FAILURE_KEY = `bg0:webgpu-failure:v5:${LITE_MODEL.revision}`
 
 // This opt-in console output stays in the current browser.
 const gpuDebug = typeof location !== 'undefined' &&
@@ -984,9 +984,6 @@ function configureModelCache(env: TransformersEnv): void {
   env.customCache = cache ?? null
 }
 
-// Both model modes share the GPU device selected for this tab.
-let gpuDevice: Promise<unknown> | undefined
-
 async function loadEngine(
   choice: EngineChoice,
   onDownload: EngineProgressListener,
@@ -1041,19 +1038,7 @@ async function loadEngine(
       progress_callback: trackedProgress,
     })) as unknown as ProcessorRunner
 
-    let sessionOptions: Parameters<typeof AutoModel.from_pretrained>[1]
-    if (choice.adapter) {
-      const { maxBufferSize, maxStorageBufferBindingSize } = choice.adapter.limits
-      gpuDevice ??= choice.adapter.requestDevice({
-        requiredFeatures: ['shader-f16'],
-        requiredLimits: { maxBufferSize, maxStorageBufferBindingSize },
-      })
-      sessionOptions = {
-        session_options: { executionProviders: [{ name: 'webgpu', device: await gpuDevice }] },
-      }
-    }
     const model = (await AutoModel.from_pretrained(definition.id, {
-      ...sessionOptions,
       revision: definition.revision,
       device: provider,
       dtype: 'fp16',
