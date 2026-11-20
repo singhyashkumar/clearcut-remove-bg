@@ -104,6 +104,14 @@ export interface BrowserCapabilities {
 // Retry previous failures after changing how the WebGPU adapter is selected.
 const WEBGPU_FAILURE_KEY = `bg0:webgpu-failure:v5:${LITE_MODEL.revision}`
 
+// This opt-in console output stays in the current browser.
+const gpuDebug = typeof location !== 'undefined' &&
+  new URLSearchParams(location.search).get('gpu-debug') === '1'
+
+function traceGpu(stage: string, detail?: unknown): void {
+  if (gpuDebug) console.info('[Clearcutt WebGPU]', stage, detail)
+}
+
 type TensorLike = {
   data: Float32Array | Uint8Array | Int32Array | BigInt64Array
   dims: number[]
@@ -317,6 +325,7 @@ export async function removeBackground(
           engine.definition.name === 'birefnet-lite'
         )
           throw error
+        if (engine.provider === 'webgpu') traceGpu('inference failed', error)
         rememberEngineFailure(engine)
         await lease.retire()
         await lease.release()
@@ -487,6 +496,7 @@ async function getPreferredEngine(
       )
     } catch (error) {
       throwIfCancelled(signal)
+      if (choice.provider === 'webgpu') traceGpu('model setup failed', error)
       lastError = error
       if (error instanceof ModelStartTimeoutError) {
         // The runtime queues session creation, so a start that never ends
@@ -536,6 +546,9 @@ async function getPreferredChoices(): Promise<EngineChoice[]> {
   detectedChoices ??= detectEngineChoices()
   const choices = await detectedChoices
   const skipFullModel = await isFullModelBlocked()
+  if (gpuDebug) {
+    traceGpu('available engines', choices.map(({ provider, definition }) => [provider, definition.name]))
+  }
   const usable = choices.filter(
     (choice) =>
       (choice.provider !== 'webgpu' || canTryWebgpu()) &&
@@ -624,6 +637,8 @@ async function retireEngine(load: EngineLoad): Promise<void> {
 
 function canTryWebgpu(): boolean {
   if (!webgpuUsableForSession) return false
+  // A fresh debug tab can reproduce a previous GPU failure without erasing settings.
+  if (gpuDebug) return true
   try {
     return localStorage.getItem(WEBGPU_FAILURE_KEY) !== navigator.userAgent
   } catch {
