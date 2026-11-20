@@ -1,6 +1,8 @@
 # Clearcutt Remove BG
 
-A free-first background-removal site with an original interface and an adapted BG0 browser engine. Image inference stays in the browser. Firebase sign-in, Cloudflare Worker/D1 membership, payment, and moderated-review services are separate from photo processing and never receive the selected image.
+[Clearcutt](https://clearcutt.in/) is a free browser-based background remover. It processes photos on your device and exports transparent PNGs without a watermark. Clearcutt uses an adapted BG0 browser engine. Firebase sign-in, Cloudflare Worker/D1 membership, payment, and review services are separate from photo processing and never receive the selected image.
+
+[Open the editor](https://clearcutt.in/) · [Read the guides](https://clearcutt.in/how-to-remove-background/) · [Follow Clearcutt on Instagram](https://www.instagram.com/clearcutt.in/)
 
 ## Run locally
 

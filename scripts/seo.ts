@@ -38,6 +38,8 @@ import { renderGuideComparison } from './content/guide-comparison.ts';
 import { comparisonStylesheet } from './content/guide-styles.ts';
 import { hindiDescription, hindiFaqs, hindiSections, hindiSlug, hindiTitle, hinglishSlug } from './content/hindi-page.ts';
 const site = 'https://clearcutt.in/';
+const githubProfile = 'https://github.com/singhyashkumar/clearcut-remove-bg';
+const instagramProfile = 'https://www.instagram.com/clearcutt.in/';
 const releaseDate = '2026-11-14';
 const policyDates: Record<string, string> = {about:'2026-11-13',privacy:releaseDate,contact:'2026-11-13'};
 const policySlugs = new Set(Object.keys(policyDates));
@@ -98,6 +100,7 @@ const legacySources: readonly LegacyGuideSource[] = [
  transparentPage,
  ['about','About Clearcutt Remove BG','Learn what Clearcutt supports, how local image processing works, and what the free editor and Plus membership provide.',[
  ['An independent image editor','Clearcutt removes backgrounds in your browser with an open-source BG0/BiRefNet-based engine. The website is hosted through GitHub Pages and Cloudflare. Clearcutt is independent and is not affiliated with remove.bg or Canva.'],
+ ['Where to find Clearcutt',`Browse the [Clearcutt source code on GitHub](${githubProfile}) or follow [@clearcutt.in on Instagram](${instagramProfile}) for tutorials and product updates.`],
  ['What works today','The editor supports JPG, PNG and WebP up to 20 MB and 25 megapixels, original/result comparison, Erase and Restore, background replacement, trimming and PNG export without a watermark. Desktop Chrome or Edge is recommended. iOS and HEIC are unsupported.'],
  ['Clear pricing and limitations','Processing currently works without sign-in. Plus is a one-time ₹90 payment for 30 days, renewed manually. The backend stores the account badge and expiry. Daily limits are guidance and are not enforced today; Plus does not yet unlock batch processing. Read the current pricing before paying. Demonstration artwork is original AI-generated artwork, not measured model output.'],
  ['Editorial standards','Clearcutt maintains its guides against the current editor and the sources cited on each page. Product claims are updated when behaviour changes, and dated India guidance is reviewed at least every 90 days or sooner when an official source changes. Illustrations and AI-generated artwork are labelled; measured benchmarks must publish their device, browser, model, input and date. Send factual corrections through the Contact page.']]],
@@ -222,7 +225,7 @@ const renderWorkflowDemo=(p: Page)=>p.slug==='how-to-remove-background'?`<detail
 const description = 'Remove image backgrounds for free with Clearcutt. Create transparent PNGs, add white or colored backgrounds, and refine cutouts privately on your device.';
 export const schema = {'@context':'https://schema.org','@graph':[
  {'@type':'WebSite','@id':`${site}#website`,name:'Clearcutt',alternateName:['Clearcutt Remove BG','clearcutt.in'],url:site,inLanguage:'en'},
- {'@type':'Organization','@id':`${site}#organization`,name:'Clearcutt',alternateName:'Clearcutt Remove BG',url:site,logo:{'@type':'ImageObject',url:`${site}favicon-512.png`,width:512,height:512},sameAs:['https://github.com/singhyashkumar/clearcut-remove-bg','https://www.instagram.com/clearcutt.in/']},
+ {'@type':'Organization','@id':`${site}#organization`,name:'Clearcutt',alternateName:'Clearcutt Remove BG',url:site,logo:{'@type':'ImageObject',url:`${site}favicon-512.png`,width:512,height:512},sameAs:[githubProfile,instagramProfile]},
  {'@type':'FAQPage','@id':`${site}#faq`,mainEntity:[
   {'@type':'Question',name:'Is Clearcutt free to use?',acceptedAnswer:{'@type':'Answer',text:'The current Clearcutt background remover is free to use without a watermark or required account. Processing runs on the user’s device.'}},
   {'@type':'Question',name:'Are images uploaded or saved by Clearcutt?',acceptedAnswer:{'@type':'Answer',text:'Selected photos, masks and edits remain in browser memory and are not uploaded to Clearcutt’s payment backend. Model files may be cached by the browser.'}},
