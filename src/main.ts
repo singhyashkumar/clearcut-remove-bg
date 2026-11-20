@@ -168,6 +168,15 @@ $('reset-mask').onclick=()=>{
  alpha=initialAlpha.slice();
  render();
 };
+for(const preset of document.querySelectorAll<HTMLButtonElement>('[data-jpg-width][data-jpg-height]')){
+ preset.onclick=()=>{
+  const {jpgWidth,jpgHeight}=preset.dataset;
+  if(!jpgWidth||!jpgHeight)return;
+  $('jpg-width').value=jpgWidth;
+  $('jpg-height').value=jpgHeight;
+  $('edit-status').textContent=`JPG dimensions set to ${jpgWidth} × ${jpgHeight} px.`;
+ };
+}
 async function downloadCutout(format: 'png' | 'jpg'){
  if(!alpha)return;
  const sizeInput=$('jpg-max-kb'),widthInput=$('jpg-width'),heightInput=$('jpg-height');

@@ -28,3 +28,4 @@
 .jpg-download{display:block;width:100%;margin-top:8px}
 .jpg-size{margin-top:12px;color:#42624f;font-size:12px}.jpg-size summary{cursor:pointer}.jpg-size label{display:block;margin-top:10px}.jpg-size input{width:100%;margin-top:4px;padding:7px;border:1px solid #d9e1d3;border-radius:6px;font:inherit}.jpg-size p{margin:6px 0 0;color:var(--muted);line-height:1.5}
 .jpg-dimensions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.jpg-presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.jpg-presets button.secondary{padding:6px 8px;font-size:11px;text-align:left}
