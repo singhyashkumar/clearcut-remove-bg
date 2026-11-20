@@ -18,6 +18,7 @@ Clearcutt is a free browser-based image background remover at https://clearcutt.
 - [Animal and pet backgrounds](https://clearcutt.in/remove-background-animals/)
 - [Car Background Remover](https://clearcutt.in/remove-background-cars/)
 - [Photo ka background kaise hataye (Hinglish guide)](https://clearcutt.in/photo-ka-background-kaise-hataye/)
+- [फ़ोटो का बैकग्राउंड कैसे हटाएँ (हिंदी)](https://clearcutt.in/photo-background-hindi/)
 - [Passport and exam form white backgrounds](https://clearcutt.in/passport-exam-form-white-background/)
 - [Amazon, Flipkart and Meesho product white backgrounds](https://clearcutt.in/amazon-flipkart-meesho-product-white-background/)
 - [Signature background removal to PNG](https://clearcutt.in/remove-background-from-signature-png/)

@@ -75,6 +75,7 @@ const ORIGIN = (args.find((a) => !a.startsWith('--')) || 'https://clearcutt.in')
 
 /** Routes outside the four India pages that must remain present in every release. */
 const EXISTING_SLUGS = [
+  'photo-background-hindi',
   '',
   'how-to-remove-background',
   'transparent-background',

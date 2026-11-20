@@ -120,7 +120,7 @@ test('about, privacy and contact pages expose no FAQ schema and no visible FAQ s
 });
 test('guide pages have unique FAQs and unique section headings across the site',()=>{
  const guides=pages.filter(p=>p.faqs.length===expectedFaqs(p.slug));
- assert.equal(guides.length,11,'six legacy guides, four India pages and the migration explainer must each expose their expected FAQ count');
+ assert.equal(guides.length,12,'six legacy guides, four India pages, the Hindi guide and migration explainer must expose their expected FAQ count');
  const questions=guides.flatMap(p=>p.faqs.map(([q])=>`${p.slug}|${q}`));
  assert.equal(new Set(questions).size,questions.length,'FAQ questions must be page-specific');
  const headings=guides.flatMap(p=>p.sections.map(p.india?s=>s.heading:([h])=>h));
@@ -196,7 +196,7 @@ test('privacy, authorship and editorial signals match the live implementation',(
   assert.equal(data.dateModified,p.lastModified,`${p.slug} schema modification date`);
   if(p.isGuide){
    assert.match(html,new RegExp(`<time datetime="${p.lastModified}">`),`${p.slug} visible update date`);
-   assert.match(html,/Maintained by <a href="\/about\/#editorial-standards">Clearcutt<\/a>/,`${p.slug} visible authorship`);
+   assert.match(html,/(?:Maintained by|लेखक) <a href="\/about\/#editorial-standards">Clearcutt<\/a>/,`${p.slug} visible authorship`);
   }else assert.equal(html.includes('class="page-meta"'),false,`${p.slug} policy page should not use the guide byline`);
  }
  const org=schema['@graph'].find(node=>node['@type']==='Organization');
@@ -430,13 +430,25 @@ test('the four india landing pages are built from the verified content spec with
   }
  }
 });
-test('the site exposes fifteen crawlable URLs covering every page exactly once',()=>{
+test('the site exposes sixteen crawlable URLs covering every page exactly once',()=>{
  const expected=['',...pages.map(p=>`${p.slug}/`)];
- assert.equal(pages.length,14,'nine legacy pages plus four India pages and one dated migration explainer');
- assert.equal((sitemap.match(/<loc>/g)||[]).length,15,'sitemap must list 15 URLs');
+ assert.equal(pages.length,15,'nine legacy pages, four India pages, the Hindi guide and the migration explainer');
+ assert.equal((sitemap.match(/<loc>/g)||[]).length,16,'sitemap must list 16 URLs');
  for(const path of expected)assert.ok(sitemap.includes(`<loc>https://clearcutt.in/${path}</loc>`),`sitemap missing ${path||'home'}`);
  assert.equal(new Set(expected).size,expected.length,'slugs must stay unique');
  for(const p of pages)assert.ok(sitemap.includes(`<loc>https://clearcutt.in/${p.slug}/</loc>`));
+});
+test('the Devanagari and Hinglish guides retain independent canonicals and reciprocal alternates',()=>{
+ const routes=[['hi','photo-background-hindi'],['hi-Latn','photo-ka-background-kaise-hataye']];
+ for(const [language,slug] of routes){
+  const html=renderPage(pages.find(p=>p.slug===slug));
+  assert.ok(html.includes(`<html lang="${language}">`));
+  assert.ok(html.includes(`rel="canonical" href="https://clearcutt.in/${slug}/"`));
+  for(const [alt,altSlug] of routes)assert.ok(html.includes(`rel="alternate" hreflang="${alt}" href="https://clearcutt.in/${altSlug}/"`));
+ }
+ const hindi=renderPage(pages.find(p=>p.slug===routes[0][1]));
+ assert.match(hindi,/<h1>फ़ोटो का बैकग्राउंड कैसे हटाएँ\?<\/h1>/);
+ assert.match(hindi,/अक्सर पूछे जाने वाले सवाल/);
 });
 test('india pages render the passport warning before editing steps, callouts, citations and contextual links',()=>{
  const passport=pages.find(p=>p.slug==='passport-exam-form-white-background');

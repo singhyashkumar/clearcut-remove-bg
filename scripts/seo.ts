@@ -36,6 +36,7 @@ import { transparentPage } from './content/transparent-page.ts';
 import { renderTransparentPage } from './content/transparent-renderer.ts';
 import { renderGuideComparison } from './content/guide-comparison.ts';
 import { comparisonStylesheet } from './content/guide-styles.ts';
+import { hindiDescription, hindiFaqs, hindiSections, hindiSlug, hindiTitle, hinglishSlug } from './content/hindi-page.ts';
 const site = 'https://clearcutt.in/';
 const releaseDate = '2026-11-14';
 const policyDates: Record<string, string> = {about:'2026-11-13',privacy:releaseDate,contact:'2026-11-13'};
@@ -193,7 +194,13 @@ const newsPages: Page[] = [{
   ['Can Clearcutt replace remove.bg for bulk or mobile workflows?','No. Clearcutt currently processes one photo at a time in desktop Chrome or Edge, exports PNG only, and does not support an API, batch processing, HEIC or iOS.']
  ]
 }];
-export const pages=[...legacyPages,...indiaPages,...newsPages];
+const hindiPage: Page = {
+ slug: hindiSlug, title: hindiTitle, metaTitle: hindiTitle, h1: hindiTitle, description: hindiDescription,
+ lang: 'hi', explicitLang: true, article: true, isGuide: true,
+ datePublished: '2026-11-20', lastModified: '2026-11-20',
+ sections: hindiSections, faqs: hindiFaqs,
+};
+export const pages=[...legacyPages,...indiaPages,...newsPages,hindiPage];
 const guideMedia: Record<string, GuideMedia> = {
  'how-to-remove-background':{name:'workflow',width:960,height:340,alt:'Illustrated three-step Clearcutt workflow showing upload, edge refinement and PNG download',caption:'Illustrated walkthrough — your own photo and result will be different.'},
  'photo-ka-background-kaise-hataye':{name:'workflow',width:960,height:340,alt:'Clearcutt mein upload, edge refine aur PNG download ka illustrated three-step workflow',caption:'Illustrated walkthrough — aapki photo aur result alag honge.'},
@@ -271,6 +278,32 @@ export function renderPage(p: Page) {
  const sharedHtml=protectEmails(renderPageBase(p))
   .replace('property="og:site_name" content="Clearcutt Remove BG"','property="og:site_name" content="Clearcutt"')
   .replace('<link rel="stylesheet" href="/seo.css">',`${faviconLinks}<link rel="stylesheet" href="${stylesheet}">`);
+ if(p.slug===hindiSlug||p.slug===hinglishSlug){
+  const hindi=p.slug===hindiSlug;
+  const alternates=`<link rel="alternate" hreflang="hi" href="${site}${hindiSlug}/"><link rel="alternate" hreflang="hi-Latn" href="${site}${hinglishSlug}/">`;
+  const switchLink=hindi
+   ? `<p><a href="/${hinglishSlug}/" lang="hi-Latn">Hinglish mein padhein</a></p>`
+   : `<p><a href="/${hindiSlug}/" lang="hi">हिंदी (देवनागरी) में पढ़ें</a></p>`;
+  let html=sharedHtml.replace('</head>',`${alternates}</head>`).replace('<p class="page-meta">',`${switchLink}<p class="page-meta">`);
+  if(hindi)html=html
+   .replace('>Skip to content<','>मुख्य सामग्री पर जाएँ<')
+   .replace('aria-label="Main"','aria-label="मुख्य नेविगेशन"')
+   .replace('>Remove background<','>बैकग्राउंड हटाएँ<')
+   .replace('>How to use<','>इस्तेमाल करने का तरीका<')
+   .replace('>Pricing<','>कीमत<')
+   .replace('>Home<','>होम<')
+   .replace('>Maintained by ', '>लेखक ')
+   .replace('· Last updated ', '· अपडेट ')
+   .replace('>Frequently asked questions<','>अक्सर पूछे जाने वाले सवाल<')
+   .replace('>Open the free background remover →<','>मुफ़्त एडिटर खोलें →<')
+   .replace('aria-label="Related guides"','aria-label="संबंधित गाइड"')
+   .replace('>Explore Clearcutt<','>Clearcutt की अन्य गाइड<')
+   .replace('>About<','>परिचय<')
+   .replace('>Privacy<','>गोपनीयता<')
+   .replace('>Contact<','>संपर्क<')
+   .replace('>Open-source notices<','>ओपन सोर्स नोटिस<');
+  return html;
+ }
  if(p.slug!=='transparent-background')return sharedHtml;
  const typedHtml=renderTransparentPage({linksHtml:links(),lastModified:p.lastModified});
  if(typedHtml!==sharedHtml){
