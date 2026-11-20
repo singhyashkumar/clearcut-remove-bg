@@ -102,7 +102,7 @@ export interface BrowserCapabilities {
 }
 
 // Retry previous failures after changing how the WebGPU adapter is selected.
-const WEBGPU_FAILURE_KEY = `bg0:webgpu-failure:v5:${LITE_MODEL.revision}`
+const WEBGPU_FAILURE_KEY = `bg0:webgpu-failure:v6:${LITE_MODEL.revision}`
 
 // This opt-in console output stays in the current browser.
 const gpuDebug = typeof location !== 'undefined' &&
