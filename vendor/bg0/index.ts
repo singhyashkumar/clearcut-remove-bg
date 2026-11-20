@@ -101,8 +101,8 @@ export interface BrowserCapabilities {
   wasm: boolean
 }
 
-// Retry GPUs rejected by the older runtime after moving to Transformers.js 4.
-const WEBGPU_FAILURE_KEY = `bg0:webgpu-failure:v4:${LITE_MODEL.revision}`
+// Retry previous failures after changing how the WebGPU adapter is selected.
+const WEBGPU_FAILURE_KEY = `bg0:webgpu-failure:v5:${LITE_MODEL.revision}`
 
 type TensorLike = {
   data: Float32Array | Uint8Array | Int32Array | BigInt64Array
@@ -981,6 +981,10 @@ async function loadEngine(
   // Use a proxy worker on CPU-only devices. Keep this choice tied to the
   // complete detected queue, rather than flipping a global flag on fallback.
   configureCpuProxy(env.backends.onnx, await (detectedChoices ??= detectEngineChoices()), typeof Worker !== 'undefined')
+  if (choice.adapter && env.backends.onnx?.webgpu) {
+    // Use the same adapter whose FP16 and limits passed detection.
+    env.backends.onnx.webgpu.adapter = choice.adapter
+  }
   await yieldToBrowser()
   const transformersEnv = env as unknown as TransformersEnv
   configureModelCache(transformersEnv)

@@ -25,3 +25,16 @@ test('a missing or rejected WebGPU adapter preserves the Standard CPU path', asy
   assert.equal(choices.at(-1).definition.name,'birefnet-lite');
  }
 });
+test('GPU detection uses the low-power adapter when the default lacks FP16', async()=>{
+ const defaultAdapter={features:{has:()=>false},limits:{maxBufferSize:2**30,maxStorageBufferBindingSize:2**28}};
+ const lowPowerAdapter={...defaultAdapter,features:{has:name=>name==='shader-f16'}};
+ const requests=[];
+ const gpu={requestAdapter:async options=>{
+  requests.push(options?.powerPreference);
+  return options ? lowPowerAdapter : defaultAdapter;
+ }};
+ const choices=await detectEngineChoices({...desktop,gpu});
+ assert.deepEqual(requests,[undefined,'low-power']);
+ assert.equal(choices.find(choice=>choice.definition.name==='birefnet-lite').adapter,lowPowerAdapter);
+ assert.equal(choices.at(-1).provider,'wasm');
+});

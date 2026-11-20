@@ -33,6 +33,7 @@ export const FULL_MODEL: ModelDefinition = {
 export interface EngineChoice {
   definition: ModelDefinition
   provider: ExecutionProvider
+  adapter?: AdapterCapabilities
 }
 
 interface AdapterCapabilities {
@@ -46,7 +47,7 @@ interface HardwareNavigator {
   deviceMemory?: number
   hardwareConcurrency?: number
   maxTouchPoints?: number
-  gpu?: { requestAdapter: () => Promise<AdapterCapabilities | null> }
+  gpu?: { requestAdapter: (options?: { powerPreference: 'low-power' }) => Promise<AdapterCapabilities | null> }
 }
 
 export function modelUrl(model: ModelDefinition): string {
@@ -66,7 +67,18 @@ function requestAdapterWithin(
 ): Promise<AdapterCapabilities | null> {
   let timer: ReturnType<typeof setTimeout> | undefined
   return Promise.race([
-    gpu.requestAdapter(),
+    (async () => {
+      for (const options of [undefined, { powerPreference: 'low-power' } as const]) {
+        try {
+          const adapter = await gpu.requestAdapter(options)
+          if (adapter && !adapter.isFallbackAdapter && adapter.features.has('shader-f16'))
+            return adapter
+        } catch {
+          // A browser can expose WebGPU while denying one adapter request.
+        }
+      }
+      return null
+    })(),
     new Promise<null>((resolve) => {
       timer = setTimeout(() => resolve(null), timeoutMs)
     }),
@@ -91,11 +103,7 @@ export async function detectEngineChoices(
             options.adapterTimeoutMs ?? ADAPTER_TIMEOUT_MS,
           )
         : null
-      if (
-        adapter &&
-        !adapter.isFallbackAdapter &&
-        adapter.features.has('shader-f16')
-      ) {
+      if (adapter) {
         // These are admission heuristics, not a VRAM measurement. Runtime
         // failures still fall back. Do not gate on CPU count or GPU branding.
         if (
@@ -103,9 +111,9 @@ export async function detectEngineChoices(
           adapter.limits.maxBufferSize >= 256 * 1024 * 1024 &&
           adapter.limits.maxStorageBufferBindingSize >= 128 * 1024 * 1024
         ) {
-          choices.push({ definition: FULL_MODEL, provider: 'webgpu' })
+          choices.push({ definition: FULL_MODEL, provider: 'webgpu', adapter })
         }
-        choices.push({ definition: LITE_MODEL, provider: 'webgpu' })
+        choices.push({ definition: LITE_MODEL, provider: 'webgpu', adapter })
       }
     } catch {
       // An exposed API may still be disabled by browser policy or the driver.
