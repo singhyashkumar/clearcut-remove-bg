@@ -175,19 +175,12 @@ Applicability note: the photograph figures (10 KB to 200 KB, 80% face including 
 
 
 ### `SRC-AMAZON-IN-IMAGES`
-- **Authority:** Amazon Seller Central India (`sellercentral.amazon.in`)
-- **Documents:**
-  1. *Uploading Images — Official Amazon India Moderator Guide (`Noor_Amazon_`, referencing Seller Central Help `G1881`)* (`https://sellercentral.amazon.in/seller-forums/discussions/t/41489053-40d6-493e-b5c1-dd8611082354`, published `2025-03-05`, referencing `https://sellercentral.amazon.in/help/hub/reference/G1881`)
-  2. *Amazon-Compliant Product Images (`sellercentral.amazon.in`)* (`https://sellercentral.amazon.in/seller-forums/discussions/t/3cd8bb69-073a-4e6e-83f2-42c71cbbde17`, updated `2025-12-19`)
-- **Publication / Applicability Date:** Published `2025-03-05` / updated `2025-12-19`; verified live `2026-11-13`.
-- **Claims supported:**
-  - Amazon India MAIN product image requires a pure white background (`RGB: 255, 255, 255`), product occupying at least `85%` of the image frame, full product in frame without props/unincluded accessories/packaging (unless packaging is a product feature), and zero text, logos, borders, watermarks, or badges.
-  - Technical image requirements: `500` to `10,000` pixels on the longest side (`1,000+` pixels preferred to enable zoom); accepted formats are `JPEG` (preferred), `TIFF`, `PNG`, and non-animated `GIF`.
-  - Category-specific rules vary even on Amazon.in (e.g., footwear single shoe left-facing at 45°; adult clothing on standing model; children's clothing and clothing accessories/multipacks flat-lay with no model).
+- **Authority:** Amazon India Seller (`sell.amazon.in`)
+- **Document:** [How to Sell on Amazon.in](https://sell.amazon.in/beginners-guide)
+- **Claims supported:** JPEG is preferred, TIFF is accepted, the longest side must not exceed 10,000 pixels, and both dimensions should be at least 1,000 pixels for zoom.
 - **Used in slugs:** `amazon-flipkart-meesho-product-white-background`
 
-Citation note (2026-11-13): the authoritative Seller Central Help page (G1881, https://sellercentral.amazon.in/help/hub/reference/G1881) redirects to the Amazon seller sign-in wall and could not be verified publicly. The figures above therefore rest on the public Amazon-moderated Seller Forums threads listed here. Do not describe them as quoted from Amazon's official help documentation. Amazon India sellers should confirm the current wording inside their own Seller Central account.
-
+Source reviewed on 2026-11-20. The public Amazon India seller guide supports the format, pixel and zoom figures above. Confirm category-specific main-image and framing rules in Seller Central.
 
 ### `SRC-FLIPKART-LISTING`
 - **Authority:** Flipkart Seller Hub (`seller.flipkart.com`)

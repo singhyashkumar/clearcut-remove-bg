@@ -357,7 +357,7 @@
             "Pure white (#ffffff) is widely used for Indian marketplace main images, but no single rule applies to every platform or category. Review the official requirements inside your seller account for each vertical you list:"
           ],
           "bullets": [
-            "Amazon India (Seller Central): Main images require a pure white background (RGB 255, 255, 255), with the product filling at least 85% of the frame, 500 to 10,000 pixels on the longest side (1,000+ pixels preferred to enable customer zoom), and zero text, logos, borders, watermarks, or unincluded props. Accepted formats are JPEG (preferred), TIFF, PNG, and non-animated GIF. Category style guides still vary—for example, standing models for adult clothing, flat-lay without models for children's clothing and accessories, and a single left-facing shoe at a 45-degree angle for footwear.",
+            "Amazon India's public seller guide lists JPEG as the preferred format, accepts TIFF, and caps the longest side at 10,000 pixels. It recommends both dimensions be at least 1,000 pixels for zoom. Check the current main-image and category requirements in Seller Central.",
             "Flipkart Seller Hub: Flipkart's listing workflow recommends high-resolution, multi-angle product images on a white background for standard catalog quality checks, while Flipkart's fashion photography guidance explicitly allows neutral white, grey, or beige walls and category-suited backdrops.",
             "Meesho Supplier Panel: Public Meesho supplier category guides instruct sellers to upload a clear front image in JPEG format without logos, watermarks, props, or partial views, and point to detailed per-category image rules inside the Meesho Supplier Panel.",
             "Myntra (DIY / MAS Cataloging): Myntra Seller University publishes category-specific image guidelines plus model styling and sizing rules, so open the sheet for your vertical inside the portal. Some apparel verticals specify studio model photography rather than isolated #ffffff cutouts."
@@ -391,10 +391,10 @@
         },
         {
           "id": "trim-framing-and-jpeg-conversion",
-          "heading": "Managing Amazon's 85% frame rule, Trim empty edges, and JPEG conversion",
+          "heading": "Product framing, Trim empty edges, and JPG export",
           "paragraphs": [
             "Understanding how Clearcutt exports canvases prevents accidental catalog rejections. When 'Trim empty edges' is left unchecked, Clearcutt preserves your original photo's pixel width and height. When 'Trim empty edges' IS checked, Clearcutt crops tightly to the outer edge of the detected product with zero white margin—even when the White (#ffffff) swatch is active.",
-            "If you need a square 1:1 or 3:4 marketplace canvas where the item fills roughly 85–90% of the frame with clean white breathing room, either frame your camera shot with that margin and leave 'Trim empty edges' unchecked, or export a trimmed transparent PNG and place it onto a sized #ffffff canvas (for example, 1500×1500 px or 2000×2000 px) in your layout editor. When your catalog feed requires JPEG, choose the White swatch and select Download JPG. Leave the JPG options blank and Trim empty edges off to keep your original canvas dimensions. If the marketplace specifies a maximum file size, enter it in KB under Limit JPG file size. Use Set JPG dimensions for exact pixel dimensions, or an external editor to arrange the product differently on the canvas."
+            "If you need a square 1:1 or 3:4 marketplace canvas with clean white breathing room around the product, either frame your camera shot with that margin and leave 'Trim empty edges' unchecked, or export a trimmed transparent PNG and place it onto a sized #ffffff canvas (for example, 1500×1500 px or 2000×2000 px) in your layout editor. When your catalog feed requires JPEG, choose the White swatch and select Download JPG. Leave the JPG options blank and Trim empty edges off to keep your original canvas dimensions. If the marketplace specifies a maximum file size, enter it in KB under Limit JPG file size. Use Set JPG dimensions for exact pixel dimensions, or an external editor to arrange the product differently on the canvas."
           ],
           "sourceIds": [
             "REPO-EDITOR-EXPORT",
@@ -419,7 +419,7 @@
       "faqs": [
         {
           "question": "Is Clearcutt's White swatch pure RGB 255, 255, 255 for Amazon India main images?",
-          "answer": "Yes. Selecting the White background swatch fills transparent areas with solid #ffffff, which is exact RGB 255, 255, 255. You still need to meet Amazon India's framing and content rules, including 85% minimum product frame fill, 500 to 10,000 pixels on the longest side (1,000+ pixels recommended for zoom), and no watermarks, text, or unincluded props.",
+          "answer": "Yes. Selecting the White background swatch fills transparent areas with solid #ffffff, which is exact RGB 255, 255, 255. Check the framing and content rules for your category in Seller Central. Choose Download JPG if your listing requires JPEG.",
           "sourceIds": [
             "REPO-EDITOR-EXPORT",
             "SRC-AMAZON-IN-IMAGES"
@@ -427,7 +427,7 @@
         },
         {
           "question": "Can I upload Clearcutt's PNG file directly to Amazon India, Flipkart, Meesho, and Myntra?",
-          "answer": "Amazon India accepts PNG alongside JPEG (preferred), TIFF, and non-animated GIF. Meesho's public category guides specify JPEG format for catalog images, and Flipkart or Myntra uploaders may impose their own format or aspect-ratio rules. Check the uploader in your seller panel, and choose Download JPG whenever your portal requires JPEG.",
+          "answer": "Amazon India's public seller guide lists JPEG and TIFF. Meesho's public category guides specify JPEG format for catalog images, and Flipkart or Myntra uploaders may impose their own format or aspect-ratio rules. Check the uploader in your seller panel, and choose Download JPG whenever your portal requires JPEG.",
           "sourceIds": [
             "REPO-EDITOR-EXPORT",
             "SRC-AMAZON-IN-IMAGES",

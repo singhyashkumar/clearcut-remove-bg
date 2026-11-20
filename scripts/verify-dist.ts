@@ -8,6 +8,12 @@ const html = readFileSync(resolve(root, 'index.html'), 'utf8');
 const sitemap = readFileSync(resolve(root, 'sitemap.xml'), 'utf8');
 const robots = readFileSync(resolve(root, 'robots.txt'), 'utf8');
 const llms = readFileSync(resolve(root, 'llms.txt'), 'utf8');
+const notFound = readFileSync(resolve(root, '404.html'), 'utf8');
+assert.match(notFound, /name="robots" content="noindex,follow"/);
+assert.match(notFound, /href="\/#workspace"/);
+assert.match(notFound, /href="\/how-to-remove-background\/"/);
+assert.doesNotMatch(sitemap, /404\.html/);
+
 
 assert.match(html, /<link rel="canonical" href="https:\/\/clearcutt\.in\/">/);
 assert.doesNotMatch(html, /chatgpt\.site/);

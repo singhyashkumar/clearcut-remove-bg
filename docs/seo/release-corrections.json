@@ -395,7 +395,7 @@
           "claimType": "verified-fact"
         }
       ],
-      "appliedText": "Citation note (2026-11-13): the authoritative Seller Central Help page (G1881, https://sellercentral.amazon.in/help/hub/reference/G1881) redirects to the Amazon seller sign-in wall and could not be verified publicly. The figures above therefore rest on the public Amazon-moderated Seller Forums threads listed here. Do not describe them as quoted from Amazon's official help documentation. Amazon India sellers should confirm the current wording inside their own Seller Central account.",
+      "appliedText": "Source reviewed on 2026-11-20. The public Amazon India seller guide supports the format, pixel and zoom figures above. Confirm category-specific main-image and framing rules in Seller Central.",
       "status": "applied"
     },
     {
@@ -426,7 +426,7 @@
           "claimType": "verified-fact"
         }
       ],
-      "appliedText": "Amazon India accepts PNG alongside JPEG (preferred), TIFF, and non-animated GIF. Meesho's public category guides specify JPEG format for catalog images, and Flipkart or Myntra uploaders may impose their own format or aspect-ratio rules. Check the uploader in your seller panel, and choose Download JPG whenever your portal requires JPEG.",
+      "appliedText": "Amazon India's public seller guide lists JPEG and TIFF. Meesho's public category guides specify JPEG format for catalog images, and Flipkart or Myntra uploaders may impose their own format or aspect-ratio rules. Check the uploader in your seller panel, and choose Download JPG whenever your portal requires JPEG.",
       "status": "applied"
     },
     {
