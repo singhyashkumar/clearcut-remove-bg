@@ -1,4 +1,4 @@
-import {fitJpeg} from './jpeg-size.ts';
+import {fitInside,fitJpeg} from './jpeg-size.ts';
 import {AlphaHistory} from './alpha-history.ts';
 import {errorDetails,processingFailure} from './processing-diagnostics.ts';
 import {yieldToBrowser,readAlphaChannels} from './ui-scheduling.ts';
@@ -21,6 +21,8 @@ type EditorElements = {
  download: HTMLButtonElement;
  'download-jpg': HTMLButtonElement;
  'jpg-max-kb': HTMLInputElement;
+ 'jpg-width': HTMLInputElement;
+ 'jpg-height': HTMLInputElement;
  'google-signin': HTMLButtonElement;
  'razorpay-checkout': HTMLButtonElement;
 };
@@ -168,11 +170,20 @@ $('reset-mask').onclick=()=>{
 };
 async function downloadCutout(format: 'png' | 'jpg'){
  if(!alpha)return;
- const sizeInput=$('jpg-max-kb');
- if(format==='jpg'&&!sizeInput.checkValidity()){
-  sizeInput.closest('details')!.open=true;
-  sizeInput.reportValidity();
-  return;
+ const sizeInput=$('jpg-max-kb'),widthInput=$('jpg-width'),heightInput=$('jpg-height');
+ const exactSize=format==='jpg'&&(widthInput.value!==''||heightInput.value!=='');
+ if(format==='jpg'){
+  widthInput.required=heightInput.required=exactSize;
+  const invalid=[sizeInput,widthInput,heightInput].find(input=>!input.checkValidity());
+  if(invalid){
+   invalid.closest('details')!.open=true;
+   invalid.reportValidity();
+   return;
+  }
+  if(exactSize&&widthInput.valueAsNumber*heightInput.valueAsNumber>MAX_PIXELS){
+   $('edit-status').textContent='Choose JPG dimensions up to 25 megapixels.';
+   return;
+  }
  }
  const maxBytes=format==='jpg'&&sizeInput.value ? sizeInput.valueAsNumber*1000 : undefined;
  const exportRun=runId;
@@ -189,28 +200,29 @@ async function downloadCutout(format: 'png' | 'jpg'){
    for(let i=0;i<alpha.length;i++)maskData[i*4+3]=alpha[i];
    bounds=alphaBounds(maskData,canvas.width,canvas.height);
   }
-  exportCanvas.width=bounds.width;
-  exportCanvas.height=bounds.height;
+  exportCanvas.width=exactSize?widthInput.valueAsNumber:bounds.width;
+  exportCanvas.height=exactSize?heightInput.valueAsNumber:bounds.height;
   const context=exportCanvas.getContext('2d')!;
   if(format==='jpg'){
    context.fillStyle='#fff';
-   context.fillRect(0,0,bounds.width,bounds.height);
+   context.fillRect(0,0,exportCanvas.width,exportCanvas.height);
   }
-  context.drawImage(canvas,bounds.x,bounds.y,bounds.width,bounds.height,0,0,bounds.width,bounds.height);
+  const frame=fitInside(bounds.width,bounds.height,exportCanvas.width,exportCanvas.height);
+  context.drawImage(canvas,bounds.x,bounds.y,bounds.width,bounds.height,frame.x,frame.y,frame.width,frame.height);
   const mime=format==='jpg'?'image/jpeg':'image/png';
   const encode=async (surface: HTMLCanvasElement, quality?: number)=>{
    const blob=await new Promise<Blob | null>(resolve=>surface.toBlob(resolve,mime,quality));
    if(!blob||blob.type!==mime)throw Error();
    return blob;
   };
-  let outputWidth=bounds.width,outputHeight=bounds.height;
+  let outputWidth=exportCanvas.width,outputHeight=exportCanvas.height;
   let blob: Blob;
   if(maxBytes!==undefined){
    let scaledCanvas: HTMLCanvasElement | undefined;
    $('edit-status').textContent='Preparing a JPG within your file size limit…';
-   const fitted=await fitJpeg(bounds.width,bounds.height,maxBytes,(width,height,quality)=>{
+   const fitted=await fitJpeg(outputWidth,outputHeight,maxBytes,(width,height,quality)=>{
     if(exportRun!==runId)throw Error();
-    if(width===bounds.width&&height===bounds.height)return encode(exportCanvas,quality);
+    if(width===exportCanvas.width&&height===exportCanvas.height)return encode(exportCanvas,quality);
     if(!scaledCanvas||scaledCanvas.width!==width||scaledCanvas.height!==height){
      scaledCanvas??=document.createElement('canvas');
      scaledCanvas.width=width;
@@ -218,10 +230,10 @@ async function downloadCutout(format: 'png' | 'jpg'){
      scaledCanvas.getContext('2d')!.drawImage(exportCanvas,0,0,width,height);
     }
     return encode(scaledCanvas,quality);
-   });
+   },exactSize);
    if(exportRun!==runId)return;
    if(!fitted){
-    $('edit-status').textContent='Try a larger JPG file size limit.';
+    $('edit-status').textContent=exactSize?'These dimensions need a larger JPG file size limit.':'Try a larger JPG file size limit.';
     return;
    }
    ({blob,width:outputWidth,height:outputHeight}=fitted);
@@ -236,7 +248,7 @@ async function downloadCutout(format: 'png' | 'jpg'){
   a.click();
   a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),30000);
-  $('edit-status').textContent=maxBytes===undefined
+  $('edit-status').textContent=maxBytes===undefined&&!exactSize
    ? `Your ${label} is ready. Check your downloads.`
    : `JPG ready · ${(blob.size/1000).toFixed(2)} KB · ${outputWidth} × ${outputHeight} px. Check your downloads.`;
  }catch{

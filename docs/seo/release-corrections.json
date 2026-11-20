@@ -74,7 +74,7 @@
         "(JPG|JPEG)",
         "(DPI|KB)"
       ],
-      "note": "Exact dimensions and DPI still require an external utility. JPG export supports a maximum size in KB."
+      "note": "JPG export supports exact pixel dimensions and a maximum size in KB. Prescribed framing or DPI may require an external utility."
     },
     {
       "id": "P4-device-and-format-limits",
@@ -611,7 +611,7 @@
       "claimDetail": "'uncompressed-alpha raster PNG' is implementation vocabulary; the practical fact is full-resolution PNG export. The rest of the sentence, including the external JPG/DPI/KB limits, is unchanged.",
       "currentText": "Clearcutt always downloads an uncompressed-alpha raster PNG ('clearcutt.png') at your source image's pixel dimensions.",
       "proposedText": "Clearcutt always downloads a full-resolution PNG ('clearcutt.png') at your source image's pixel dimensions.",
-      "appliedText": "With Trim empty edges off and no JPG size limit, Clearcutt keeps your source image's pixel dimensions. Limit JPG file size sets a maximum in KB and may reduce both dimensions. Fixed templates, exact dimensions and requested DPI still require a separate image utility.",
+      "appliedText": "Set JPG dimensions sets the exported width and height in pixels and preserves the photo's proportions with white padding where needed. Use Limit JPG file size to set a maximum in KB. When both are set, the editor keeps the requested dimensions and asks for a larger limit if it cannot meet the cap. Use a separate image utility for prescribed framing or DPI.",
       "status": "applied"
     },
     {
