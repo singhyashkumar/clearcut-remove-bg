@@ -1,3 +1,4 @@
+import {AlphaHistory} from './alpha-history.ts';
 import {errorDetails,processingFailure} from './processing-diagnostics.ts';
 import {yieldToBrowser,readAlphaChannels} from './ui-scheduling.ts';
 import {validateFile,MAX_PIXELS,alphaBounds,brushAlpha} from './image-utils.ts';
@@ -49,15 +50,17 @@ let controller: AbortController | null = null;
 let source: ImageBitmap | null = null, bg: ImageBitmap | null = null;
 let basePixels: ImageData | null = null;
 let alpha: Uint8Array | null = null, initialAlpha: Uint8Array | null = null;
-let sourceAlpha: Uint8Array | null = null, undo: Uint8Array | null = null;
+let sourceAlpha: Uint8Array | null = null;
+const alphaHistory = new AlphaHistory();
+let strokePointer: number | null = null;
 let tool: Tool = 'view', lastPoint: Point | null = null, sourceUrl: string | null = null;
-let busy=false,background='transparent',drawing=false,frame=0,runId=0,bgRevision=0;
+let busy=false,background='transparent',frame=0,runId=0,bgRevision=0;
 const cutout=document.createElement('canvas'),cutCtx=cutout.getContext('2d')!;
 function fail(message: string){$('error').textContent=message;$('error').hidden=false;}
 function panels(mode: 'upload' | 'processing' | 'editor'){$('showcase').hidden=mode!=='upload';$('upload-panel').hidden=mode!=='upload';$('processing').hidden=mode!=='processing';$('editor').hidden=mode!=='editor';}
 function setTool(value: Tool){tool=value;for(const id of ['move','erase','restore'])$(id).classList.toggle('active',(id==='move'?'view':id)===value);canvas.style.cursor='default';if(value==='view')canvasWrap.classList.remove('brush-visible');else if(canvas.matches(':hover'))canvasWrap.classList.add('brush-visible');if(value!=='view')showResult();}
 function showResult(){canvas.hidden=false;$('original').hidden=true;$('result-view').classList.add('active');$('original-view').classList.remove('active');}
-function release(){cancelAnimationFrame(frame);frame=0;drawing=false;lastPoint=null;source?.close();source=null;bg?.close();bg=null;basePixels=alpha=initialAlpha=sourceAlpha=undo=null;if(sourceUrl)URL.revokeObjectURL(sourceUrl);sourceUrl=null;$('original').removeAttribute('src');canvas.width=canvas.height=cutout.width=cutout.height=1;$('undo').disabled=true;$('file').value='';$('bg-file').value='';$('edit-status').textContent='';}
+function release(){cancelAnimationFrame(frame);frame=0;strokePointer=null;lastPoint=null;source?.close();source=null;bg?.close();bg=null;basePixels=alpha=initialAlpha=sourceAlpha=null;alphaHistory.clear();if(sourceUrl)URL.revokeObjectURL(sourceUrl);sourceUrl=null;$('original').removeAttribute('src');canvas.width=canvas.height=cutout.width=cutout.height=1;$('undo').disabled=true;$('file').value='';$('bg-file').value='';$('edit-status').textContent='';}
 function reset(){++runId;controller?.abort();controller=null;busy=false;release();panels('upload');$('error').hidden=true;}
 function render(){
  if(!basePixels||!alpha)return;
@@ -121,8 +124,45 @@ function updateBrushCursor(e: PointerEvent){const wrap=canvasWrap.getBoundingCli
 function resizeBrushCursor(){const size=`${$('brush').value}px`;brushCursor.style.width=size;brushCursor.style.height=size;}
 $('brush').oninput=()=>{$('brush-value').value=$('brush').value;resizeBrushCursor();};resizeBrushCursor();
 function paint(e: PointerEvent){if(!alpha||!sourceAlpha)return;const rect=canvas.getBoundingClientRect();const point={x:(e.clientX-rect.left)*canvas.width/rect.width,y:(e.clientY-rect.top)*canvas.height/rect.height};const radius=Number($('brush').value)*canvas.width/rect.width/2;const start=lastPoint??point;const count=Math.max(1,Math.ceil(Math.hypot(point.x-start.x,point.y-start.y)/Math.max(1,radius/3)));for(let n=1;n<=count;n++)brushAlpha(alpha,sourceAlpha,canvas.width,canvas.height,start.x+(point.x-start.x)*n/count,start.y+(point.y-start.y)*n/count,radius,tool==='restore');lastPoint=point;queueRender();}
-canvas.addEventListener('pointerdown',e=>{updateBrushCursor(e);if(tool==='view'||!alpha||e.button!==0)return;undo=alpha.slice();$('undo').disabled=false;drawing=true;lastPoint=null;canvas.setPointerCapture(e.pointerId);paint(e);});canvas.addEventListener('pointermove',e=>{updateBrushCursor(e);if(drawing)paint(e);});canvas.addEventListener('pointerleave',()=>{if(!drawing)canvasWrap.classList.remove('brush-visible');});canvas.addEventListener('pointerenter',e=>{if(tool!=='view'&&alpha){canvasWrap.classList.add('brush-visible');updateBrushCursor(e);}});function endStroke(){drawing=false;lastPoint=null;}canvas.addEventListener('pointerup',endStroke);canvas.addEventListener('pointercancel',endStroke);
-$('undo').onclick=()=>{if(undo){alpha=undo;undo=null;$('undo').disabled=true;render();}};$('reset-mask').onclick=()=>{if(!alpha)return;undo=alpha.slice();$('undo').disabled=false;alpha=initialAlpha!.slice();render();};
+canvas.addEventListener('pointerdown',e=>{
+ updateBrushCursor(e);
+ if(tool==='view'||!alpha||e.button!==0||strokePointer!==null)return;
+ alphaHistory.capture(alpha);
+ $('undo').disabled=!alphaHistory.canUndo;
+ strokePointer=e.pointerId;
+ lastPoint=null;
+ canvas.setPointerCapture(e.pointerId);
+ paint(e);
+});
+canvas.addEventListener('pointermove',e=>{
+ updateBrushCursor(e);
+ if(strokePointer===e.pointerId)paint(e);
+});
+canvas.addEventListener('pointerleave',()=>{if(strokePointer===null)canvasWrap.classList.remove('brush-visible');});
+canvas.addEventListener('pointerenter',e=>{if(tool!=='view'&&alpha){canvasWrap.classList.add('brush-visible');updateBrushCursor(e);}});
+function endStroke(e: PointerEvent){
+ if(strokePointer!==e.pointerId)return;
+ strokePointer=null;
+ lastPoint=null;
+}
+canvas.addEventListener('pointerup',endStroke);
+canvas.addEventListener('pointercancel',endStroke);
+canvas.addEventListener('lostpointercapture',endStroke);
+$('undo').onclick=()=>{
+ if(strokePointer!==null)return;
+ const previous=alphaHistory.undo();
+ if(!previous)return;
+ alpha=previous;
+ $('undo').disabled=!alphaHistory.canUndo;
+ render();
+};
+$('reset-mask').onclick=()=>{
+ if(!alpha||!initialAlpha||strokePointer!==null)return;
+ alphaHistory.capture(alpha);
+ $('undo').disabled=!alphaHistory.canUndo;
+ alpha=initialAlpha.slice();
+ render();
+};
 $('download').onclick=async()=>{
  const button=$('download');button.disabled=true;
  try{

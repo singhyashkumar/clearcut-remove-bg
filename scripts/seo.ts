@@ -123,7 +123,7 @@ const legacyPages = legacySources.map(([slug,title,description,sections,faqs,fie
 });
 const links = () => pages.map(p => `<li><a href="${site}${p.slug}/">${escape(p.title)}</a></li>`).join('');
 // Editorial sanitizers: strip internal implementation details (alpha thresholds, forensic RAM erasure)
-// from published india-page prose; practical limits (512px masks, single-step undo, model sizes) stay.
+// from published india-page prose; practical limits (512px masks and model sizes) stay.
 const sanitizeProse = (value: string) => value
  .replace(/\s*\(alpha\s*>\s*\d+\)/g,'')
  .replace(/\s*\(halaanki tab band karna forensic RAM erasure ki guarantee nahi hota\)/g,'')

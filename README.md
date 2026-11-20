@@ -21,7 +21,7 @@ Open the Local URL printed by Vite. `npm run typecheck` checks the frontend, SEO
 - Model download progress, cancellation and error/reset flow.
 - Original/result views, checkerboard transparency preview.
 - Solid/custom color and photo backgrounds.
-- Erase/restore brushes, one-stroke undo and reset cutout.
+- Erase/restore brushes, up to 12 undo steps (48 MiB of mask history per photo), and reset cutout.
 - Optional trim to the subject bounds and PNG download without watermark.
 - Responsive layout, focus indicators and live status/error announcements.
 
