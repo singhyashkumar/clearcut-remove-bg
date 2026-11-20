@@ -74,7 +74,7 @@
         "(JPG|JPEG)",
         "(DPI|KB)"
       ],
-      "note": "JPG conversion, cm/pixel cropping, DPI metadata and KB compression must stay explicitly external and unsupported on every page that mentions portal uploads."
+      "note": "Exact cm or pixel sizing, DPI targets and KB limits still require an external utility. Clearcutt can export JPG directly."
     },
     {
       "id": "P4-device-and-format-limits",
@@ -328,7 +328,7 @@
       "claimDetail": "Removes the alpha constant and the unsupported claim that the crop lands on ink bounds; 'whatever the model kept' is outcome-neutral and consistent with R1.",
       "currentText": "Choose background and Trim empty edges: Switch back to the Transparent checkerboard swatch for digital document signing (or White #ffffff if you plan to convert externally to a white-background JPG). For transparent document signatures, checking 'Trim empty edges' is helpful because it crops 'clearcutt.png' tightly to the ink bounds (alpha > 4) without extra empty canvas.",
       "proposedText": "Choose background and Trim empty edges: Switch back to the Transparent checkerboard swatch for digital document signing (or White #ffffff if you plan to convert externally to a white-background JPG). For document signatures, checking 'Trim empty edges' is helpful because it crops 'clearcutt.png' tightly around whatever the model kept, without extra empty canvas.",
-      "appliedText": "Choose background and Trim empty edges: Switch back to the Transparent checkerboard swatch for digital document signing (or White #ffffff if you plan to convert externally to a white-background JPG). For document signatures, checking 'Trim empty edges' is helpful because it crops 'clearcutt.png' tightly around whatever the model kept, without extra empty canvas.",
+      "appliedText": "Choose background and Trim empty edges: Switch back to the Transparent checkerboard swatch for digital document signing (or White #ffffff if you need a white-background JPG). For document signatures, checking 'Trim empty edges' is helpful because it crops 'clearcutt.png' tightly around whatever the model kept, without extra empty canvas.",
       "status": "applied"
     },
     {
@@ -426,7 +426,7 @@
           "claimType": "verified-fact"
         }
       ],
-      "appliedText": "Amazon India accepts PNG alongside JPEG (preferred), TIFF, and non-animated GIF. Meesho's public category guides specify JPEG format for catalog images, and Flipkart or Myntra uploaders may impose their own format or aspect-ratio rules. Check the uploader in your seller panel, and convert Clearcutt's PNG export to JPEG externally whenever your portal requires it.",
+      "appliedText": "Amazon India accepts PNG alongside JPEG (preferred), TIFF, and non-animated GIF. Meesho's public category guides specify JPEG format for catalog images, and Flipkart or Myntra uploaders may impose their own format or aspect-ratio rules. Check the uploader in your seller panel, and choose Download JPG whenever your portal requires JPEG.",
       "status": "applied"
     },
     {
@@ -611,7 +611,7 @@
       "claimDetail": "'uncompressed-alpha raster PNG' is implementation vocabulary; the practical fact is full-resolution PNG export. The rest of the sentence, including the external JPG/DPI/KB limits, is unchanged.",
       "currentText": "Clearcutt always downloads an uncompressed-alpha raster PNG ('clearcutt.png') at your source image's pixel dimensions.",
       "proposedText": "Clearcutt always downloads a full-resolution PNG ('clearcutt.png') at your source image's pixel dimensions.",
-      "appliedText": "Clearcutt always downloads a full-resolution PNG ('clearcutt.png') at your source image's pixel dimensions. It does not export .jpg/.jpeg files, crop to fixed ratios such as 3.5 cm × 4.5 cm, 630×810 px, or 200×230 px, write DPI metadata, or compress files to portal windows like 20–50 KB or 10–200 KB.",
+      "appliedText": "With Trim empty edges off, Clearcutt downloads a PNG or JPG at your source image's pixel dimensions. It does not crop to fixed templates, set a requested DPI, or compress to a portal's target size range.",
       "status": "applied"
     },
     {

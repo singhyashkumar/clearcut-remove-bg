@@ -494,7 +494,7 @@ test('india page FAQs stay a 1:1 match between visible HTML and FAQPage schema',
  }
 });
 test('india pages publish no internal implementation details or forbidden claims',()=>{
- const forbidden=[/alpha\s*>\s*\d/,/forensic/i,/schema markup|JSON-LD|structured data|meta description|keyword/i,/rank #1|first on Google|top of search/i,/official(ly)? certifi(ed|cation)|government certified/i,/works? on (all|every) (Android|phone|device)s?/i,/universal(ly)? (supported|compatible)/i,/(can|also) (exports?|save|download) .{0,20}(JPG|JPEG)/i,/exports? .{0,15}(JPG|JPEG) files? (directly|for you|automatically)/i];
+ const forbidden=[/alpha\s*>\s*\d/,/forensic/i,/schema markup|JSON-LD|structured data|meta description|keyword/i,/rank #1|first on Google|top of search/i,/official(ly)? certifi(ed|cation)|government certified/i,/works? on (all|every) (Android|phone|device)s?/i,/universal(ly)? (supported|compatible)/i,/exports? (?:PNG|raster PNG) files? only|exports? PNG only/i];
  for(const p of pages.filter(page=>page.india)){
   const html=renderPage(p);
   const data=JSON.parse([...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/gs)].map(m=>m[1])[0]);

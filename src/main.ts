@@ -18,6 +18,7 @@ type EditorElements = {
  progress: HTMLProgressElement;
  undo: HTMLButtonElement;
  download: HTMLButtonElement;
+ 'download-jpg': HTMLButtonElement;
  'google-signin': HTMLButtonElement;
  'razorpay-checkout': HTMLButtonElement;
 };
@@ -163,16 +164,49 @@ $('reset-mask').onclick=()=>{
  alpha=initialAlpha.slice();
  render();
 };
-$('download').onclick=async()=>{
- const button=$('download');button.disabled=true;
+async function downloadCutout(format: 'png' | 'jpg'){
+ if(!alpha)return;
+ const exportRun=runId;
+ const pngButton=$('download'),jpgButton=$('download-jpg');
+ pngButton.disabled=jpgButton.disabled=true;
+ const label=format.toUpperCase();
  try{
-  render();const exportCanvas=document.createElement('canvas');
+  render();
+  const exportCanvas=document.createElement('canvas');
   let bounds={x:0,y:0,width:canvas.width,height:canvas.height};
-  if($('crop').checked&&alpha){const maskData=new Uint8ClampedArray(alpha.length*4);for(let i=0;i<alpha.length;i++)maskData[i*4+3]=alpha[i];bounds=alphaBounds(maskData,canvas.width,canvas.height);}
-  exportCanvas.width=bounds.width;exportCanvas.height=bounds.height;exportCanvas.getContext('2d')!.drawImage(canvas,bounds.x,bounds.y,bounds.width,bounds.height,0,0,bounds.width,bounds.height);
-  const blob=await new Promise<Blob | null>(resolve=>exportCanvas.toBlob(resolve,'image/png'));if(!blob)throw Error();const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='clearcutt.png';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);$('edit-status').textContent='Your PNG is ready. Check your downloads.';
- }catch{fail('The PNG could not be created. Please try again.');}finally{button.disabled=false;}
-};
+  if($('crop').checked){
+   const maskData=new Uint8ClampedArray(alpha.length*4);
+   for(let i=0;i<alpha.length;i++)maskData[i*4+3]=alpha[i];
+   bounds=alphaBounds(maskData,canvas.width,canvas.height);
+  }
+  exportCanvas.width=bounds.width;
+  exportCanvas.height=bounds.height;
+  const context=exportCanvas.getContext('2d')!;
+  if(format==='jpg'){
+   context.fillStyle='#fff';
+   context.fillRect(0,0,bounds.width,bounds.height);
+  }
+  context.drawImage(canvas,bounds.x,bounds.y,bounds.width,bounds.height,0,0,bounds.width,bounds.height);
+  const mime=format==='jpg'?'image/jpeg':'image/png';
+  const blob=await new Promise<Blob | null>(resolve=>exportCanvas.toBlob(resolve,mime,format==='jpg'?0.92:undefined));
+  if(exportRun!==runId)return;
+  if(!blob||blob.type!==mime)throw Error();
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;
+  a.download=`clearcutt.${format}`;
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),30000);
+  $('edit-status').textContent=`Your ${label} is ready. Check your downloads.`;
+ }catch{
+  if(exportRun===runId)fail(`The ${label} could not be created. Please try again.`);
+ }finally{
+  pngButton.disabled=jpgButton.disabled=false;
+ }
+}
+$('download').onclick=()=>downloadCutout('png');
+$('download-jpg').onclick=()=>downloadCutout('jpg');
 window.addEventListener('pagehide',()=>{controller?.abort();release();});
 
 import {renderMembership} from './membership.ts';

@@ -168,8 +168,8 @@
       "renderedTitle": "Passport and Exam Form White Background Guide | Clearcutt",
       "description": "Check Passport Seva, UPSC, SSC, IBPS and NTA photo rules before editing. Add a #ffffff white background locally in Clearcutt where allowed.",
       "h1": "White Background for Passport and Indian Exam Form Photos: Rules and Limits",
-      "lead": "Read your official portal instructions before editing any ID or application portrait: some authorities prohibit software-edited photographs or capture live webcam photos during registration. Where background cleanup is allowed, Clearcutt can place your portrait on solid white (#ffffff) locally in your browser without uploading your photo, after which you must convert and resize the PNG externally if the form requires a specific JPG size.",
-      "uniqueIntent": "Indian passport and competitive-exam applicants checking whether and how they can put an application portrait on a plain white (#ffffff) background while respecting official non-alteration rules, live-photo mandates, and external JPG/pixel/KB conversion steps.",
+      "lead": "Read your official portal instructions before editing any ID or application portrait: some authorities prohibit software-edited photographs or capture live webcam photos during registration. Where background cleanup is allowed, Clearcutt can place your portrait on solid white (#ffffff) locally in your browser without uploading your photo, then download a JPG. Use a separate image utility if the form requires specific pixel dimensions or a file-size range.",
+      "uniqueIntent": "Indian passport and competitive-exam applicants checking whether and how they can put an application portrait on a plain white (#ffffff) background while respecting official non-alteration rules, live-photo mandates, and JPG export and external sizing steps.",
       "cannibalizationBoundary": {
         "versusHomepage": "Homepage (/) targets general commercial background removal; this page addresses Indian government/exam portrait compliance boundaries and white-background preparation.",
         "versusExistingGuides": "Leaves creative/profile portrait editing to /remove-background-portraits/ and delegates handwritten ink signature rules to /remove-background-from-signature-png/."
@@ -226,7 +226,7 @@
             "1. Open Clearcutt on desktop Chrome or Edge (Android Chrome runs the 98 MB Standard model by default and has worked in user testing, though low-memory phones can fail; iOS/iPadOS and HEIC are unsupported).",
             "2. Select, drop, or paste your JPG, PNG, or WebP portrait (up to 20 MB and 25 megapixels). Your photo stays in local browser memory and is never uploaded to Clearcutt's backend.",
             "3. After the 512px AI mask finishes (about 98 MB model download on first Standard run, or up to 473 MB in Detailed mode), click the White background swatch to fill the backdrop with pure #ffffff (RGB 255, 255, 255).",
-            "4. Toggle between 'Result' and 'Original'. Use 'Restore' and 'Erase' (5–150 px brush; single-step 'Undo' and 'Reset cutout' available) to clean stray hair, ear contours, and dark collar edges.",
+            "4. Toggle between 'Result' and 'Original'. Use 'Restore' and 'Erase' (5–150 px brush; multi-step 'Undo' and 'Reset cutout' available) to clean stray hair, ear contours, and dark collar edges.",
             "5. Leave 'Trim empty edges' UNCHECKED, then click 'Download PNG'. Checking 'Trim empty edges' crops tightly to the subject's outer edge with zero head or shoulder margin—even when White (#ffffff) is selected."
           ],
           "sourceIds": [
@@ -239,10 +239,10 @@
         },
         {
           "id": "external-jpg-crop-kb-steps",
-          "heading": "External steps Clearcutt does not perform: JPG conversion, cropping, DPI and KB limits",
+          "heading": "JPG export and checking exact dimensions, DPI and file size",
           "paragraphs": [
-            "Clearcutt always downloads a full-resolution PNG ('clearcutt.png') at your source image's pixel dimensions. It does not export .jpg/.jpeg files, crop to fixed ratios such as 3.5 cm × 4.5 cm, 630×810 px, or 200×230 px, write DPI metadata, or compress files to portal windows like 20–50 KB or 10–200 KB.",
-            "If an online form allows your white-background portrait and asks for a specific JPG size, open the downloaded PNG in your operating system's built-in photo editor or offline image tool, crop to the exact head-and-shoulders framing specified in your notice, export as .jpg/.jpeg, and verify both pixel dimensions and kilobyte size before uploading."
+            "With Trim empty edges off, Clearcutt downloads a PNG or JPG at your source image's pixel dimensions. It does not crop to fixed templates, set a requested DPI, or compress to a portal's target size range.",
+            "If an online form allows your white-background portrait and asks for a specific JPG size, open the downloaded JPG in your operating system's built-in photo editor or offline image tool, crop to the exact head-and-shoulders framing specified in your notice, export as .jpg/.jpeg, and verify both pixel dimensions and kilobyte size before uploading."
           ],
           "sourceIds": [
             "REPO-EDITOR-EXPORT",
@@ -273,7 +273,7 @@
         },
         {
           "question": "Can Clearcutt export a 20 KB to 50 KB JPG or crop to 3.5 x 4.5 cm?",
-          "answer": "No. Clearcutt exports full-resolution PNG files only and does not convert to JPG/JPEG, crop to centimetre or pixel templates, set DPI, or compress files to KB targets. Use a separate image utility to crop and save as JPG within your notification's exact size range.",
+          "answer": "Clearcutt can download a JPG, but it does not crop to centimetre or pixel templates, set DPI, or compress to a target file size. Use a separate image utility when your notification specifies exact dimensions or a KB range.",
           "sourceIds": [
             "REPO-EDITOR-EXPORT"
           ]
@@ -380,7 +380,7 @@
             "1. Open Clearcutt on desktop Chrome or Edge and upload, drop, or paste a JPG, PNG, or WebP photo up to 20 MB and 25 megapixels (Android Chrome defaults to the 98 MB Standard model and has worked in user testing, though low-RAM phones are not guaranteed; iOS and HEIC are unsupported).",
             "2. Select 'Standard · original model (98 MB)' for straightforward shapes, or 'Detailed · larger model' (up to 473 MB on capable hardware) when a smaller product occupies under 85% of the frame and benefits from Clearcutt's focused 512px crop pass.",
             "3. Click the White swatch (#ffffff) to set an exact RGB 255, 255, 255 background, or leave Transparent selected if you are placing the cutout into a separate catalog template.",
-            "4. Inspect straps, handles, ports, and inner cutouts using 'Result' vs 'Original'. Clean the mask with 'Erase' and 'Restore' (5–150 px brush; single-step 'Undo' and 'Reset cutout' included), then click 'Download PNG'."
+            "4. Inspect straps, handles, ports, and inner cutouts using 'Result' vs 'Original'. Clean the mask with 'Erase' and 'Restore' (5–150 px brush; multi-step 'Undo' and 'Reset cutout' included), then click 'Download PNG'."
           ],
           "sourceIds": [
             "REPO-INPUT-LIMITS",
@@ -394,7 +394,7 @@
           "heading": "Managing Amazon's 85% frame rule, Trim empty edges, and JPEG conversion",
           "paragraphs": [
             "Understanding how Clearcutt exports canvases prevents accidental catalog rejections. When 'Trim empty edges' is left unchecked, Clearcutt preserves your original photo's pixel width and height. When 'Trim empty edges' IS checked, Clearcutt crops tightly to the outer edge of the detected product with zero white margin—even when the White (#ffffff) swatch is active.",
-            "If you need a square 1:1 or 3:4 marketplace canvas where the item fills roughly 85–90% of the frame with clean white breathing room, either frame your camera shot with that margin and leave 'Trim empty edges' unchecked, or export a trimmed transparent PNG and place it onto a sized #ffffff canvas (for example, 1500×1500 px or 2000×2000 px) in your layout editor. Likewise, because Clearcutt exports PNG only—and does not resize, set DPI, or compress files—convert your #ffffff PNG to JPEG externally whenever Meesho, Flipkart, Myntra, or your catalog feed requires .jpg/.jpeg files."
+            "If you need a square 1:1 or 3:4 marketplace canvas where the item fills roughly 85–90% of the frame with clean white breathing room, either frame your camera shot with that margin and leave 'Trim empty edges' unchecked, or export a trimmed transparent PNG and place it onto a sized #ffffff canvas (for example, 1500×1500 px or 2000×2000 px) in your layout editor. When your catalog feed requires JPEG, choose the White swatch and select Download JPG. Clearcutt preserves the canvas size unless Trim empty edges is enabled. Use an external editor if a marketplace specifies a target file size in KB or exact pixel dimensions."
           ],
           "sourceIds": [
             "REPO-EDITOR-EXPORT",
@@ -427,7 +427,7 @@
         },
         {
           "question": "Can I upload Clearcutt's PNG file directly to Amazon India, Flipkart, Meesho, and Myntra?",
-          "answer": "Amazon India accepts PNG alongside JPEG (preferred), TIFF, and non-animated GIF. Meesho's public category guides specify JPEG format for catalog images, and Flipkart or Myntra uploaders may impose their own format or aspect-ratio rules. Check the uploader in your seller panel, and convert Clearcutt's PNG export to JPEG externally whenever your portal requires it.",
+          "answer": "Amazon India accepts PNG alongside JPEG (preferred), TIFF, and non-animated GIF. Meesho's public category guides specify JPEG format for catalog images, and Flipkart or Myntra uploaders may impose their own format or aspect-ratio rules. Check the uploader in your seller panel, and choose Download JPG whenever your portal requires JPEG.",
           "sourceIds": [
             "REPO-EDITOR-EXPORT",
             "SRC-AMAZON-IN-IMAGES",
@@ -560,8 +560,8 @@
           ],
           "bullets": [
             "Preview against a dark swatch: Temporarily click the dark green (#20372f) background swatch to spot pale paper halos around the ink or leftover white islands trapped inside closed loops of letters like 'a', 'e', 'o', 'd', and 'g'.",
-            "Clean with Erase and Restore: Select 'Erase' with a small brush (5–20 px on the 5–150 px slider) to clear paper specks inside letter loops, and use 'Restore' to bring back faint pen tails or dots. Remember that 'Undo' reverts only the single latest stroke, while 'Reset cutout' restores the initial AI mask.",
-            "Choose background and Trim empty edges: Switch back to the Transparent checkerboard swatch for digital document signing (or White #ffffff if you plan to convert externally to a white-background JPG). For document signatures, checking 'Trim empty edges' is helpful because it crops 'clearcutt.png' tightly around whatever the model kept, without extra empty canvas."
+            "Clean with Erase and Restore: Select 'Erase' with a small brush (5–20 px on the 5–150 px slider) to clear paper specks inside letter loops, and use 'Restore' to bring back faint pen tails or dots. Remember that 'Undo' can revert several recent strokes, while 'Reset cutout' restores the initial AI mask.",
+            "Choose background and Trim empty edges: Switch back to the Transparent checkerboard swatch for digital document signing (or White #ffffff if you need a white-background JPG). For document signatures, checking 'Trim empty edges' is helpful because it crops 'clearcutt.png' tightly around whatever the model kept, without extra empty canvas."
           ],
           "sourceIds": [
             "REPO-INPUT-LIMITS",
@@ -574,7 +574,7 @@
           "heading": "Local signature privacy, supported devices, and unsupported formats",
           "paragraphs": [
             "Handwritten signatures are sensitive personal identifiers. In Clearcutt, your selected image, its cutout mask, and your brush edits stay in your browser's memory on your device and are never uploaded to Clearcutt's backend or stored in a database. Download your PNG before closing or refreshing the tab, as ending the session discards the cutout in the app.",
-            "Desktop Chrome or Edge is recommended. Android Chrome runs the 98 MB Standard model by default and has worked in user testing, though universal phone compatibility is not guaranteed on low-memory devices; iOS/iPadOS and HEIC files are unsupported. Clearcutt exports raster PNGs only—it does not trace vector SVG paths, convert to PDF or JPG, resize to 140×60 pixels, set 200 DPI, or compress files to 4–30 KB."
+            "Desktop Chrome or Edge is recommended. Android Chrome runs the 98 MB Standard model by default and has worked in user testing, though universal phone compatibility is not guaranteed on low-memory devices; iOS/iPadOS and HEIC files are unsupported. Clearcutt exports raster PNG and JPG files. It does not trace vector SVG paths, create PDFs, resize to 140×60 pixels, set 200 DPI, or compress files to a specific KB range. Use a separate image utility for these requirements."
           ],
           "sourceIds": [
             "REPO-EDITOR-EXPORT",
@@ -613,7 +613,7 @@
         },
         {
           "question": "Can Clearcutt export my signature as an SVG vector or a 10 to 20 KB JPG?",
-          "answer": "No. Clearcutt exports raster PNG files only at your image's pixel dimensions (or tightly cropped to ink pixels when Trim empty edges is checked). It does not vectorize signatures into SVG or export resized, DPI-tagged, or KB-compressed JPG files.",
+          "answer": "Clearcutt can download a raster JPG at the current pixel dimensions or crop to the cutout with Trim empty edges. It does not create SVG vectors or set a target size in KB.",
           "sourceIds": [
             "REPO-EDITOR-EXPORT"
           ]
