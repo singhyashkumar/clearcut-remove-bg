@@ -98,7 +98,11 @@ async function processFile(input: File | null){
   if(thisRun!==runId)return;
   alpha=channels.alpha;sourceAlpha=channels.sourceAlpha;initialAlpha=alpha.slice();
   sourceUrl=URL.createObjectURL(result.sourceBlob??file);$('original').src=sourceUrl;background='transparent';$('crop').checked=false;setTool('view');showResult();selectSwatch('transparent');
-  $('dimensions').textContent=`${canvas.width} × ${canvas.height} px`;render();panels('editor');$('edit-status').textContent=`Background removed with ${result.model==='birefnet-lite'?'BiRefNet Lite (98 MB)':'BiRefNet Detailed (473 MB)'}.`;
+  const modelLabel=result.model==='birefnet-lite'?'BiRefNet Lite (98 MB)':'BiRefNet Detailed (473 MB)';
+  const engineLabel=result.provider==='webgpu'?'WebGPU':'WebAssembly';
+  $('dimensions').textContent=`${canvas.width} × ${canvas.height} px`;
+  $('edit-status').textContent=`Background removed with ${modelLabel} using ${engineLabel}.`;
+  render();panels('editor');
  }catch(e){if(thisRun!==runId)return;release();panels('upload');if(errorDetails(e).code!=='cancelled'&&errorDetails(e).name!=='AbortError'){fail(processingFailure(e,processingStage,processingProvider));}}
  finally{bitmap?.close();if(thisRun===runId){busy=false;controller=null;}}
 }

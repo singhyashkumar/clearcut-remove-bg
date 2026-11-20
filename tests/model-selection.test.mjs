@@ -18,3 +18,10 @@ test('original GPU model ordering is restored on capable mobile hardware',async(
  const gpu={requestAdapter:async()=>({features:{has:()=>true},limits:{maxBufferSize:2**30,maxStorageBufferBindingSize:2**28}})};
  assert.deepEqual((await detectEngineChoices({...android,gpu})).map(c=>[c.definition.name,c.provider]),[['birefnet','webgpu'],['birefnet-lite','webgpu'],['birefnet-lite','wasm']]);
 });
+test('a missing or rejected WebGPU adapter preserves the Standard CPU path', async()=>{
+ for(const requestAdapter of [async()=>null, async()=>{throw new Error('WebGPU unavailable');}]){
+  const choices = await detectEngineChoices({...desktop,gpu:{requestAdapter}});
+  assert.deepEqual(choices.map(({provider})=>provider),['wasm','wasm']);
+  assert.equal(choices.at(-1).definition.name,'birefnet-lite');
+ }
+});
