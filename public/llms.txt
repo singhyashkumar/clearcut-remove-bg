@@ -1,10 +1,10 @@
 # Clearcutt
 
-Clearcutt is a free browser-based image background remover at https://clearcutt.in/. It removes a photo background on the user's device and exports PNG files without a watermark. Clearcutt is an independent product and is not affiliated with remove.bg, Canva, Adobe, or similarly named services.
+Clearcutt is a free browser-based image background remover at https://clearcutt.in/. It removes a photo background on the user's device and exports PNG (transparent) or JPG (opaque) files without a watermark. Clearcutt is an independent product and is not affiliated with remove.bg, Canva, Adobe, or similarly named services.
 
 ## Main tool
 
-- [Background remover](https://clearcutt.in/): Upload JPG, PNG, or WebP; remove the background; refine with Erase and Restore; choose transparency, a colour, or another image; then download PNG.
+- [Background remover](https://clearcutt.in/): Upload JPG, PNG, or WebP; remove the background; refine with Erase and Restore; choose transparency, a colour, or another image; then download PNG (transparent) or JPG (opaque). JPG downloads can be limited to a maximum file size in KB or set to exact pixel dimensions; JPG fills transparent areas with white.
 - Images are processed in browser memory and are not uploaded to Clearcutt's payment backend.
 - The first use downloads an AI model. Standard is approximately 98 MB; Detailed can download up to approximately 473 MB.
 - Current limitations include one photo per run, no public API, no batch processing, and no HEIC or iOS support.
