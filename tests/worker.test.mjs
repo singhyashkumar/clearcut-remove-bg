@@ -329,3 +329,275 @@ test('only configured administrators can moderate reviews and every decision is 
     assert.deepEqual({ ...audit }, { review_id: reviewId, moderator_uid: 'clearcut-user', action: 'approved', reason: 'Relevant first-hand product feedback.' });
   } finally { db.sqlite.close(); }
 });
+
+// ---- Workstream 3: login-session reporting and request security ----
+
+function sessionDb() {
+  const sqlite = new DatabaseSync(':memory:');
+  for (const name of ['0001_payments.sql', '0002_accounts.sql', '0004_login_sessions.sql']) {
+    sqlite.exec(readFileSync(new URL(`../worker/migrations/${name}`, import.meta.url), 'utf8'));
+  }
+  return {
+    sqlite,
+    prepare(sql) {
+      return { bind(...args) { return {
+        async run() { sqlite.prepare(sql).run(...args); return { success: true }; },
+        async all() { return { results: sqlite.prepare(sql).all(...args) }; },
+        async first() { return sqlite.prepare(sql).get(...args) || null; }
+      }; } };
+    },
+    async batch() { return []; }
+  };
+}
+
+function byteStream(chunks, { onCancel } = {}) {
+  let index = 0;
+  return new ReadableStream({
+    pull(controller) {
+      if (index < chunks.length) {
+        const chunk = chunks[index];
+        controller.enqueue(typeof chunk === 'string' ? new TextEncoder().encode(chunk) : chunk);
+        index += 1;
+      } else controller.close();
+    },
+    cancel() { if (onCancel) onCancel(); }
+  });
+}
+
+test('POST /api/session records signed sessions once and never trusts client-supplied identity', async () => {
+  const db = sessionDb();
+  try {
+    const post = (claims, body) => worker.fetch(new Request('https://api.example/api/session', {
+      method: 'POST', headers: authHeaders(claims), body: body === undefined ? undefined : JSON.stringify(body)
+    }), env(keyFetch, db));
+    const first = await post({});
+    assert.equal(first.status, 200);
+    assert.equal((await first.json()).recorded, true);
+    await post({});
+    await post({}, { uid: 'attacker-uid', auth_time: 1 });
+    let rows = db.sqlite.prepare('SELECT uid, auth_time, first_seen_at FROM login_sessions').all();
+    assert.equal(rows.length, 1, 'repeated loads, refreshes and client UID overrides must not duplicate');
+    assert.deepEqual({ ...rows[0] }, { uid: 'clearcut-user', auth_time: now, first_seen_at: rows[0].first_seen_at });
+    assert.ok(rows[0].first_seen_at > 0);
+    await post({ sub: 'other-user' });
+    rows = db.sqlite.prepare('SELECT uid FROM login_sessions').all();
+    assert.deepEqual(rows.map(row => row.uid).sort(), ['clearcut-user', 'other-user']);
+    const noAuth = await worker.fetch(new Request('https://api.example/api/session', { method: 'POST', headers: { origin: 'https://clearcutt.in' } }), env(keyFetch, db));
+    assert.equal(noAuth.status, 401);
+  } finally { db.sqlite.close(); }
+});
+
+test('Firebase auth_time claim is validated and the signed value is what gets recorded', async () => {
+  const db = sessionDb();
+  try {
+    const post = claims => worker.fetch(new Request('https://api.example/api/session', {
+      method: 'POST', headers: authHeaders(claims)
+    }), env(keyFetch, db));
+    assert.equal((await post({ auth_time: 'not-a-number' })).status, 401, 'non-integer auth_time must be rejected');
+    assert.equal((await post({ auth_time: 1.5 })).status, 401, 'fractional auth_time must be rejected');
+    assert.equal((await post({ auth_time: -1 })).status, 401, 'negative auth_time must be rejected');
+    assert.equal((await post({ auth_time: now + 3600 })).status, 401, 'future auth_time must be rejected');
+    assert.equal(db.sqlite.prepare('SELECT COUNT(*) AS n FROM login_sessions').get().n, 0);
+    assert.equal((await post({ auth_time: now - 100 })).status, 200);
+    const row = db.sqlite.prepare('SELECT uid, auth_time FROM login_sessions').get();
+    assert.equal(row.auth_time, now - 100, 'the signed auth_time must be stored verbatim');
+  } finally { db.sqlite.close(); }
+});
+
+test('the private security report returns only the authenticated user\'s own sessions', async () => {
+  const db = sessionDb();
+  try {
+    db.sqlite.prepare('INSERT INTO login_sessions VALUES (?,?,?)').run('clearcut-user', now - 500, now - 400);
+    db.sqlite.prepare('INSERT INTO login_sessions VALUES (?,?,?)').run('clearcut-user', now - 300, now - 200);
+    db.sqlite.prepare('INSERT INTO login_sessions VALUES (?,?,?)').run('other-user', now - 100, now - 50);
+    const report = await worker.fetch(new Request('https://api.example/api/security-report?uid=other-user', {
+      headers: authHeaders()
+    }), env(keyFetch, db));
+    assert.equal(report.status, 200);
+    assert.equal(report.headers.get('cache-control'), 'no-store');
+    const data = await report.json();
+    assert.equal(data.retention_days, 30);
+    assert.equal(data.sessions.length, 2, 'query parameters must never widen the report beyond the signed user');
+    for (const session of data.sessions) {
+      assert.equal(session.uid, undefined, 'the private report must not expose UIDs');
+      assert.ok(Number.isInteger(session.auth_time) && Number.isInteger(session.first_seen_at));
+    }
+    const other = await worker.fetch(new Request('https://api.example/api/security-report', {
+      headers: authHeaders({ sub: 'other-user' })
+    }), env(keyFetch, db));
+    const otherData = await other.json();
+    assert.equal(otherData.sessions.length, 1, 'cross-account access must be denied');
+    assert.equal(otherData.sessions[0].auth_time, now - 100);
+    const unauth = await worker.fetch(new Request('https://api.example/api/security-report', { headers: { origin: 'https://clearcutt.in' } }), env(keyFetch, db));
+    assert.equal(unauth.status, 401);
+  } finally { db.sqlite.close(); }
+});
+
+test('the user security report is capped at 100 records over a 30-day window', async () => {
+  const db = sessionDb();
+  try {
+    for (let index = 0; index < 105; index++) {
+      db.sqlite.prepare('INSERT INTO login_sessions VALUES (?,?,?)').run('clearcut-user', now - index, now - index);
+    }
+    db.sqlite.prepare('INSERT INTO login_sessions VALUES (?,?,?)').run('clearcut-user', now - 2600000, now - 2592001);
+    db.sqlite.prepare('INSERT INTO login_sessions VALUES (?,?,?)').run('clearcut-user', now - 3000000, now - 2999999);
+    const report = await worker.fetch(new Request('https://api.example/api/security-report', { headers: authHeaders() }), env(keyFetch, db));
+    const data = await report.json();
+    assert.equal(data.sessions.length, 100, 'reports must stop at 100 records');
+    assert.ok(data.sessions.every(session => session.first_seen_at >= now - 2592000), 'no record older than 30 days may be returned');
+    assert.ok(data.sessions.every(session => session.first_seen_at > now - 600), 'newest records must come first');
+  } finally { db.sqlite.close(); }
+});
+
+test('administrator reports deny by default, keep REVIEW allowlists separate and require verified recent identity', async () => {
+  const db = sessionDb();
+  try {
+    const report = (claims, extraEnv = {}) => worker.fetch(new Request('https://api.example/api/admin/security-report', {
+      headers: authHeaders(claims)
+    }), { ...env(keyFetch, db), ...extraEnv });
+    assert.equal((await report({ email: 'owner@example.com', email_verified: true })).status, 403, 'missing allowlist must deny');
+    assert.equal((await report({ email: 'owner@example.com', email_verified: true }, { REVIEW_ADMIN_UIDS: 'clearcut-user' })).status, 403, 'REVIEW_ADMIN_UIDS must not grant security access');
+    assert.equal((await report({ email: 'owner@example.com', email_verified: true }, { SECURITY_ADMIN_UIDS: '  ' })).status, 403, 'empty allowlist must deny');
+    assert.equal((await report({ email: 'owner@example.com', email_verified: false }, { SECURITY_ADMIN_UIDS: 'clearcut-user' })).status, 403, 'unverified email must deny');
+    assert.equal((await report({ email: 'owner@example.com', email_verified: true, auth_time: now - 601 }, { SECURITY_ADMIN_UIDS: 'clearcut-user' })).status, 403, 'sign-in older than 10 minutes must deny');
+    assert.equal((await report({ email: 'owner@example.com', email_verified: true }, { SECURITY_ADMIN_UIDS: 'someone-else' })).status, 403, 'non-allowlisted UID must deny');
+    assert.equal((await report({ email: 'owner@example.com', email_verified: true }, { SECURITY_ADMIN_UIDS: 'clearcut-user, someone-else ' })).status, 200);
+    const unauth = await worker.fetch(new Request('https://api.example/api/admin/security-report', { headers: { origin: 'https://clearcutt.in' } }), env(keyFetch, db));
+    assert.equal(unauth.status, 401);
+  } finally { db.sqlite.close(); }
+});
+
+test('the administrator report is capped at 200 records over the 30-day window and identifies accounts', async () => {
+  const db = sessionDb();
+  try {
+    for (let index = 0; index < 201; index++) {
+      db.sqlite.prepare('INSERT INTO login_sessions VALUES (?,?,?)').run(index % 2 ? 'user-a' : 'user-b', now - index, now - index);
+    }
+    db.sqlite.prepare('INSERT INTO login_sessions VALUES (?,?,?)').run('user-a', now - 3000000, now - 3000000);
+    const adminEnv = { ...env(keyFetch, db), SECURITY_ADMIN_UIDS: 'clearcut-user' };
+    const report = await worker.fetch(new Request('https://api.example/api/admin/security-report', { headers: authHeaders({ email: 'owner@example.com', email_verified: true }) }), adminEnv);
+    assert.equal(report.status, 200);
+    const data = await report.json();
+    assert.equal(data.retention_days, 30);
+    assert.equal(data.sessions.length, 200, 'administrator reports must stop at 200 records');
+    assert.ok(data.sessions.every(session => typeof session.uid === 'string'), 'administrator reports include the account UID');
+    assert.ok(data.sessions.every(session => session.first_seen_at >= now - 2592000), 'administrator reports must respect the 30-day window');
+  } finally { db.sqlite.close(); }
+});
+
+test('scheduled retention deletes sessions older than 30 days and failures emit one fixed event', async t => {
+  const errors = [];
+  t.mock.method(console, 'error', message => errors.push(String(message)));
+  const db = sessionDb();
+  try {
+    db.sqlite.prepare('INSERT INTO login_sessions VALUES (?,?,?)').run('old-user', now - 3000000, now - 3000000);
+    db.sqlite.prepare('INSERT INTO login_sessions VALUES (?,?,?)').run('new-user', now, now);
+    const waitUntil = [];
+    await worker.scheduled({}, env(keyFetch, db), { waitUntil: promise => waitUntil.push(promise) });
+    await Promise.all(waitUntil);
+    assert.deepEqual(db.sqlite.prepare('SELECT uid FROM login_sessions').all().map(row => row.uid), ['new-user']);
+    assert.equal(errors.length, 0, 'successful cleanup must stay silent');
+    const brokenDb = { prepare() { throw new Error('SENSITIVE_D1_ERROR_DETAIL'); } };
+    const brokenWaits = [];
+    await worker.scheduled({}, env(keyFetch, brokenDb), { waitUntil: promise => brokenWaits.push(promise) });
+    await Promise.all(brokenWaits);
+    assert.equal(errors.length, 1, 'cleanup failure must emit exactly one fixed event');
+    const event = JSON.parse(errors[0]);
+    assert.deepEqual(event, { type: 'security_maintenance', outcome: 'retention_failed' });
+    assert.equal(errors.join('').includes('SENSITIVE_D1_ERROR_DETAIL'), false, 'database errors must never leak into the failure event');
+  } finally { db.sqlite.close(); }
+});
+
+test('security logs are structured, redacted and never trust client-controlled values', async t => {
+  const messages = [];
+  t.mock.method(console, 'info', message => messages.push(String(message)));
+  const response = await worker.fetch(new Request('https://api.example/api/not-a-route?uid=INJECTED&token=hidden', {
+    method: 'POST',
+    headers: { origin: 'https://attacker.example', authorization: 'Bearer SECRET', 'x-request-id': 'CLIENTVALUE' },
+    body: 'PRIVATEPHOTO'
+  }), env(keyFetch));
+  assert.equal(response.status, 403);
+  const requestId = response.headers.get('x-request-id');
+  assert.notEqual(requestId, 'CLIENTVALUE', 'the request ID must be server-generated');
+  assert.match(requestId, /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+  assert.equal(messages.length, 1);
+  const event = JSON.parse(messages[0]);
+  assert.deepEqual(event, { type: 'security_request', request_id: requestId, route: 'unknown', status: 403, outcome: 'rejected' });
+  for (const secret of ['INJECTED', 'hidden', 'SECRET', 'CLIENTVALUE', 'PRIVATEPHOTO', 'attacker.example', 'not-a-route']) {
+    assert.equal(messages.join('').includes(secret), false, `log must not contain ${secret}`);
+  }
+});
+
+test('known routes log their fixed label, queries stay out of logs and OPTIONS is never logged', async t => {
+  const messages = [];
+  t.mock.method(console, 'info', message => messages.push(String(message)));
+  const db = sessionDb();
+  try {
+    await worker.fetch(new Request('https://api.example/api/session', { method: 'POST', headers: authHeaders() }), env(keyFetch, db));
+    await worker.fetch(new Request('https://api.example/api/security-report?uid=SECRETQUERY', { headers: authHeaders() }), env(keyFetch, db));
+    assert.equal(messages.length, 2);
+    const events = messages.map(message => JSON.parse(message));
+    assert.deepEqual(events.map(event => [event.route, event.status, event.outcome]), [['/api/session', 200, 'accepted'], ['/api/security-report', 200, 'accepted']]);
+    assert.equal(messages.join('').includes('SECRETQUERY'), false, 'query strings must never reach the logs');
+    const preflight = await worker.fetch(new Request('https://api.example/api/session', { method: 'OPTIONS', headers: { origin: 'https://clearcutt.in' } }), env(keyFetch, db));
+    assert.equal(preflight.status, 204);
+    assert.equal(messages.length, 2, 'CORS preflights must not be logged');
+  } finally { db.sqlite.close(); }
+});
+
+test('body limits are enforced by received bytes including missing or incorrect Content-Length', async () => {
+  const { readLimitedBytes, JSON_BODY_LIMIT, WEBHOOK_BODY_LIMIT } = await import('../worker/security.ts');
+  const fakeRequest = (headers, stream) => ({ headers: new Headers(headers), body: stream });
+  let cancelled = 0;
+  const track = () => { cancelled += 1; };
+  assert.equal(await readLimitedBytes(fakeRequest({ 'content-length': String(WEBHOOK_BODY_LIMIT + 1) }, byteStream(['tiny'], { onCancel: track })), WEBHOOK_BODY_LIMIT), null, 'an oversized declared length must be rejected before reading');
+  assert.equal(await readLimitedBytes(fakeRequest({ 'content-length': '5' }, byteStream(['a'.repeat(JSON_BODY_LIMIT + 1)], { onCancel: track })), JSON_BODY_LIMIT), null, 'a stream exceeding a lying Content-Length must still be rejected by actual bytes');
+  assert.equal(await readLimitedBytes(fakeRequest({}, byteStream(['a'.repeat(JSON_BODY_LIMIT + 1)], { onCancel: track })), JSON_BODY_LIMIT), null, 'chunked bodies without Content-Length must be byte-bounded');
+  assert.equal(cancelled, 2, 'oversized streams must be cancelled');
+  const within = await readLimitedBytes(fakeRequest({}, byteStream(['é'.repeat(50)])), JSON_BODY_LIMIT);
+  assert.notEqual(within, null);
+  assert.equal(new TextDecoder().decode(within), 'é'.repeat(50));
+  const split = await readLimitedBytes(fakeRequest({}, byteStream([new Uint8Array([0xc3]), new Uint8Array([0xa9]), 'bc'])), JSON_BODY_LIMIT);
+  assert.deepEqual([...split], [0xc3, 0xa9, 0x62, 0x63], 'multibyte characters split across chunks must survive byte-exact');
+  const boundary = await readLimitedBytes(fakeRequest({}, byteStream(['a'.repeat(JSON_BODY_LIMIT)])), JSON_BODY_LIMIT);
+  assert.notEqual(boundary, null, 'a body of exactly the limit must be accepted');
+  assert.equal(await readLimitedBytes(fakeRequest({}, byteStream(['a'.repeat(WEBHOOK_BODY_LIMIT + 1)])), WEBHOOK_BODY_LIMIT), null);
+});
+
+test('JSON endpoints reject oversized and invalid bodies while keeping multibyte content intact', async () => {
+  const db = reviewDb();
+  try {
+    const reviewEnv = { ...env(keyFetch, db), REVIEW_ADMIN_UIDS: '' };
+    const send = body => worker.fetch(new Request('https://api.example/api/reviews', {
+      method: 'POST', headers: authHeaders(), body
+    }), reviewEnv);
+    const oversized = await send('{"display_name":"' + 'a'.repeat(20000) + '"}');
+    assert.equal(oversized.status, 400, 'bodies beyond 16 KiB must be rejected by bytes, not string length');
+    const invalid = await send('not-json-at-all');
+    assert.equal(invalid.status, 400);
+    const multibyte = await send(JSON.stringify({ display_name: 'Naïve résumé', rating: 5, body: 'The cutout was quick and the editor was easy to refine — café test.' }));
+    assert.equal(multibyte.status, 201);
+    const stored = db.sqlite.prepare('SELECT display_name, body FROM reviews').get();
+    assert.equal(stored.display_name, 'Naïve résumé');
+    assert.equal(stored.body.includes('café'), true);
+  } finally { db.sqlite.close(); }
+});
+
+test('webhook HMAC verification keeps exact original bytes and oversized signed webhooks are still rejected', async () => {
+  const db = fakeDb();
+  const entity = { id: 'pay_live123', order_id: 'order_live123', status: 'captured', amount: 9000, currency: 'INR', description: 'Naïve café ₹ payment' };
+  const payload = JSON.stringify({ event: 'payment.captured', payload: { payment: { entity } } });
+  const signature = createHmac('sha256', 'webhook-only-secret').update(payload).digest('hex');
+  const multibyte = await worker.fetch(new Request('https://api.example/api/webhook', {
+    method: 'POST', headers: { 'x-razorpay-signature': signature, 'x-razorpay-event-id': 'evt_multibyte' }, body: payload
+  }), env(async () => { throw Error('Webhook must not call external APIs'); }, db));
+  assert.equal(multibyte.status, 200, 'HMAC must verify over the exact received bytes, including multibyte UTF-8');
+  const base = '{"event":"unrelated","pad":"';
+  const oversizedBody = base + 'a'.repeat(65537 - base.length - 2) + '"}';
+  assert.equal(new TextEncoder().encode(oversizedBody).length, 65537, 'the oversized fixture must exceed the 64 KiB webhook limit by one byte');
+  const oversizedSignature = createHmac('sha256', 'webhook-only-secret').update(oversizedBody).digest('hex');
+  const oversized = await worker.fetch(new Request('https://api.example/api/webhook', {
+    method: 'POST', headers: { 'x-razorpay-signature': oversizedSignature, 'x-razorpay-event-id': 'evt_oversize' }, body: oversizedBody
+  }), env(async () => { throw Error('Webhook must not call external APIs'); }, db));
+  assert.equal(oversized.status, 400, 'a validly signed webhook beyond 64 KiB must still be rejected by the byte limit');
+});
