@@ -214,7 +214,7 @@ test('remove.bg migration explainer is factual, sourced and uses Article schema'
  const data=JSON.parse(html.match(/<script type="application\/ld\+json">(.*?)<\/script>/s)[1]);
  assert.equal(data['@type'],'Article');
  assert.equal(data.datePublished,'2026-11-14');
- assert.equal(data.dateModified,'2026-11-14');
+ assert.equal(data.dateModified,'2026-11-20');
  assert.equal(data.author.name,'Clearcutt');
  assert.equal(data.mainEntityOfPage,'https://clearcutt.in/remove-bg-shutting-down/');
 });
@@ -385,14 +385,68 @@ test('sitemap URL count follows the generated page list dynamically',()=>{
  assert.equal(count,pages.length+1,'sitemap must contain exactly one URL per page plus the homepage');
  assert.equal(new Set(expected).size,expected.length,'page slugs must stay unique');
 });
-test('sitemap publishes one accurate lastmod for every canonical URL',()=>{
- assert.ok(sitemap.includes('<loc>https://clearcutt.in/</loc><lastmod>2026-11-14</lastmod>'),'homepage lastmod must reflect the privacy disclosure release');
- for(const p of pages){
-  const entry=`<url><loc>https://clearcutt.in/${p.slug}/</loc><lastmod>${p.lastModified}</lastmod></url>`;
-  assert.ok(sitemap.includes(entry),`${p.slug} sitemap lastmod must match page metadata`);
-  assert.match(p.lastModified,/^2026-\d{2}-\d{2}$/,`${p.slug} lastModified must be an ISO date`);
+test('sitemap publishes one accurate ISO 8601 lastmod for every canonical URL',()=>{
+ assert.ok(sitemap.includes('<loc>https://clearcutt.in/</loc><lastmod>2026-11-20T17:41:15Z</lastmod>'),'homepage lastmod must reflect the 20 November 2026 homepage change');
+ const entries=[...sitemap.matchAll(/<url><loc>(https:\/\/clearcutt\.in\/[^<]*)<\/loc><lastmod>([^<]+)<\/lastmod><\/url>/g)];
+ assert.equal(entries.length,pages.length+1,'every sitemap URL must carry exactly one lastmod');
+ const byPath=new Map(entries.map(([,loc,lastmod])=>[new URL(loc).pathname.replace(/\/$/,'')||'/',lastmod]));
+ for(const [path,lastmod] of byPath)assert.match(lastmod,/^(?:\d{4}-\d{2}-\d{2}|\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)$/,`${path} lastmod must be ISO 8601 (date or UTC date-time), got ${lastmod}`);
+ // URLs whose meaningful content changed in the 20 November 2026 accuracy update
+ // (squash commit 507a76e, 2026-11-20T17:41:15Z) carry that actual UTC instant.
+ for(const slug of ['remove-background-products','remove-background-portraits','privacy','passport-exam-form-white-background','amazon-flipkart-meesho-product-white-background','remove-background-from-signature-png','remove-bg-shutting-down']){
+  assert.equal(byPath.get(`/${slug}`),'2026-11-20T17:41:15Z',`${slug} lastmod must be the 20 November 2026 update instant`);
  }
- assert.equal((sitemap.match(/<lastmod>/g)||[]).length,pages.length+1,'every sitemap URL must carry exactly one lastmod');
+ assert.equal(byPath.get('/about'),'2026-11-22T08:40:02Z','about lastmod must be the documentation-alignment instant');
+ // Pages with no meaningful change keep their already accurate date-only values
+ // and are never falsely marked as freshly updated.
+ assert.equal(byPath.get('/how-to-remove-background'),'2026-11-14');
+ assert.equal(byPath.get('/remove-background-animals'),'2026-11-14');
+ assert.equal(byPath.get('/remove-background-cars'),'2026-11-14');
+ assert.equal(byPath.get('/photo-ka-background-kaise-hataye'),'2026-11-14');
+ assert.equal(byPath.get('/transparent-background'),'2026-11-19');
+ assert.equal(byPath.get('/photo-background-hindi'),'2026-11-20');
+ assert.equal(byPath.get('/contact'),'2026-11-13');
+ // Page metadata dates also reflect actual content updates.
+ const expectedDates={'remove-background-products':'2026-11-20','remove-background-portraits':'2026-11-20','privacy':'2026-11-20','passport-exam-form-white-background':'2026-11-20','amazon-flipkart-meesho-product-white-background':'2026-11-20','remove-background-from-signature-png':'2026-11-20','remove-bg-shutting-down':'2026-11-20','about':'2026-11-22','transparent-background':'2026-11-19','photo-background-hindi':'2026-11-20','remove-background-cars':'2026-11-14','contact':'2026-11-13'};
+ for(const [slug,date] of Object.entries(expectedDates))assert.equal(pages.find(p=>p.slug===slug).lastModified,date,`${slug} page lastModified must reflect its actual content update`);
+ // No entry may carry a build-time or future timestamp.
+ for(const [,loc,lastmod] of entries)assert.ok(lastmod.slice(0,10)<='2026-11-22',`lastmod ${lastmod} for ${loc} must not be a build or future timestamp`);
+});
+test('sitemap URLs stay canonical and complete',()=>{
+ const locs=[...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match=>match[1]);
+ assert.equal(new Set(locs).size,locs.length,'sitemap URLs must be unique');
+ for(const loc of locs){
+  const url=new URL(loc);
+  assert.equal(url.origin,'https://clearcutt.in',`sitemap URLs must be canonical absolute HTTPS URLs: ${loc}`);
+  assert.equal(url.search,'',`sitemap URLs must not carry query strings: ${loc}`);
+  assert.equal(url.hash,'',`sitemap URLs must not carry fragments: ${loc}`);
+  assert.match(url.pathname,/\/$/,'non-homepage sitemap URLs must end with the trailing slash');
+  assert.doesNotMatch(loc,/404\.html/,'sitemap must not list the noindex 404 page');
+ }
+ for(const p of pages)assert.ok(locs.includes(`https://clearcutt.in/${p.slug}/`),`${p.slug} must appear in the sitemap with its canonical URL`);
+ assert.ok(locs.includes('https://clearcutt.in/'),'the homepage must appear in the sitemap');
+});
+test('generated robots.txt matches the source robots file and keeps crawler access intact',()=>{
+ const source=readFileSync(new URL('../public/robots.txt',import.meta.url),'utf8');
+ assert.equal(robots,source,'the generated robots.txt must be byte-identical to public/robots.txt');
+ assert.match(robots,/Disallow: \/THIRD_PARTY_NOTICES\.md/,'the third-party notices file must be excluded from crawling');
+ assert.match(robots,/User-agent: \*\nAllow: \//,'all crawlers including Bingbot must stay allowed on the site');
+ assert.match(robots,/Sitemap: https:\/\/clearcutt\.in\/sitemap\.xml/,'robots.txt must keep declaring the sitemap');
+});
+test('product documentation accurately describes PNG and JPG output',()=>{
+ const llms=readFileSync(new URL('../public/llms.txt',import.meta.url),'utf8');
+ assert.match(llms,/PNG \(transparent\) or JPG \(opaque\) files without a watermark/,'llms.txt intro must describe both output formats');
+ assert.match(llms,/maximum file size in KB/,'llms.txt must describe the JPG file-size limit');
+ assert.match(llms,/exact pixel dimensions/,'llms.txt must describe the JPG dimension option');
+ assert.match(llms,/JPG fills transparent areas with white/,'llms.txt must describe JPG opacity behaviour');
+ assert.equal(/exports PNG files\b/.test(llms),false,'llms.txt must not claim PNG-only export');
+ const readme=readFileSync(new URL('../README.md',import.meta.url),'utf8');
+ assert.match(readme,/transparent PNG or opaque JPG files without a watermark/,'README intro must describe both output formats');
+ assert.match(readme,/maximum file size \(KB\) and exact pixel dimensions/,'README must describe the JPG download options');
+ assert.equal(/PNG download without watermark/.test(readme),false,'README must not describe a PNG-only download');
+ const about=renderPage(pages.find(p=>p.slug==='about'));
+ assert.match(about,/PNG or JPG export without a watermark/,'About page must describe both output formats');
+ assert.match(about,/maximum file size in KB or exact pixel dimensions/,'About page must describe the JPG download controls');
 });
 test('page lang overrides the html lang attribute and JSON-LD inLanguage',()=>{
  const base=pages.find(page=>page.slug==='about');

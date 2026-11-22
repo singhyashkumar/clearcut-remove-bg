@@ -41,8 +41,25 @@ const site = 'https://clearcutt.in/';
 const githubProfile = 'https://github.com/singhyashkumar/clearcut-remove-bg';
 const instagramProfile = 'https://www.instagram.com/clearcutt.in/';
 const releaseDate = '2026-11-14';
-const policyDates: Record<string, string> = {about:'2026-11-13',privacy:releaseDate,contact:'2026-11-13'};
-const policySlugs = new Set(Object.keys(policyDates));
+// Content-update bookkeeping: dates must reflect when a page's meaningful content
+// actually changed, never the build time or the current date.
+// - contentUpdate*: the 20 November 2026 accuracy update (squash commit 507a76e,
+//   committed 2026-11-20T17:41:15Z): JPG-export documentation, refreshed Amazon/
+//   Flipkart/Meesho sourcing, the About contact section and the homepage brand
+//   correction.
+// - docsUpdate*: this documentation-alignment change set (About export wording).
+const contentUpdateDate = '2026-11-20';
+const contentUpdateInstant = '2026-11-20T17:41:15Z';
+const docsUpdateDate = '2026-11-22';
+const docsUpdateInstant = '2026-11-22T08:40:02Z';
+const pageDates: Record<string, string> = {
+ 'remove-background-products': contentUpdateDate,
+ 'remove-background-portraits': contentUpdateDate,
+ about: docsUpdateDate,
+ privacy: contentUpdateDate,
+ contact: '2026-11-13',
+};
+const policySlugs = new Set(['about', 'privacy', 'contact']);
 const socialImage = `${site}artwork/clearcut-social-card.png`;
 const faviconLinks = '<link rel="icon" type="image/png" sizes="512x512" href="/favicon-512.png"><link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="icon" href="/favicon-48.png" type="image/png" sizes="48x48"><link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">';
 const escape = (value: string) => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('"', '&quot;');
@@ -101,7 +118,7 @@ const legacySources: readonly LegacyGuideSource[] = [
  ['about','About Clearcutt Remove BG','Learn what Clearcutt supports, how local image processing works, and what the free editor and Plus membership provide.',[
  ['An independent image editor','Clearcutt removes backgrounds in your browser with an open-source BG0/BiRefNet-based engine. The website is hosted through GitHub Pages and Cloudflare. Clearcutt is independent and is not affiliated with remove.bg or Canva.'],
  ['Where to find Clearcutt',`Browse the [Clearcutt source code on GitHub](${githubProfile}) or follow [@clearcutt.in on Instagram](${instagramProfile}) for tutorials and product updates.`],
- ['What works today','The editor supports JPG, PNG and WebP up to 20 MB and 25 megapixels, original/result comparison, Erase and Restore, background replacement, trimming and PNG export without a watermark. Desktop Chrome or Edge is recommended. iOS and HEIC are unsupported.'],
+ ['What works today','The editor supports JPG, PNG and WebP up to 20 MB and 25 megapixels, original/result comparison, Erase and Restore, background replacement, trimming and PNG or JPG export without a watermark. JPG downloads can target a maximum file size in KB or exact pixel dimensions, and JPG fills transparent areas with white. Desktop Chrome or Edge is recommended. iOS and HEIC are unsupported.'],
  ['Clear pricing and limitations','Processing currently works without sign-in. Plus is a one-time ₹90 payment for 30 days, renewed manually. The backend stores the account badge and expiry. Daily limits are guidance and are not enforced today; Plus does not yet unlock batch processing. Read the current pricing before paying. Demonstration artwork is original AI-generated artwork, not measured model output.'],
  ['Editorial standards','Clearcutt maintains its guides against the current editor and the sources cited on each page. Product claims are updated when behaviour changes, and dated India guidance is reviewed at least every 90 days or sooner when an official source changes. Illustrations and AI-generated artwork are labelled; measured benchmarks must publish their device, browser, model, input and date. Send factual corrections through the Contact page.']]],
  ['privacy','Clearcutt Privacy Policy','How Clearcutt handles local images, Google sign-in, reviews, payment references, model downloads and membership data.',[
@@ -119,7 +136,7 @@ const legacySources: readonly LegacyGuideSource[] = [
 ];
 const legacyPages = legacySources.map(([slug,title,description,sections,faqs,fields]): Page => {
  const o=typeof fields==='object'&&fields!==null?fields:{};
- return {slug,title,description,sections,faqs:faqs||[],metaTitle:o.metaTitle||title,h1:o.h1||title,lang:o.lang||'en',images:o.images||[],tables:o.tables||[],explicitLang:!!o.lang,lastModified:o.lastModified||policyDates[slug]||releaseDate,isGuide:!policySlugs.has(slug)};
+ return {slug,title,description,sections,faqs:faqs||[],metaTitle:o.metaTitle||title,h1:o.h1||title,lang:o.lang||'en',images:o.images||[],tables:o.tables||[],explicitLang:!!o.lang,lastModified:o.lastModified||pageDates[slug]||releaseDate,isGuide:!policySlugs.has(slug)};
 });
 const links = () => pages.map(p => `<li><a href="${site}${p.slug}/">${escape(p.title)}</a></li>`).join('');
 // Editorial sanitizers: strip internal implementation details (alpha thresholds, forensic RAM erasure)
@@ -156,6 +173,11 @@ const renderIndiaSection=(section: IndiaSection)=>{
  parts.push('</section>');
  return parts.join('');
 };
+// India pages whose meaningful content was updated on 20 November 2026 (commit
+// 507a76e): JPG export documentation on the passport and signature pages and the
+// refreshed Amazon/Flipkart/Meesho sourcing. The Hinglish guide only received the
+// brand-spelling sweep, so it keeps its release date.
+const indiaContentUpdate = new Set(['passport-exam-form-white-background','amazon-flipkart-meesho-product-white-background','remove-background-from-signature-png']);
 const indiaPages=indiaDoc.pages.map((page): Page =>{
  const existingSlugs=new Set(legacyPages.map(p=>p.slug));
  if(existingSlugs.has(page.slug))throw new Error(`India page ${page.slug} collides with an existing page`);
@@ -173,7 +195,7 @@ const indiaPages=indiaDoc.pages.map((page): Page =>{
  const faqs=(page.faqs||[]).map((f): GuideFaq =>[f.question,sanitizeProse(f.answer)]);
  if(faqs.length!==5)throw new Error(`India page ${page.slug} must expose exactly five FAQs`);
  const primaryCta=(page.contextualLinks||[]).find(l=>l.placement==='primary-cta');
- return {slug:page.slug,title:page.title,metaTitle:page.title,description:page.description,h1:page.h1,lead:mdProse(page.lead),lang:page.lang,explicitLang:true,faqs,india:true,sections:page.sections,indiaBody:renderedSections,indiaCta:primaryCta?primaryCta.anchorText:'Open the free background remover',editorialDate:indiaDoc.verifiedDate,lastModified:releaseDate,isGuide:true};
+ return {slug:page.slug,title:page.title,metaTitle:page.title,description:page.description,h1:page.h1,lead:mdProse(page.lead),lang:page.lang,explicitLang:true,faqs,india:true,sections:page.sections,indiaBody:renderedSections,indiaCta:primaryCta?primaryCta.anchorText:'Open the free background remover',editorialDate:indiaDoc.verifiedDate,lastModified:indiaContentUpdate.has(page.slug)?contentUpdateDate:releaseDate,isGuide:true};
 });
 const newsPages: Page[] = [{
  slug:'remove-bg-shutting-down',
@@ -181,7 +203,7 @@ const newsPages: Page[] = [{
  metaTitle:'remove.bg Is Moving to Canva: What Changes on 1 December 2026',
  h1:'Is remove.bg shutting down? What changes on 1 December 2026',
  description:'remove.bg says its standalone background-removal service is moving to Canva on 1 December 2026, while API users are directed to Leonardo.Ai. Here is what is confirmed and where Clearcutt fits.',
- lang:'en',explicitLang:true,lastModified:releaseDate,datePublished:releaseDate,isGuide:true,article:true,
+ lang:'en',explicitLang:true,lastModified:contentUpdateDate,datePublished:releaseDate,isGuide:true,article:true,
  sections:[
   ['What remove.bg confirms','Yes—the standalone remove.bg experience is changing. The [official remove.bg FAQ](https://www.remove.bg/faq/) says its background-removal functionality is moving into Canva. The [official remove.bg API page](https://www.remove.bg/bg/api/) says that, starting 1 December 2026, API background removal moves to Leonardo.Ai. Clearcutt is independent and is not affiliated with remove.bg, Canva or Leonardo.Ai.'],
   ['What is changing on 1 December 2026','For people removing backgrounds through the remove.bg website, the official destination is Canva. For developers using the self-service API, remove.bg points to Leonardo.Ai. The companies may update migration details, so check the official FAQ before making account, subscription or API decisions.'],
@@ -316,7 +338,24 @@ export function renderPage(p: Page) {
  }
  return typedHtml;
 }
-export const robots=`User-agent: *\nAllow: /\n\nSitemap: ${site}sitemap.xml\n`;
-export const sitemap=`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${site}</loc><lastmod>${releaseDate}</lastmod></url>${pages.map(p=>`<url><loc>${site}${p.slug}/</loc><lastmod>${p.lastModified}</lastmod></url>`).join('')}</urlset>\n`;
+// Byte-identical to public/robots.txt. Disallow controls crawling only and does
+// not guarantee deindexing; no primary content page or crawler (including
+// Bingbot) is blocked.
+export const robots=`User-agent: *\nAllow: /\nDisallow: /THIRD_PARTY_NOTICES.md\n\nSitemap: ${site}sitemap.xml\n`;
+// Sitemap lastmod: actual modification instants (ISO 8601 UTC) for URLs whose
+// content changed at a known commit time; date-only values are preserved where
+// that accurate day is already recorded and no newer change exists. Never set
+// these to the build timestamp or the current date.
+export const sitemapLastmod: Record<string, string> = {
+ 'remove-background-products': contentUpdateInstant,
+ 'remove-background-portraits': contentUpdateInstant,
+ 'about': docsUpdateInstant,
+ 'privacy': contentUpdateInstant,
+ 'passport-exam-form-white-background': contentUpdateInstant,
+ 'amazon-flipkart-meesho-product-white-background': contentUpdateInstant,
+ 'remove-background-from-signature-png': contentUpdateInstant,
+ 'remove-bg-shutting-down': contentUpdateInstant,
+};
+export const sitemap=`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${site}</loc><lastmod>${contentUpdateInstant}</lastmod></url>${pages.map(p=>`<url><loc>${site}${p.slug}/</loc><lastmod>${sitemapLastmod[p.slug] ?? p.lastModified}</lastmod></url>`).join('')}</urlset>\n`;
 export function seoPlugin(): Plugin {let outDir: string;return {name:'clearcut-seo',configResolved(config){outDir=resolve(config.root,config.build.outDir);},transformIndexHtml:enhanceHome,closeBundle(){for(const p of pages){const directory=resolve(outDir,p.slug);mkdirSync(directory,{recursive:true});writeFileSync(resolve(directory,'index.html'),renderPage(p));}writeFileSync(resolve(outDir,'robots.txt'),robots);writeFileSync(resolve(outDir,'sitemap.xml'),sitemap);}};}
 

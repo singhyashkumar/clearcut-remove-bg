@@ -26,6 +26,8 @@ assert.match(html, /id="review-form"/);
 assert.doesNotMatch(html, /AggregateRating|"@type":"Review"/);
 assert.match(html, /"@type":"FAQPage"/);
 assert.match(robots, /Sitemap: https:\/\/clearcutt\.in\/sitemap\.xml/);
+assert.equal(robots, readFileSync(resolve('public', 'robots.txt'), 'utf8'), 'built robots.txt must match public/robots.txt');
+assert.match(robots, /Disallow: \/THIRD_PARTY_NOTICES\.md/);
 assert.match(llms, /https:\/\/clearcutt\.in\/how-to-remove-background\//);
 for (const icon of ['favicon.ico', 'favicon-48.png', 'favicon-512.png', 'favicon.svg', 'apple-touch-icon.png']) {
   assert.ok(existsSync(resolve(root, icon)), `Missing identity asset: ${icon}`);
@@ -33,6 +35,9 @@ for (const icon of ['favicon.ico', 'favicon-48.png', 'favicon-512.png', 'favicon
 
 const urls = [...sitemap.matchAll(/<loc>(https:\/\/clearcutt\.in\/[^<]*)<\/loc>/g)].map(match => new URL(match[1]));
 assert.equal(urls.length, pages.length + 1, `Sitemap must include the homepage and every generated page (${pages.length + 1} URLs)`);
+const lastmods = [...sitemap.matchAll(/<lastmod>([^<]+)<\/lastmod>/g)].map(match => match[1]);
+assert.equal(lastmods.length, urls.length, 'every sitemap URL must carry exactly one lastmod');
+for (const lastmod of lastmods) assert.match(lastmod, /^(?:\d{4}-\d{2}-\d{2}|\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)$/, `sitemap lastmod must be a valid ISO 8601 date or UTC date-time: ${lastmod}`);
 for (const url of urls) {
   const relative = url.pathname === '/' ? 'index.html' : `${url.pathname.slice(1)}index.html`;
   assert.ok(existsSync(resolve(root, relative)), `Missing generated page: ${relative}`);
