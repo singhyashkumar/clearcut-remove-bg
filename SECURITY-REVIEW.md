@@ -25,3 +25,37 @@ Publication safeguards prepared:
 
 Verdict: suitable for an initial free evaluation launch with the limits above. Security review is not a penetration test or a guarantee that no vulnerability exists.
 Not checked: physical mobile compatibility, detailed/full-model corpus, adversarial decoder fuzzing, independent penetration test, full host/WAF/access logs, or future backend/billing functionality.
+
+## Login-session reporting and request security (Workstream 3, 22 November 2026)
+
+What the session report records:
+- The `login_sessions` D1 table (migration `0004_login_sessions.sql`) stores one row per `(uid, auth_time)` with a `first_seen_at` timestamp, indexed on `first_seen_at`. A row means a verified Firebase session first observed by Clearcutt's backend: the Firebase ID token's RS256 signature, issuer, audience, expiry and `auth_time` bounds were checked before anything was written.
+- `POST /api/session` records the signed UID and signed `auth_time` of the caller. `GET /api/security-report` returns only the signed-in user's own rows (at most 100, newest first). `GET /api/admin/security-report` returns at most 200 rows across accounts for allowlisted administrators with a verified email and a sign-in no older than 10 minutes.
+
+What it does not record, and what a record does not prove:
+- No IP addresses, user-agent strings, email addresses, device or browser fingerprints, query strings, request bodies, image data, tokens or provider error details are stored in the session table or written to request logs.
+- A session row is the first backend observation of a signed Firebase session, not a device inventory. It does not prove every physical device, and it does not prove every Google authentication event: sign-ins that predate the deployment, sessions whose tokens were never presented to the backend, and token refreshes (which reuse the original signed `auth_time`) are all invisible or deduplicated. Accuracy claim: "a verified Firebase session first observed by Clearcutt."
+
+Retention:
+- Reports and retention both use a 30-day window (`first_seen_at >= unixepoch() - 2592000`). A scheduled Worker trigger (cron `15 3 * * *` UTC in `wrangler.jsonc`) deletes rows older than 30 days daily. Cleanup failures emit one fixed operational event, `{"type":"security_maintenance","outcome":"retention_failed"}`, without database error details.
+
+`SECURITY_ADMIN_UIDS` configuration:
+- A server-side Worker secret/variable: a comma-separated list of exact Firebase UIDs. It is separate from `REVIEW_ADMIN_UIDS` (the review-moderation allowlist) and the two are not interchangeable. There is no default administrator identity; the endpoint denies access when the allowlist is missing, empty, or does not contain the caller's UID, and it independently requires a verified email and a sign-in within the last 10 minutes. Set it with `npx wrangler secret put SECURITY_ADMIN_UIDS` (or a Worker var) in the target environment only; never commit UIDs to this repository.
+
+Inspecting request logs:
+- The Worker emits one structured JSON line per request (except CORS preflights) with fixed fields only: `type`, `request_id`, `route`, `status`, `outcome`. Route labels come from a fixed allowlist; any other path is logged as `unknown`, so client-controlled values never become a route label. Every response carries a server-generated `x-request-id` header for correlating a user report with log lines.
+- View logs with `npx wrangler tail clearcut-payments` or Cloudflare dashboard → Workers → `clearcut-payments` → Logs (observability with log capture is enabled in `wrangler.jsonc`; invocation logs are off). Filter by `type:security_request` or a specific `request_id`.
+
+Staging migration and deployment sequence:
+1. Run the validation suite locally: `npm ci --ignore-scripts`, `npm run typecheck`, `npm test`, `npm run build`, `npx wrangler deploy --dry-run`.
+2. Apply the migration to a staging/local D1 database only: `npx wrangler d1 migrations apply clearcut-payments --local` (add `--env`/staging binding as configured). The migration is additive — no existing table is altered — so rollback is `DROP TABLE login_sessions; DROP INDEX login_sessions_seen;`.
+3. Deploy the Worker to staging (`npx wrangler deploy` against the staging configuration), set `SECURITY_ADMIN_UIDS` there, and verify: unauthenticated `POST /api/session` → 401; authenticated session POST → deduplicated rows; report isolation between two test accounts; admin denial without the allowlist.
+4. For production: back up D1 first (`npx wrangler d1 export` or a point-in-time restore), then `npx wrangler d1 migrations apply clearcut-payments --remote` deliberately, deploy, and set the production allowlist. Never run migrations or deploys blindly against production, and never reuse staging secrets.
+
+Known limitations:
+- No immediate Firebase token revocation check: a recorded session relies on the ID token's signature and expiry at request time. Firebase token revocation (refresh-token reset or Admin SDK `checkRevoked`) is not implemented unless separately built and verified, so a row may exist for a session whose underlying Google grant was later revoked until the token expires.
+- Retention runs daily at 03:15 UTC, so rows can persist up to ~24 hours past the 30-day boundary even though reports never return them.
+- Session writes are best-effort: a D1 failure returns a generic 503 and is not retried; the user can simply retry.
+- `first_seen_at` is recorded server-side at first observation; clock skew between the Worker and D1 `unixepoch()` is negligible but the value is not a client-reported event time.
+- Request logs are fixed-field by construction, so troubleshooting relies on `x-request-id` correlation; no request payloads are retained anywhere for debugging.
+- The frontend login-report interface is intentionally out of scope for this change.

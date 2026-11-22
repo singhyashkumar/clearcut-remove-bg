@@ -1,3 +1,5 @@
+import { ADMIN_AUTH_MAX_AGE_SECONDS, JSON_BODY_LIMIT, WEBHOOK_BODY_LIMIT, adminSessionReport, logSecurityRequest, pruneSessions, readLimitedBytes, recordVerifiedSession, routeName, sessionReport } from './security.ts';
+
 type SqlValue = string | number | null;
 interface Statement {
   bind(...values: SqlValue[]): Statement;
@@ -12,6 +14,7 @@ interface Database {
 interface Env {
   ALLOWED_ORIGINS?: string;
   REVIEW_ADMIN_UIDS?: string;
+  SECURITY_ADMIN_UIDS?: string;
   PAYMENT_MODE?: string;
   PLAN_AMOUNT_PAISE: string;
   RAZORPAY_KEY_ID: string;
@@ -43,7 +46,7 @@ const json = (body: unknown, status = 200, headers: HeaderFields = {}) => new Re
 function corsHeaders(origin: string | null, env: Env): HeaderFields | null {
   const allowed = (env.ALLOWED_ORIGINS || '').split(',').map(value => value.trim()).filter(Boolean);
   if (!origin || !allowed.includes(origin)) return null;
-  return { 'access-control-allow-origin': origin, 'access-control-allow-methods': 'GET, POST, OPTIONS', 'access-control-allow-headers': 'Authorization, Content-Type', 'vary': 'Origin' };
+  return { 'access-control-allow-origin': origin, 'access-control-allow-methods': 'GET, POST, OPTIONS', 'access-control-allow-headers': 'Authorization, Content-Type', 'access-control-expose-headers': 'X-Request-ID', 'vary': 'Origin' };
 }
 
 function b64urlBytes(value: string) {
@@ -65,7 +68,7 @@ export async function verifyFirebaseIdToken(token: unknown, projectId: unknown, 
   if (header.alg !== 'RS256' || typeof header.kid !== 'string' || claims.iss !== `https://securetoken.google.com/${projectId}`
     || claims.aud !== projectId || typeof claims.sub !== 'string' || !claims.sub || claims.sub.length > 128
     || !Number.isInteger(claims.exp) || claims.exp <= now || !Number.isInteger(claims.iat) || claims.iat > now + 60
-    || !Number.isInteger(claims.auth_time) || claims.auth_time > now + 60) return null;
+    || !Number.isInteger(claims.auth_time) || claims.auth_time < 0 || claims.auth_time > now + 60) return null;
   try {
     const keySet: { keys?: (JsonWebKey & { kid?: string })[] } | null = await fetchImpl(FIREBASE_JWKS_URL, { signal: AbortSignal.timeout(10000) }).then(response => response.ok ? response.json() : null);
     const jwk = keySet?.keys?.find(key => key.kid === header.kid && key.kty === 'RSA');
@@ -75,15 +78,16 @@ export async function verifyFirebaseIdToken(token: unknown, projectId: unknown, 
     if (!valid) return null;
     const email = claims.email_verified === true && typeof claims.email === 'string' && claims.email.length <= 254
       && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(claims.email) ? claims.email : null;
-    return { uid: claims.sub, email };
+    return { uid: claims.sub, email, authTime: claims.auth_time };
   } catch { return null; }
 }
 
-async function hmacValid(secret: string, message: string, signature: unknown) {
+async function hmacValid(secret: string, message: string | Uint8Array<ArrayBuffer>, signature: unknown) {
   if (typeof signature !== 'string' || !/^[a-f\d]{64}$/i.test(signature)) return false;
+  const payload = typeof message === 'string' ? new TextEncoder().encode(message) : message;
   try {
     const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']);
-    return crypto.subtle.verify('HMAC', key, Uint8Array.from(signature.match(/.{2}/g) ?? [], byte => Number.parseInt(byte, 16)), new TextEncoder().encode(message));
+    return crypto.subtle.verify('HMAC', key, Uint8Array.from(signature.match(/.{2}/g) ?? [], byte => Number.parseInt(byte, 16)), payload);
   } catch { return false; }
 }
 
@@ -107,9 +111,9 @@ async function requireUser(request: Request, env: Env, fetchImpl = fetch) {
 
 async function readJson(request: Request): Promise<Record<string, unknown> | null> {
   try {
-    const text = await request.text();
-    if (text.length > 16384) return null;
-    return JSON.parse(text);
+    const bytes = await readLimitedBytes(request, JSON_BODY_LIMIT);
+    if (bytes === null) return null;
+    return JSON.parse(new TextDecoder().decode(bytes));
   } catch { return null; }
 }
 
@@ -121,6 +125,12 @@ function responseWithHeaders(response: Response, headers: HeaderFields | null) {
 
 function adminUids(env: Env) {
   return new Set((env.REVIEW_ADMIN_UIDS || '').split(',').map(value => value.trim()).filter(Boolean));
+}
+
+// Deliberately separate from REVIEW_ADMIN_UIDS: security-report administrators
+// are an independent allowlist, configured server-side, with no default value.
+function securityAdminUids(env: Env) {
+  return new Set((env.SECURITY_ADMIN_UIDS || '').split(',').map(value => value.trim()).filter(Boolean));
 }
 
 function reviewInput(body: Record<string, unknown> | null) {
@@ -297,10 +307,10 @@ async function webhook(request: Request, env: Env) {
   if (!env.RAZORPAY_WEBHOOK_SECRET || !env.DB) return json({ error: 'Webhook is not configured.' }, 503);
   const signature = request.headers.get('x-razorpay-signature') || '';
   const eventId = request.headers.get('x-razorpay-event-id') || '';
-  const raw = await request.text();
-  if (raw.length > 65536 || !eventId || eventId.length > 128 || !await hmacValid(env.RAZORPAY_WEBHOOK_SECRET, raw, signature)) return json({ error: 'Invalid webhook.' }, 400);
+  const rawBytes = await readLimitedBytes(request, WEBHOOK_BODY_LIMIT);
+  if (rawBytes === null || !eventId || eventId.length > 128 || !await hmacValid(env.RAZORPAY_WEBHOOK_SECRET, rawBytes, signature)) return json({ error: 'Invalid webhook.' }, 400);
   let event;
-  try { event = JSON.parse(raw); } catch { return json({ error: 'Invalid webhook.' }, 400); }
+  try { event = JSON.parse(new TextDecoder().decode(rawBytes)); } catch { return json({ error: 'Invalid webhook.' }, 400); }
   if (!['payment.captured', 'order.paid'].includes(event?.event)) return json({ received: true });
   const payment = event?.payload?.payment?.entity;
   if (!payment || payment.status !== 'captured' || typeof payment.order_id !== 'string' || typeof payment.id !== 'string') return json({ error: 'Payment event is incomplete.' }, 400);
@@ -324,16 +334,13 @@ async function webhook(request: Request, env: Env) {
   } catch { return json({ error: 'Could not process webhook.' }, 503); }
 }
 
-export default {
-  async fetch(request: Request, env: Env) {
+async function handleRequest(request: Request, env: Env, headers: HeaderFields | null): Promise<Response> {
     const url = new URL(request.url);
-    const origin = request.headers.get('origin');
-    const headers = corsHeaders(origin, env);
     if (url.pathname === '/api/webhook') return request.method === 'POST' ? webhook(request, env) : json({ error: 'Method not allowed.' }, 405);
     if (url.pathname === '/api/reviews' && request.method === 'GET') return responseWithHeaders(await publicReviews(env), headers);
     if (!headers) return json({ error: 'Origin is not allowed.' }, 403);
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
-    const getRoutes = ['/api/entitlement', '/api/reviews/mine', '/api/admin/reviews'];
+    const getRoutes = ['/api/entitlement', '/api/reviews/mine', '/api/admin/reviews', '/api/security-report', '/api/admin/security-report'];
     if (request.method !== (getRoutes.includes(url.pathname) ? 'GET' : 'POST')) return json({ error: 'Method not allowed.' }, 405, headers);
     const response = await (async () => {
       const fetchImpl = env.__testFetch || fetch;
@@ -346,6 +353,27 @@ export default {
             WHERE accounts.email != excluded.email`).bind(user.uid, user.email).run();
         } catch { return json({ error: 'Could not sync your account. Please retry; your saved membership is unchanged.' }, 503); }
       }
+      if (url.pathname === '/api/session') {
+        try {
+          await recordVerifiedSession(env.DB, user);
+          return json({ recorded: true });
+        } catch { return json({ error: 'Login reporting is temporarily unavailable.' }, 503); }
+      }
+      if (url.pathname === '/api/security-report') {
+        try {
+          return json({ sessions: await sessionReport(env.DB, user.uid), retention_days: 30 });
+        } catch { return json({ error: 'The security report is temporarily unavailable.' }, 503); }
+      }
+      if (url.pathname === '/api/admin/security-report') {
+        const admins = securityAdminUids(env);
+        const authAge = Math.floor(Date.now() / 1000) - user.authTime;
+        if (!admins.size || !user.email || !admins.has(user.uid) || authAge > ADMIN_AUTH_MAX_AGE_SECONDS) {
+          return json({ error: 'Administrator access requires a verified email, an allowlisted account and a recent sign-in.' }, 403);
+        }
+        try {
+          return json({ sessions: await adminSessionReport(env.DB), retention_days: 30 });
+        } catch { return json({ error: 'The security report is temporarily unavailable.' }, 503); }
+      }
       if (url.pathname === '/api/createOrder') return createOrder(request, env, user.uid, fetchImpl);
       if (url.pathname === '/api/verifyPayment') return verifyPayment(request, env, user.uid, fetchImpl);
       if (url.pathname === '/api/entitlement') return getEntitlement(env, user.uid);
@@ -357,5 +385,39 @@ export default {
       return json({ error: 'Not found.' }, 404);
     })();
     return responseWithHeaders(response, headers);
+}
+
+export default {
+  // Every request gets a server-generated request ID and exactly one structured
+  // security log line with fixed fields only: request_id, allowlisted route,
+  // status and accepted/rejected outcome. No headers, tokens, claims, bodies,
+  // query strings, addresses or exception text are ever logged, and errors are
+  // collapsed to a generic 503 so internal details never reach the client.
+  async fetch(request: Request, env: Env) {
+    const requestId = crypto.randomUUID();
+    const headers = corsHeaders(request.headers.get('origin'), env);
+    let response: Response;
+    try {
+      response = await handleRequest(request, env, headers);
+    } catch {
+      response = json({ error: 'Service temporarily unavailable.' }, 503, headers || {});
+    }
+    if (request.method !== 'OPTIONS') {
+      logSecurityRequest({ requestId, route: routeName(new URL(request.url).pathname), status: response.status, outcome: response.ok ? 'accepted' : 'rejected' });
+    }
+    const responseHeaders = new Headers(response.headers);
+    responseHeaders.set('x-request-id', requestId);
+    return new Response(response.body, { status: response.status, statusText: response.statusText, headers: responseHeaders });
+  },
+  // Daily retention at 03:15 UTC (wrangler.jsonc crons). Failures emit one fixed
+  // operational event and never surface database error details.
+  async scheduled(_event: unknown, env: Env, ctx: { waitUntil(promise: Promise<unknown>): void }) {
+    ctx.waitUntil((async () => {
+      try {
+        await pruneSessions(env.DB);
+      } catch {
+        console.error(JSON.stringify({ type: 'security_maintenance', outcome: 'retention_failed' }));
+      }
+    })());
   }
 };
