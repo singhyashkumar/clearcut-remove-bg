@@ -69,6 +69,20 @@ The frontend displays a Plus badge, membership email and expiry, and an explicit
 
 Before deploying backend changes, run `npm test`, inspect pending D1 migrations and apply them to `clearcut-payments` using Wrangler, then deploy the Worker. Deploy the frontend through the existing GitHub Pages workflow. Never commit `.dev.vars`, `.env.local`, API secrets or D1 data.
 
+## Account security and login activity (Workstream 3)
+
+The signed-in account menu offers an **Account security** panel. It records verified Google sessions with `POST /api/session` and shows the user's own login history and (only when the backend authorizes it) the administrator report from the security API. The frontend never stores Firebase UID allowlists: `SECURITY_ADMIN_UIDS` stays a server-side secret, administrator data renders only on HTTP 200, and UIDs are displayed masked.
+
+The security API base URL is a separate variable and never reuses the payment configuration:
+
+- `VITE_SECURITY_API_BASE_URL` — security-report API base (see `.env.example`, shipped empty).
+- When it is unset, the integration stays completely disabled: no requests are made, the Account security button is hidden, and the rest of the application is unchanged.
+- For local staging setup, create `.env.local` (git-ignored; never commit it or any token) with:
+
+      VITE_SECURITY_API_BASE_URL=https://clearcut-payments-staging.clearcutt-payments.workers.dev
+
+- CORS is origin-allowlisted by the Worker, never wildcarded: the browser origin must be listed in the staging Worker's `ALLOWED_ORIGINS`. `http://localhost:5173` and `http://127.0.0.1:5173` are already configured for local `npm run dev`; before pointing a deployed frontend (for example `https://clearcutt.in`) at the staging Worker, its `ALLOWED_ORIGINS` must be extended with that exact origin. The staging origin is permitted by the page CSP (`connect-src`).
+
 ## Moderated public reviews
 
 The homepage review form uses the same Firebase sign-in and Cloudflare Worker/D1 service. Reading approved reviews is public. Creating, editing and deleting a review requires a valid Firebase token and an allowed site origin. Each Firebase UID can own one review; edits are limited to once per hour and return an approved review to `pending`. The public API never returns Firebase UIDs or account emails.
