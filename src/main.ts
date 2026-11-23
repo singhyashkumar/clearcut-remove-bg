@@ -272,11 +272,13 @@ window.addEventListener('pagehide',()=>{controller?.abort();release();});
 
 import {renderMembership} from './membership.ts';
 import {watchGoogleAuth,signInWithGoogle,signOutGoogle,getGoogleAuthToken} from './firebase-auth.ts';
+import {initAccountSecurity} from './security-report.ts';
 const signInButton=$('google-signin'),accountControl=$('account-control'),authStatus=$('auth-status');
+const accountSecurity=initAccountSecurity(document);
 let refreshPaymentEntitlement: () => void = ()=>{},currentUser: GoogleUser | null = null,authRevision=0;
 function googleAuthMessage(failure: unknown){const error=errorDetails(failure);switch(error?.code){case'auth/unauthorized-domain':return'This site is not yet enabled for Google sign-in.';case'auth/operation-not-allowed':return'Google sign-in is disabled in Firebase settings.';case'auth/popup-blocked':return'Your browser blocked the sign-in window. Allow pop-ups for this site and try again.';case'auth/popup-closed-by-user':return'Sign-in was cancelled.';case'auth/network-request-failed':return'Google sign-in could not connect. Check your connection and try again.';default:return'Google sign-in failed ('+(error?.code||error?.name||'unknown error')+'). Refresh the page and try again.';}}
 signInButton.disabled=true;
-watchGoogleAuth(user=>{currentUser=user;authRevision++;renderMembership(document,user,null,paymentMode);signInButton.hidden=Boolean(user);accountControl.hidden=!user;authStatus.textContent=user?'Google account connected. Photo processing still happens on this device.':'';if(user)refreshPaymentEntitlement();},error=>{authStatus.textContent=googleAuthMessage(error);}).then(()=>{signInButton.disabled=false;}).catch(()=>{});
+watchGoogleAuth(user=>{currentUser=user;authRevision++;renderMembership(document,user,null,paymentMode);signInButton.hidden=Boolean(user);accountControl.hidden=!user;authStatus.textContent=user?'Google account connected. Photo processing still happens on this device.':'';accountSecurity?.handleUser(user);if(user)refreshPaymentEntitlement();},error=>{authStatus.textContent=googleAuthMessage(error);}).then(()=>{signInButton.disabled=false;}).catch(()=>{});
 signInButton.onclick=async()=>{signInButton.disabled=true;authStatus.textContent='Opening Google sign-in…';try{await signInWithGoogle();}catch(error){authStatus.textContent=googleAuthMessage(error);}finally{signInButton.disabled=false;}};
 $('google-signout').onclick=async()=>{try{await signOutGoogle();authStatus.textContent='Signed out.';}catch{authStatus.textContent='Could not sign out. Please try again.';}};
 

@@ -9,6 +9,7 @@ declare module 'https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js' {
   import type { FirebaseApp } from 'https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js';
 
   export interface GoogleUser {
+    readonly uid: string;
     email: string | null;
     getIdToken(): Promise<string>;
   }
