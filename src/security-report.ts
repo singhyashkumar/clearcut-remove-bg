@@ -79,13 +79,17 @@ export function initAccountSecurity(doc: Document, {
 
   const doFetch: FetchLike = fetchImpl ?? ((input, init) => fetch(input, init));
   const disabled = !apiBase;
-  let open = false, generation = 0, recordedUid: string | null = null, loadedUid: string | null = null;
+  let open = false, generation = 0, recordedUid: string | null = null;
   let recording: AbortController | null = null, loading: AbortController | null = null;
   toggleButton.hidden = disabled;
   if (disabled) return { handleUser() {}, setOpen() {}, disabled };
 
-  const abort = () => {
-    for (const slot of [recording, loading]) slot?.abort();
+  // Closing the panel only stops report rendering; the independent session
+  // recording keeps running. A genuine identity change aborts everything.
+  const abortLoading = () => { loading?.abort(); loading = null; };
+  const abortAll = () => {
+    recording?.abort();
+    loading?.abort();
     recording = loading = null;
   };
   const bearer = (token: string) => ({ authorization: `Bearer ${token}` });
@@ -175,9 +179,10 @@ export function initAccountSecurity(doc: Document, {
       : 'Login activity is temporarily unavailable. Reopen Account security to try again.';
   }
 
-  // Personal report always loads; the administrator report is requested with the
-  // same signed token and rendered only on HTTP 200. A 403 is the ordinary-user
-  // path: nothing administrator-related is shown and no error is raised.
+  // The personal report is the primary content and must survive administrator
+  // endpoint failures: the two requests settle independently. The administrator
+  // section renders only on HTTP 200; a 403 (ordinary user) or any
+  // administrator-side failure simply leaves the section hidden.
   async function loadReports(revision: number) {
     const request = new AbortController();
     loading?.abort();
@@ -186,19 +191,28 @@ export function initAccountSecurity(doc: Document, {
     try {
       const token = await getToken();
       if (isStale(revision)) return;
-      const [personal, adminResponse] = await Promise.all([
+      const [personalResult, adminResult] = await Promise.allSettled([
         doFetch(`${apiBase}/api/security-report`, { headers: bearer(token), signal: request.signal }),
         doFetch(`${apiBase}/api/admin/security-report`, { headers: bearer(token), signal: request.signal })
       ]);
       if (isStale(revision)) return;
+      if (personalResult.status === 'rejected') {
+        if (personalResult.reason instanceof Error && personalResult.reason.name === 'AbortError') return;
+        statusLine.textContent = 'Could not load login activity. Reopen Account security to try again.';
+        listRef.replaceChildren();
+        emptyNoteRef.hidden = true;
+        adminRef.hidden = true;
+        return;
+      }
+      const personal = personalResult.value;
       if (!personal.ok) { renderLoadFailure(personal.status); return; }
       const personalData = await personal.json().catch(() => null) as { sessions?: SessionEntry[]; retention_days?: number } | null;
       if (isStale(revision)) return;
       renderPersonal(personalData);
       const retentionDays = Number(personalData?.retention_days) || DEFAULT_RETENTION_DAYS;
       retentionRef.textContent = `Login activity is kept for ${retentionDays} days.`;
-      if (adminResponse.status === 200) {
-        const adminData = await adminResponse.json().catch(() => null) as { sessions?: AdminSessionEntry[] } | null;
+      if (adminResult.status === 'fulfilled' && adminResult.value.status === 200) {
+        const adminData = await adminResult.value.json().catch(() => null) as { sessions?: AdminSessionEntry[] } | null;
         if (isStale(revision)) return;
         renderAdmin(adminData?.sessions ?? [], retentionDays);
       } else {
@@ -214,30 +228,32 @@ export function initAccountSecurity(doc: Document, {
     } finally { if (loading === request) loading = null; }
   }
 
+  // Auth-state notifications arrive repeatedly for the same account (page
+  // loads, token refreshes, focus events). Only a genuine identity change —
+  // including sign-out — bumps the generation and aborts in-flight work. A
+  // repeated notification for the current account returns early so it can
+  // never cancel a pending recording or report request, and the generation
+  // bump on a real change keeps stale responses from rendering.
   function handleUser(user: SecurityUser) {
-    generation++;
-    abort();
     const uid = typeof user?.uid === 'string' && user.uid ? user.uid : null;
+    if (uid === recordedUid) return;
+    generation++;
+    abortAll();
     if (!uid) {
       // Sign-out: clear every piece of displayed security data.
       recordedUid = null;
-      loadedUid = null;
       open = false;
       panel.hidden = true;
       toggleButton.setAttribute('aria-expanded', 'false');
       clearPanel('');
       return;
     }
-    if (uid !== recordedUid) {
-      recordedUid = uid;
-      void recordSession(generation);
-    }
-    // Reload the visible report only for a genuinely different account, so
-    // repeated auth-state notifications for the same user cause no requests.
-    if (open && uid !== loadedUid) {
-      loadedUid = uid;
-      void loadReports(generation);
-    }
+    // One recording per authentication session; the backend deduplicates
+    // repeated page loads and token refreshes by (uid, auth_time).
+    recordedUid = uid;
+    void recordSession(generation);
+    // An open panel belongs to the previous account: reload for the new one.
+    if (open) void loadReports(generation);
   }
 
   function setOpen(next: boolean) {
@@ -245,12 +261,8 @@ export function initAccountSecurity(doc: Document, {
     open = next;
     toggleButton.setAttribute('aria-expanded', String(next));
     panel.hidden = !next;
-    if (next) {
-      loadedUid = null;
-      void loadReports(generation);
-    } else {
-      abort();
-    }
+    if (next) void loadReports(generation);
+    else abortLoading();
   }
 
   toggleButton.addEventListener('click', () => setOpen(!open));

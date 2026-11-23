@@ -325,3 +325,129 @@ test('configuration ships safely: staging origin is CSP-permitted, env example i
     assert.equal(/AIza|Bearer [A-Za-z0-9_\-]{20,}/.test(source), false, `${file} must not embed credentials`);
   }
 });
+
+test('a deferred token for user A still records the session after repeated same-UID callbacks', async () => {
+  const { doc, elements } = securityDoc();
+  let resolveToken;
+  const calls = [];
+  const fetchImpl = async (url, options = {}) => {
+    calls.push({ url, method: options.method || 'GET', authorization: options.headers?.authorization, signal: options.signal });
+    if (url.endsWith('/api/session')) return jsonResponse({ recorded: true });
+    if (url.endsWith('/api/admin/security-report')) return jsonResponse({ error: 'Administrator access required.' }, 403);
+    return jsonResponse({ sessions: [{ auth_time: 1763712000, first_seen_at: 1763712005 }], retention_days: 30 });
+  };
+  const control = await controller({ doc, elements }, { fetchImpl, getToken: () => new Promise(resolve => { resolveToken = resolve; }) });
+  control.handleUser({ uid: 'user-a' });
+  await flush();
+  assert.equal(calls.filter(call => call.method === 'POST').length, 0, 'recording is waiting for the deferred token');
+  control.handleUser({ uid: 'user-a' });
+  control.handleUser({ uid: 'user-a' });
+  await flush();
+  resolveToken('TOKEN-1');
+  await flush();
+  const posts = calls.filter(call => call.method === 'POST' && call.url.endsWith('/api/session'));
+  assert.equal(posts.length, 1, 'the session is still recorded exactly once');
+  assert.equal(posts[0].signal.aborted, false, 'the recording was not aborted by the repeated callbacks');
+});
+
+test('a pending POST is not aborted by a repeated same-UID callback', async () => {
+  const { doc, elements } = securityDoc();
+  let resolvePost;
+  const calls = [];
+  const fetchImpl = async (url, options = {}) => {
+    calls.push({ url, method: options.method || 'GET', signal: options.signal });
+    if (url.endsWith('/api/session')) return new Promise(resolve => { resolvePost = resolve; });
+    if (url.endsWith('/api/admin/security-report')) return jsonResponse({ error: 'Administrator access required.' }, 403);
+    return jsonResponse({ sessions: [{ auth_time: 1763712000, first_seen_at: 1763712005 }], retention_days: 30 });
+  };
+  const control = await controller({ doc, elements }, { fetchImpl });
+  control.handleUser({ uid: 'user-a' });
+  await flush();
+  const post = calls.find(call => call.method === 'POST');
+  assert.ok(post, 'the session POST started');
+  control.handleUser({ uid: 'user-a' });
+  control.handleUser({ uid: 'user-a' });
+  await flush();
+  assert.equal(post.signal.aborted, false, 'a repeated same-UID callback must not abort the pending POST');
+  resolvePost(jsonResponse({ recorded: true }));
+  await flush();
+  assert.equal(post.signal.aborted, false);
+});
+
+test('a pending report request is not cancelled by a repeated same-UID callback', async () => {
+  const { doc, elements } = securityDoc();
+  let resolveReport;
+  const calls = [];
+  const fetchImpl = async (url, options = {}) => {
+    calls.push({ url, method: options.method || 'GET', signal: options.signal });
+    if (url.endsWith('/api/session')) return jsonResponse({ recorded: true });
+    if (url.endsWith('/api/admin/security-report')) return jsonResponse({ error: 'Administrator access required.' }, 403);
+    if (url.endsWith('/api/security-report')) return new Promise(resolve => { resolveReport = resolve; });
+    throw new Error(`unexpected fetch: ${url}`);
+  };
+  const control = await controller({ doc, elements }, { fetchImpl });
+  control.handleUser({ uid: 'user-a' });
+  control.setOpen(true);
+  await flush();
+  const report = calls.find(call => call.url.endsWith('/api/security-report'));
+  assert.ok(report, 'the report request started');
+  control.handleUser({ uid: 'user-a' });
+  control.handleUser({ uid: 'user-a', email: 'user-a@example.com' });
+  await flush();
+  assert.equal(report.signal.aborted, false, 'a repeated same-UID callback must not cancel the pending report');
+  resolveReport(jsonResponse({ sessions: [{ auth_time: 1763712000, first_seen_at: 1763712005 }], retention_days: 30 }));
+  await flush();
+  assert.equal(elements.get('security-sessions').children.length, 1, 'the pending report completes and renders');
+});
+
+test('signing out aborts pending requests and stale responses never render afterwards', async () => {
+  const { doc, elements } = securityDoc();
+  let resolvePost, resolveReport;
+  const calls = [];
+  const fetchImpl = async (url, options = {}) => {
+    calls.push({ url, method: options.method || 'GET', signal: options.signal });
+    if (url.endsWith('/api/session')) return new Promise(resolve => { resolvePost = resolve; });
+    if (url.endsWith('/api/admin/security-report')) return jsonResponse({ error: 'Administrator access required.' }, 403);
+    if (url.endsWith('/api/security-report')) return new Promise(resolve => { resolveReport = resolve; });
+    throw new Error(`unexpected fetch: ${url}`);
+  };
+  const control = await controller({ doc, elements }, { fetchImpl });
+  control.handleUser({ uid: 'user-a' });
+  await flush();
+  control.setOpen(true);
+  await flush();
+  control.handleUser(null);
+  await flush();
+  const post = calls.find(call => call.method === 'POST');
+  const report = calls.find(call => call.url.endsWith('/api/security-report'));
+  assert.equal(post.signal.aborted, true, 'pending recording is aborted on sign-out');
+  assert.equal(report.signal.aborted, true, 'pending report load is aborted on sign-out');
+  assert.equal(elements.get('security-sessions').children.length, 0);
+  assert.equal(elements.get('security-admin').hidden, true);
+  assert.equal(elements.get('account-security').hidden, true);
+  assert.equal(elements.get('security-toggle').attributes['aria-expanded'], 'false');
+  // Both stale responses arrive after sign-out; neither may render anything.
+  resolvePost(jsonResponse({ recorded: true }));
+  resolveReport(jsonResponse({ sessions: [{ auth_time: 1763712000, first_seen_at: 1763712005 }], retention_days: 30 }));
+  await flush();
+  assert.equal(elements.get('security-sessions').children.length, 0, 'stale report data never renders after sign-out');
+  assert.equal(elements.get('security-status').textContent, '', 'no stale status message after sign-out');
+});
+
+test('an administrator endpoint failure does not hide the personal report', async () => {
+  const { doc, elements } = securityDoc();
+  const fetchImpl = async (url) => {
+    if (url.endsWith('/api/session')) return jsonResponse({ recorded: true });
+    if (url.endsWith('/api/admin/security-report')) throw new TypeError('admin endpoint unreachable');
+    return jsonResponse({ sessions: [{ auth_time: 1763712000, first_seen_at: 1763712005 }], retention_days: 30 });
+  };
+  const control = await controller({ doc, elements }, { fetchImpl });
+  control.handleUser({ uid: 'user-a' });
+  control.setOpen(true);
+  await flush();
+  assert.equal(elements.get('security-sessions').children.length, 1, 'the personal report renders despite the administrator failure');
+  assert.match(elements.get('security-status').textContent, /1 session in the last 30 days/);
+  assert.equal(elements.get('security-retention').textContent, 'Login activity is kept for 30 days.');
+  assert.equal(elements.get('security-admin').hidden, true, 'the administrator section stays hidden');
+  assert.doesNotMatch(elements.get('security-status').textContent, /temporarily unavailable|Could not load/, 'the personal report is not penalized by the administrator failure');
+});
