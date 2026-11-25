@@ -527,7 +527,9 @@ test('the Hindi and Hinglish guides accurately describe both PNG and JPG exports
  assert.match(hinglish,/Limit JPG file size se maximum file size \(KB\)/);
  assert.match(hinglish,/Set JPG dimensions se exact width aur height \(pixels\)/);
  assert.match(hinglish,/aspect ratio alag hone par photo apne proportions mein white padding ke saath fit hoti hai/);
- assert.match(hinglish,/full-resolution PNG \(transparent\) ya JPG file download karta hai/);
+ assert.match(hinglish,/full-resolution PNG ya JPG file download karta hai/,'the format/limits paragraph must state both formats without an unconditional transparency label');
+ assert.match(hinglish,/full-resolution PNG ya JPG file download karta hai[\s\S]{0,60}Transparent chuna hai toh PNG transparency rakhta hai/,'the conditional explanation must follow immediately in the format/limits paragraph');
+ assert.doesNotMatch(hinglish,/full-resolution PNG \(transparent\)|PNG \(transparent\) ya JPG file/,'the misleading always-transparent PNG wording must never return to the format/limits paragraph');
 });
 test('the translated guides never claim PNG-only export or an external JPG converter',()=>{
  const hindi=renderPage(pages.find(p=>p.slug==='photo-background-hindi'));
@@ -546,11 +548,26 @@ test('the translated guides never claim PNG-only export or an external JPG conve
 test('the Hinglish guide distinguishes the Transparent selection from other backgrounds and never labels PNG as always transparent',()=>{
  const hindi=renderPage(pages.find(p=>p.slug==='photo-background-hindi'));
  const hinglish=renderPage(pages.find(p=>p.slug==='photo-ka-background-kaise-hataye'));
- // Workflow step 3, FAQ 1 and FAQ 5 must all carry the conditional behaviour:
- // PNG keeps transparency only for the Transparent selection; a White,
- // custom colour or background photo is included in the PNG as-is.
+ // Check each location individually: the workflow bullet, FAQ 1 and FAQ 5 must
+ // EACH carry the conditional behaviour — PNG keeps transparency only for the
+ // Transparent selection; a White, custom colour or background photo is
+ // included in the PNG as-is; JPG is opaque with white fill.
+ const bulletStart=hinglish.indexOf('<li>3. Check aur save karein:');
+ assert.ok(bulletStart>-1,'the Hinglish workflow bullet 3 must be rendered');
+ const bullet=hinglish.slice(bulletStart,hinglish.indexOf('</li>',bulletStart));
+ const segment=(marker)=>{
+  const start=hinglish.lastIndexOf(marker);
+  assert.ok(start>-1,`the rendered FAQ must contain: ${marker}`);
+  return hinglish.slice(start,hinglish.indexOf('</p>',start));
+ };
+ const locations=[
+  ['workflow step 3',bullet],
+  ['FAQ 1',segment('<h3>Clearcutt se photo ka background free mein kaise hataye?</h3>')],
+  ['FAQ 5',segment('<h3>Background hatane ke baad safed colour ya doosri photo kaise lagayein?</h3>')]
+ ];
  for(const clause of ['Transparent chuna hai toh PNG transparency rakhta hai','White, custom colour ya background photo chuna hai toh wahi background PNG mein aata hai','JPG opaque hota hai—transparent areas white fill hote hain'])
-  assert.equal((hinglish.match(new RegExp(clause.replaceAll(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g'))||[]).length>=3,true,`workflow step 3, FAQ 1 and FAQ 5 must each explain: ${clause}`);
+  for(const [label,text] of locations)
+   assert.ok(text.includes(clause),`${label} must explain: ${clause}`);
  // Download buttons must never be labelled as unconditionally transparent.
  assert.doesNotMatch(hinglish,/'Download PNG' \(transparent\)|Download PNG \(transparent\)|result PNG \(transparent\)/,'PNG transparency depends on the selected background');
  assert.doesNotMatch(hindi,/Download PNG \(transparent\)|result PNG \(transparent\)/);
