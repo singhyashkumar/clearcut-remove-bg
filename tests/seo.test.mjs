@@ -402,15 +402,17 @@ test('sitemap publishes one accurate ISO 8601 lastmod for every canonical URL',(
  assert.equal(byPath.get('/how-to-remove-background'),'2026-11-14');
  assert.equal(byPath.get('/remove-background-animals'),'2026-11-14');
  assert.equal(byPath.get('/remove-background-cars'),'2026-11-14');
- assert.equal(byPath.get('/photo-ka-background-kaise-hataye'),'2026-11-14');
+ assert.equal(byPath.get('/photo-ka-background-kaise-hataye'),'2026-11-25T04:22:00Z','the Hinglish guide was content-corrected on 25 November 2026');
  assert.equal(byPath.get('/transparent-background'),'2026-11-19');
- assert.equal(byPath.get('/photo-background-hindi'),'2026-11-20');
+ assert.equal(byPath.get('/photo-background-hindi'),'2026-11-25T04:22:00Z','the Hindi guide was content-corrected on 25 November 2026');
  assert.equal(byPath.get('/contact'),'2026-11-13');
  // Page metadata dates also reflect actual content updates.
- const expectedDates={'remove-background-products':'2026-11-20','remove-background-portraits':'2026-11-20','privacy':'2026-11-20','passport-exam-form-white-background':'2026-11-20','amazon-flipkart-meesho-product-white-background':'2026-11-20','remove-background-from-signature-png':'2026-11-20','remove-bg-shutting-down':'2026-11-20','about':'2026-11-22','transparent-background':'2026-11-19','photo-background-hindi':'2026-11-20','remove-background-cars':'2026-11-14','contact':'2026-11-13'};
+ const expectedDates={'remove-background-products':'2026-11-20','remove-background-portraits':'2026-11-20','privacy':'2026-11-20','passport-exam-form-white-background':'2026-11-20','amazon-flipkart-meesho-product-white-background':'2026-11-20','remove-background-from-signature-png':'2026-11-20','remove-bg-shutting-down':'2026-11-20','about':'2026-11-22','transparent-background':'2026-11-19','photo-background-hindi':'2026-11-25','photo-ka-background-kaise-hataye':'2026-11-25','remove-background-cars':'2026-11-14','contact':'2026-11-13'};
  for(const [slug,date] of Object.entries(expectedDates))assert.equal(pages.find(p=>p.slug===slug).lastModified,date,`${slug} page lastModified must reflect its actual content update`);
+ // The Hindi guide keeps its original publication date.
+ assert.equal(pages.find(p=>p.slug==='photo-background-hindi').datePublished,'2026-11-20');
  // No entry may carry a build-time or future timestamp.
- for(const [,loc,lastmod] of entries)assert.ok(lastmod.slice(0,10)<='2026-11-22',`lastmod ${lastmod} for ${loc} must not be a build or future timestamp`);
+ for(const [,loc,lastmod] of entries)assert.ok(lastmod.slice(0,10)<='2026-11-25',`lastmod ${lastmod} for ${loc} must not be a build or future timestamp`);
 });
 test('sitemap URLs stay canonical and complete',()=>{
  const locs=[...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match=>match[1]);
@@ -503,6 +505,87 @@ test('the Devanagari and Hinglish guides retain independent canonicals and recip
  const hindi=renderPage(pages.find(p=>p.slug===routes[0][1]));
  assert.match(hindi,/<h1>फ़ोटो का बैकग्राउंड कैसे हटाएँ\?<\/h1>/);
  assert.match(hindi,/अक्सर पूछे जाने वाले सवाल/);
+});
+test('the Hindi and Hinglish guides accurately describe both PNG and JPG exports',()=>{
+ const hindi=renderPage(pages.find(p=>p.slug==='photo-background-hindi'));
+ const hinglish=renderPage(pages.find(p=>p.slug==='photo-ka-background-kaise-hataye'));
+ for(const html of [hindi,hinglish]){
+  assert.match(html,/Download JPG/,'both guides must name the JPG download');
+  assert.match(html,/Download PNG/,'both guides must keep the PNG download');
+ }
+ // Hindi (Devanagari): both formats, JPG opacity with white fill, size and
+ // dimension controls, white padding on differing aspect ratios.
+ assert.match(hindi,/अपारदर्शी तस्वीर के लिए JPG सेव करें/,'meta description must describe the opaque JPG option');
+ assert.match(hindi,/JPG पारदर्शी हिस्सों को सफ़ेद भर देता है/);
+ assert.match(hindi,/अधिकतम फ़ाइल साइज़ \(KB\)/);
+ assert.match(hindi,/सही चौड़ाई-ऊँचाई \(pixels\)/);
+ assert.match(hindi,/सफ़ेद पैडिंग के साथ फिट होती है/);
+ assert.match(hindi,/PNG में पारदर्शिता बनी रहती है/);
+ // Hinglish: same facts in the romanised voice.
+ assert.match(hinglish,/free transparent PNG ya opaque JPG banayein/,'meta description must describe both formats');
+ assert.match(hinglish,/JPG opaque hota hai—transparent areas white fill hote hain/);
+ assert.match(hinglish,/Limit JPG file size se maximum file size \(KB\)/);
+ assert.match(hinglish,/Set JPG dimensions se exact width aur height \(pixels\)/);
+ assert.match(hinglish,/aspect ratio alag hone par photo apne proportions mein white padding ke saath fit hoti hai/);
+ assert.match(hinglish,/full-resolution PNG ya JPG file download karta hai/,'the format/limits paragraph must state both formats without an unconditional transparency label');
+ assert.match(hinglish,/full-resolution PNG ya JPG file download karta hai[\s\S]{0,60}Transparent chuna hai toh PNG transparency rakhta hai/,'the conditional explanation must follow immediately in the format/limits paragraph');
+ assert.doesNotMatch(hinglish,/full-resolution PNG \(transparent\)|PNG \(transparent\) ya JPG file/,'the misleading always-transparent PNG wording must never return to the format/limits paragraph');
+});
+test('the translated guides never claim PNG-only export or an external JPG converter',()=>{
+ const hindi=renderPage(pages.find(p=>p.slug==='photo-background-hindi'));
+ const hinglish=renderPage(pages.find(p=>p.slug==='photo-ka-background-kaise-hataye'));
+ assert.doesNotMatch(hindi,/कन्वर्टर/,'the external-converter claim must be gone from the Hindi guide');
+ assert.doesNotMatch(hindi,/PNG देता है\. अगर/,'the PNG-only claim must be gone from the Hindi guide');
+ assert.doesNotMatch(hindi,/PNG ही रखें/);
+ assert.doesNotMatch(hinglish,/alag resize|alag converter|kisi alag .*tool ka upyog/,'the external-converter claim must be gone from the Hinglish guide');
+ assert.doesNotMatch(hinglish,/hamesha full-resolution PNG file/,'the PNG-only claim must be gone from the Hinglish guide');
+ assert.doesNotMatch(hinglish,/PNG lene ke baad/);
+ // Neither guide may promise official acceptance; the Hinglish correction
+ // states the disclaimer explicitly.
+ assert.match(hinglish,/acceptance guarantee nahi karta/);
+ assert.match(hindi,/स्वीकृति की गारंटी नहीं देता/);
+});
+test('the Hinglish guide distinguishes the Transparent selection from other backgrounds and never labels PNG as always transparent',()=>{
+ const hindi=renderPage(pages.find(p=>p.slug==='photo-background-hindi'));
+ const hinglish=renderPage(pages.find(p=>p.slug==='photo-ka-background-kaise-hataye'));
+ // Check each location individually: the workflow bullet, FAQ 1 and FAQ 5 must
+ // EACH carry the conditional behaviour — PNG keeps transparency only for the
+ // Transparent selection; a White, custom colour or background photo is
+ // included in the PNG as-is; JPG is opaque with white fill.
+ const bulletStart=hinglish.indexOf('<li>3. Check aur save karein:');
+ assert.ok(bulletStart>-1,'the Hinglish workflow bullet 3 must be rendered');
+ const bullet=hinglish.slice(bulletStart,hinglish.indexOf('</li>',bulletStart));
+ const segment=(marker)=>{
+  const start=hinglish.lastIndexOf(marker);
+  assert.ok(start>-1,`the rendered FAQ must contain: ${marker}`);
+  return hinglish.slice(start,hinglish.indexOf('</p>',start));
+ };
+ const locations=[
+  ['workflow step 3',bullet],
+  ['FAQ 1',segment('<h3>Clearcutt se photo ka background free mein kaise hataye?</h3>')],
+  ['FAQ 5',segment('<h3>Background hatane ke baad safed colour ya doosri photo kaise lagayein?</h3>')]
+ ];
+ for(const clause of ['Transparent chuna hai toh PNG transparency rakhta hai','White, custom colour ya background photo chuna hai toh wahi background PNG mein aata hai','JPG opaque hota hai—transparent areas white fill hote hain'])
+  for(const [label,text] of locations)
+   assert.ok(text.includes(clause),`${label} must explain: ${clause}`);
+ // Download buttons must never be labelled as unconditionally transparent.
+ assert.doesNotMatch(hinglish,/'Download PNG' \(transparent\)|Download PNG \(transparent\)|result PNG \(transparent\)/,'PNG transparency depends on the selected background');
+ assert.doesNotMatch(hindi,/Download PNG \(transparent\)|result PNG \(transparent\)/);
+ // The Devanagari FAQ must offer both formats without payment or sign-in.
+ assert.match(hindi,/बिना वॉटरमार्क PNG या JPG डाउनलोड करने के लिए भुगतान या साइन‑इन की ज़रूरत नहीं है/);
+});
+test('visible FAQ answers exactly match their FAQPage structured data on the translated guides',()=>{
+ const unescape=value=>value.replaceAll('&quot;','"').replaceAll('&lt;','<').replaceAll('&amp;','&');
+ for(const slug of ['photo-background-hindi','photo-ka-background-kaise-hataye']){
+  const html=renderPage(pages.find(p=>p.slug===slug));
+  const data=JSON.parse([...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/gs)].map(m=>m[1])[0]);
+  const faqNode=data['@graph']?.find(node=>node['@type']==='FAQPage')??(data['@type']==='FAQPage'?data:null);
+  assert.ok(faqNode,`${slug} must keep its FAQPage structured data`);
+  const expected=faqNode.mainEntity.map(item=>[item.name,item.acceptedAnswer.text]);
+  const visible=[...html.matchAll(/<h3>([^<]+)<\/h3><p>(.*?)<\/p>/g)].map(match=>[unescape(match[1]),unescape(match[2])]);
+  assert.equal(visible.length,expected.length,`${slug} must render one visible answer per structured question`);
+  assert.deepEqual(visible,expected,`${slug} visible FAQ content must stay synchronised with its structured data`);
+ }
 });
 test('india pages render the passport warning before editing steps, callouts, citations and contextual links',()=>{
  const passport=pages.find(p=>p.slug==='passport-exam-form-white-background');

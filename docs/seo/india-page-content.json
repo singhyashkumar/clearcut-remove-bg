@@ -19,9 +19,9 @@
       "lang": "hi-Latn",
       "title": "Photo Ka Background Kaise Hataye Free Mein",
       "renderedTitle": "Photo Ka Background Kaise Hataye Free Mein | Clearcutt",
-      "description": "Photo ka background kaise hataye: Clearcutt se browser mein free transparent ya white background PNG banayein. No watermark, no photo upload.",
+      "description": "Photo ka background kaise hataye: Clearcutt se browser mein free transparent PNG ya opaque JPG banayein. No watermark, no photo upload.",
       "h1": "Photo Ka Background Kaise Hataye (Free Browser Step-by-Step Guide)",
-      "lead": "Clearcutt (clearcutt.in) se aap bina sign-in aur bina watermark ke apni JPG, PNG ya WebP photo ka background browser mein hi hata sakte hain. Aapki chuni hui photo kisi server par upload nahi hoti, aur aap transparent, safed (#ffffff), naya colour ya apni pasand ki background photo lagakar full-size PNG download kar sakte hain.",
+      "lead": "Clearcutt (clearcutt.in) se aap bina sign-in aur bina watermark ke apni JPG, PNG ya WebP photo ka background browser mein hi hata sakte hain. Aapki chuni hui photo kisi server par upload nahi hoti, aur aap transparent, safed (#ffffff), naya colour ya apni pasand ki background photo lagakar full-size PNG ya JPG download kar sakte hain.",
       "uniqueIntent": "Romanized-Hindi (Hinglish) procedural intent for Indian users searching 'photo ka background kaise hataye' who want a free, private, step-by-step browser workflow with clear expectations about first-run AI model data download (~98 MB or ~473 MB), Android vs desktop reliability, and iOS/HEIC limits.",
       "cannibalizationBoundary": {
         "versusHomepage": "Homepage (/) owns broad English commercial queries ('background remover', 'remove bg'); this page serves Romanized-Hindi procedural queries ('photo ka background kaise hataye') in hi-Latn.",
@@ -38,7 +38,7 @@
           "bullets": [
             "1. Photo chunein (Upload): Editor kholkar 'Upload Image' dabayein, file drag-and-drop karein, ya keyboard se Ctrl + V dabayein. Sirf asli JPG, PNG ya WebP file (20 MB aur 25 megapixel tak) accept hoti hai.",
             "2. Processing mode chunein: 'Standard · original model (98 MB)' aam photos aur kam memory wale devices ke liye default hai. 'Detailed · larger model' (473 MB tak) chhote subjects par ek extra focused pass chala sakta hai jab device support kare.",
-            "3. Check aur save karein: 'Result' aur 'Original' toggle karke cutout dekhein, background chunein, aur tab band karne se pehle 'Download PNG' par click karke apni file save karein."
+            "3. Check aur save karein: 'Result' aur 'Original' toggle karke cutout dekhein, background chunein, aur tab band karne se pehle 'Download PNG' ya 'Download JPG' par click karke apni file save karein. Transparent chuna hai toh PNG transparency rakhta hai; White, custom colour ya background photo chuna hai toh wahi background PNG mein aata hai. JPG opaque hota hai—transparent areas white fill hote hain."
           ],
           "sourceIds": [
             "REPO-INPUT-LIMITS",
@@ -50,7 +50,7 @@
           "id": "privacy-aur-model-download",
           "heading": "Pehli baar data kitna lagta hai aur photo kahan rehti hai?",
           "paragraphs": [
-            "Clearcutt aapki photo ko kisi cloud image server ya payment backend par bhejkar edit nahi karta. Aapki photo, AI mask aur brush edits sirf aapke browser ki memory mein rehte hain. Jab aap 'New photo ↗' dabate hain ya browser tab band karte hain, toh editing session khatam ho jata hai—isliye PNG download karne se pehle tab na band karein.",
+            "Clearcutt aapki photo ko kisi cloud image server ya payment backend par bhejkar edit nahi karta. Aapki photo, AI mask aur brush edits sirf aapke browser ki memory mein rehte hain. Jab aap 'New photo ↗' dabate hain ya browser tab band karte hain, toh editing session khatam ho jata hai—isliye PNG ya JPG download karne se pehle tab na band karein.",
             "Pehli baar background hatate waqt browser Hugging Face aur jsDelivr se AI model aur ONNX runtime files download karta hai—Standard mode mein lagbhag 98 MB aur Detailed mode mein lagbhag 473 MB tak (agar bada model fail ho toh browser 98 MB model par fallback kar sakta hai). Browser in model files ko cache kar sakta hai jisse agli baar jaldi kaam ho, lekin pehli run ke liye Wi-Fi ya stable data connection rakhein aur tab khula chhod dein."
           ],
           "sourceIds": [
@@ -80,7 +80,7 @@
           "heading": "Android phone, iPhone aur sarkari/ecommerce formats ki zaroori jankari",
           "paragraphs": [
             "Clearcutt sabse achha Windows, macOS ya Linux ke current desktop Chrome aur Edge browsers par chalta hai. Android Chrome par bhi 98 MB wala Standard model default roop se chalu hai aur real Android users ke phones par test mein chala hai, lekin har Android phone par iski guarantee nahi hai—kyunki browser RAM kam hone ya network rukne par processing error aa sakta hai. iPhone, iPad (iOS/iPadOS) aur HEIC/HEIF photos abhi bilkul supported nahi hain.",
-            "Dhyan rahe ki Clearcutt hamesha full-resolution PNG file ('clearcutt.png') download karta hai aur ek baar mein ek hi photo process karta hai. Agar kisi sarkari exam form ya Meesho/Flipkart listing ke liye aapko 10–50 KB ki JPG file, DPI setting, ya fixed centimetre/pixel size chahiye, toh Clearcutt se PNG lene ke baad kisi alag resize/JPG tool ka upyog karein—aur pehle us portal ke official niyam zaroor padhein."
+            "Dhyan rahe ki Clearcutt full-resolution PNG ya JPG file download karta hai aur ek baar mein ek hi photo process karta hai. Transparent chuna hai toh PNG transparency rakhta hai; White, custom colour ya background photo chuna hai toh wahi background PNG mein aata hai. JPG opaque hota hai—transparent areas white fill hote hain. Limit JPG file size se maximum file size (KB) aur Set JPG dimensions se exact width aur height (pixels) set kar sakte hain; aspect ratio alag hone par photo apne proportions mein white padding ke saath fit hoti hai. Agar kisi sarkari exam form ya Meesho/Flipkart listing ko DPI setting ya fixed centimetre/pixel size chahiye, toh pehle us portal ke official niyam zaroor padhein—Clearcutt kisi form, portal ya marketplace ki acceptance guarantee nahi karta."
           ],
           "sourceIds": [
             "REPO-PLATFORM-LIMITS",
@@ -91,7 +91,7 @@
       "faqs": [
         {
           "question": "Clearcutt se photo ka background free mein kaise hataye?",
-          "answer": "Clearcutt kholkar Upload Image dabayein aur 20 MB va 25 megapixel tak ki JPG, PNG ya WebP photo chunein. AI aapke browser mein background hata deta hai. Zaroorat ho toh Erase ya Restore brush se kinare saaf karein, transparent ya White (#ffffff) background chunein, aur bina watermark Download PNG par click karein.",
+          "answer": "Clearcutt kholkar Upload Image dabayein aur 20 MB va 25 megapixel tak ki JPG, PNG ya WebP photo chunein. AI aapke browser mein background hata deta hai. Zaroorat ho toh Erase ya Restore brush se kinare saaf karein, transparent ya White (#ffffff) background chunein, aur bina watermark Download PNG ya Download JPG par click karein. Transparent chuna hai toh PNG transparency rakhta hai; White, custom colour ya background photo chuna hai toh wahi background PNG mein aata hai. JPG opaque hota hai—transparent areas white fill hote hain.",
           "sourceIds": [
             "REPO-INPUT-LIMITS",
             "REPO-EDITOR-EXPORT"
@@ -120,7 +120,7 @@
         },
         {
           "question": "Background hatane ke baad safed colour ya doosri photo kaise lagayein?",
-          "answer": "Editor mein Background ke neeche Transparent, White (#ffffff), preset colours, Custom background color (+), ya Add background photo chunein. Aap 20 MB aur 25 megapixel tak ki JPG, PNG ya WebP background image laga sakte hain aur result PNG mein download kar sakte hain.",
+          "answer": "Editor mein Background ke neeche Transparent, White (#ffffff), preset colours, Custom background color (+), ya Add background photo chunein. Aap 20 MB aur 25 megapixel tak ki JPG, PNG ya WebP background image laga sakte hain aur result PNG ya JPG mein download kar sakte hain. Transparent chuna hai toh PNG transparency rakhta hai; White, custom colour ya background photo chuna hai toh wahi background PNG mein aata hai. JPG opaque hota hai—transparent areas white fill hote hain.",
           "sourceIds": [
             "REPO-EDITOR-EXPORT"
           ]
