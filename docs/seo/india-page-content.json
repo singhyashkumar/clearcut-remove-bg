@@ -38,7 +38,7 @@
           "bullets": [
             "1. Photo chunein (Upload): Editor kholkar 'Upload Image' dabayein, file drag-and-drop karein, ya keyboard se Ctrl + V dabayein. Sirf asli JPG, PNG ya WebP file (20 MB aur 25 megapixel tak) accept hoti hai.",
             "2. Processing mode chunein: 'Standard · original model (98 MB)' aam photos aur kam memory wale devices ke liye default hai. 'Detailed · larger model' (473 MB tak) chhote subjects par ek extra focused pass chala sakta hai jab device support kare.",
-            "3. Check aur save karein: 'Result' aur 'Original' toggle karke cutout dekhein, background chunein, aur tab band karne se pehle 'Download PNG' (transparent) ya 'Download JPG' (opaque) par click karke apni file save karein."
+            "3. Check aur save karein: 'Result' aur 'Original' toggle karke cutout dekhein, background chunein, aur tab band karne se pehle 'Download PNG' ya 'Download JPG' par click karke apni file save karein. Transparent chuna hai toh PNG transparency rakhta hai; White, custom colour ya background photo chuna hai toh wahi background PNG mein aata hai. JPG opaque hota hai—transparent areas white fill hote hain."
           ],
           "sourceIds": [
             "REPO-INPUT-LIMITS",
@@ -91,7 +91,7 @@
       "faqs": [
         {
           "question": "Clearcutt se photo ka background free mein kaise hataye?",
-          "answer": "Clearcutt kholkar Upload Image dabayein aur 20 MB va 25 megapixel tak ki JPG, PNG ya WebP photo chunein. AI aapke browser mein background hata deta hai. Zaroorat ho toh Erase ya Restore brush se kinare saaf karein, transparent ya White (#ffffff) background chunein, aur bina watermark Download PNG (transparent) ya Download JPG (opaque) par click karein.",
+          "answer": "Clearcutt kholkar Upload Image dabayein aur 20 MB va 25 megapixel tak ki JPG, PNG ya WebP photo chunein. AI aapke browser mein background hata deta hai. Zaroorat ho toh Erase ya Restore brush se kinare saaf karein, transparent ya White (#ffffff) background chunein, aur bina watermark Download PNG ya Download JPG par click karein. Transparent chuna hai toh PNG transparency rakhta hai; White, custom colour ya background photo chuna hai toh wahi background PNG mein aata hai. JPG opaque hota hai—transparent areas white fill hote hain.",
           "sourceIds": [
             "REPO-INPUT-LIMITS",
             "REPO-EDITOR-EXPORT"
@@ -120,7 +120,7 @@
         },
         {
           "question": "Background hatane ke baad safed colour ya doosri photo kaise lagayein?",
-          "answer": "Editor mein Background ke neeche Transparent, White (#ffffff), preset colours, Custom background color (+), ya Add background photo chunein. Aap 20 MB aur 25 megapixel tak ki JPG, PNG ya WebP background image laga sakte hain aur result PNG (transparent) ya JPG (opaque, transparent areas white) mein download kar sakte hain.",
+          "answer": "Editor mein Background ke neeche Transparent, White (#ffffff), preset colours, Custom background color (+), ya Add background photo chunein. Aap 20 MB aur 25 megapixel tak ki JPG, PNG ya WebP background image laga sakte hain aur result PNG ya JPG mein download kar sakte hain. Transparent chuna hai toh PNG transparency rakhta hai; White, custom colour ya background photo chuna hai toh wahi background PNG mein aata hai. JPG opaque hota hai—transparent areas white fill hote hain.",
           "sourceIds": [
             "REPO-EDITOR-EXPORT"
           ]

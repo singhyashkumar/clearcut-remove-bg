@@ -543,6 +543,20 @@ test('the translated guides never claim PNG-only export or an external JPG conve
  assert.match(hinglish,/acceptance guarantee nahi karta/);
  assert.match(hindi,/स्वीकृति की गारंटी नहीं देता/);
 });
+test('the Hinglish guide distinguishes the Transparent selection from other backgrounds and never labels PNG as always transparent',()=>{
+ const hindi=renderPage(pages.find(p=>p.slug==='photo-background-hindi'));
+ const hinglish=renderPage(pages.find(p=>p.slug==='photo-ka-background-kaise-hataye'));
+ // Workflow step 3, FAQ 1 and FAQ 5 must all carry the conditional behaviour:
+ // PNG keeps transparency only for the Transparent selection; a White,
+ // custom colour or background photo is included in the PNG as-is.
+ for(const clause of ['Transparent chuna hai toh PNG transparency rakhta hai','White, custom colour ya background photo chuna hai toh wahi background PNG mein aata hai','JPG opaque hota hai—transparent areas white fill hote hain'])
+  assert.equal((hinglish.match(new RegExp(clause.replaceAll(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g'))||[]).length>=3,true,`workflow step 3, FAQ 1 and FAQ 5 must each explain: ${clause}`);
+ // Download buttons must never be labelled as unconditionally transparent.
+ assert.doesNotMatch(hinglish,/'Download PNG' \(transparent\)|Download PNG \(transparent\)|result PNG \(transparent\)/,'PNG transparency depends on the selected background');
+ assert.doesNotMatch(hindi,/Download PNG \(transparent\)|result PNG \(transparent\)/);
+ // The Devanagari FAQ must offer both formats without payment or sign-in.
+ assert.match(hindi,/बिना वॉटरमार्क PNG या JPG डाउनलोड करने के लिए भुगतान या साइन‑इन की ज़रूरत नहीं है/);
+});
 test('visible FAQ answers exactly match their FAQPage structured data on the translated guides',()=>{
  const unescape=value=>value.replaceAll('&quot;','"').replaceAll('&lt;','<').replaceAll('&amp;','&');
  for(const slug of ['photo-background-hindi','photo-ka-background-kaise-hataye']){
