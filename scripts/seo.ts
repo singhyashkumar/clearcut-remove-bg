@@ -52,6 +52,10 @@ const contentUpdateDate = '2026-11-20';
 const contentUpdateInstant = '2026-11-20T17:41:15Z';
 const docsUpdateDate = '2026-11-22';
 const docsUpdateInstant = '2026-11-22T08:40:02Z';
+// 25 November 2026 JPG-export accuracy correction: the Hindi and Hinglish guides
+// only (commit instant pinned in the sitemap below).
+const contentCorrectionDate = '2026-11-25';
+const contentCorrectionInstant = '2026-11-25T04:22:00Z';
 const pageDates: Record<string, string> = {
  'remove-background-products': contentUpdateDate,
  'remove-background-portraits': contentUpdateDate,
@@ -175,9 +179,11 @@ const renderIndiaSection=(section: IndiaSection)=>{
 };
 // India pages whose meaningful content was updated on 20 November 2026 (commit
 // 507a76e): JPG export documentation on the passport and signature pages and the
-// refreshed Amazon/Flipkart/Meesho sourcing. The Hinglish guide only received the
-// brand-spelling sweep, so it keeps its release date.
+// refreshed Amazon/Flipkart/Meesho sourcing. The Hinglish guide received only the
+// brand-spelling sweep then; its genuine content correction is dated separately
+// below (25 November JPG-export accuracy fix), as are other page-specific dates.
 const indiaContentUpdate = new Set(['passport-exam-form-white-background','amazon-flipkart-meesho-product-white-background','remove-background-from-signature-png']);
+const indiaCorrectionDates: Record<string, string> = {'photo-ka-background-kaise-hataye': contentCorrectionDate};
 const indiaPages=indiaDoc.pages.map((page): Page =>{
  const existingSlugs=new Set(legacyPages.map(p=>p.slug));
  if(existingSlugs.has(page.slug))throw new Error(`India page ${page.slug} collides with an existing page`);
@@ -195,7 +201,7 @@ const indiaPages=indiaDoc.pages.map((page): Page =>{
  const faqs=(page.faqs||[]).map((f): GuideFaq =>[f.question,sanitizeProse(f.answer)]);
  if(faqs.length!==5)throw new Error(`India page ${page.slug} must expose exactly five FAQs`);
  const primaryCta=(page.contextualLinks||[]).find(l=>l.placement==='primary-cta');
- return {slug:page.slug,title:page.title,metaTitle:page.title,description:page.description,h1:page.h1,lead:mdProse(page.lead),lang:page.lang,explicitLang:true,faqs,india:true,sections:page.sections,indiaBody:renderedSections,indiaCta:primaryCta?primaryCta.anchorText:'Open the free background remover',editorialDate:indiaDoc.verifiedDate,lastModified:indiaContentUpdate.has(page.slug)?contentUpdateDate:releaseDate,isGuide:true};
+ return {slug:page.slug,title:page.title,metaTitle:page.title,description:page.description,h1:page.h1,lead:mdProse(page.lead),lang:page.lang,explicitLang:true,faqs,india:true,sections:page.sections,indiaBody:renderedSections,indiaCta:primaryCta?primaryCta.anchorText:'Open the free background remover',editorialDate:indiaDoc.verifiedDate,lastModified:indiaCorrectionDates[page.slug] ?? (indiaContentUpdate.has(page.slug)?contentUpdateDate:releaseDate),isGuide:true};
 });
 const newsPages: Page[] = [{
  slug:'remove-bg-shutting-down',
@@ -222,7 +228,7 @@ const newsPages: Page[] = [{
 const hindiPage: Page = {
  slug: hindiSlug, title: hindiTitle, metaTitle: hindiTitle, h1: hindiTitle, description: hindiDescription,
  lang: 'hi', explicitLang: true, article: true, isGuide: true,
- datePublished: '2026-11-20', lastModified: '2026-11-20',
+ datePublished: '2026-11-20', lastModified: contentCorrectionDate,
  sections: hindiSections, faqs: hindiFaqs,
 };
 export const pages=[...legacyPages,...indiaPages,...newsPages,hindiPage];
@@ -355,6 +361,8 @@ export const sitemapLastmod: Record<string, string> = {
  'amazon-flipkart-meesho-product-white-background': contentUpdateInstant,
  'remove-background-from-signature-png': contentUpdateInstant,
  'remove-bg-shutting-down': contentUpdateInstant,
+ 'photo-ka-background-kaise-hataye': contentCorrectionInstant,
+ 'photo-background-hindi': contentCorrectionInstant,
 };
 export const sitemap=`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${site}</loc><lastmod>${contentUpdateInstant}</lastmod></url>${pages.map(p=>`<url><loc>${site}${p.slug}/</loc><lastmod>${sitemapLastmod[p.slug] ?? p.lastModified}</lastmod></url>`).join('')}</urlset>\n`;
 export function seoPlugin(): Plugin {let outDir: string;return {name:'clearcut-seo',configResolved(config){outDir=resolve(config.root,config.build.outDir);},transformIndexHtml:enhanceHome,closeBundle(){for(const p of pages){const directory=resolve(outDir,p.slug);mkdirSync(directory,{recursive:true});writeFileSync(resolve(directory,'index.html'),renderPage(p));}writeFileSync(resolve(outDir,'robots.txt'),robots);writeFileSync(resolve(outDir,'sitemap.xml'),sitemap);}};}
