@@ -24,6 +24,8 @@ export interface GuidePageFields {
   readonly lastModified?: string;
   readonly images?: readonly EvidenceImage[];
   readonly tables?: readonly EvidenceTable[];
+  /** Representative image for primaryImageOfPage and the page's social cards. */
+  readonly primaryImage?: EvidenceImage;
 }
 
 export type LegacyGuideSource = readonly [

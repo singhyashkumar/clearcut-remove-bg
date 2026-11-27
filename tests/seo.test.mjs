@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { pages, enhanceHome, renderPage, robots, sitemap, schema } from '../scripts/seo.ts';
+import { renderTransparentPage } from '../scripts/content/transparent-renderer.ts';
 /** Guides that intentionally carry more than the default five FAQs. */
 const expectedFaqs = slug => (slug === 'remove-background-cars' ? 7 : 5);
 test('search pages have unique canonical URLs, crawlable content and matching sitemap entries',()=>{
@@ -33,7 +34,7 @@ test('home SEO exposes linked guides, instant reviews and complete honest social
  assert.ok(html.includes('href="/favicon.ico"'));assert.ok(html.includes('href="/favicon-48.png"'));assert.ok(html.includes('href="/apple-touch-icon.png"'));
 });
 test('every generated page has production social metadata without fake ratings',()=>{
- for(const p of pages){const html=renderPage(p);assert.ok(html.includes(`property="og:url" content="https://clearcutt.in/${p.slug}/"`));assert.ok(html.includes('property="og:image" content="https://clearcutt.in/artwork/clearcut-social-card.png"'));assert.ok(html.includes('name="twitter:card" content="summary_large_image"'));assert.ok(html.includes('name="twitter:description"'));assert.ok(html.includes('href="/favicon.ico"'));assert.ok(html.includes('property="og:site_name" content="Clearcutt"'));assert.equal(/AggregateRating|"@type":"Review"/.test(html),false);}
+ for(const p of pages){const html=renderPage(p);const expectedSocial=p.slug==='remove-background-cars'?'https://clearcutt.in/artwork/guides/car-examples/car-example-01-silver-electric-crossover.jpg':'https://clearcutt.in/artwork/clearcut-social-card.png';assert.ok(html.includes(`property="og:url" content="https://clearcutt.in/${p.slug}/"`));assert.ok(html.includes(`property="og:image" content="${expectedSocial}"`));assert.ok(html.includes('name="twitter:card" content="summary_large_image"'));assert.ok(html.includes('name="twitter:description"'));assert.ok(html.includes('href="/favicon.ico"'));assert.ok(html.includes('property="og:site_name" content="Clearcutt"'));assert.equal(/AggregateRating|"@type":"Review"/.test(html),false);}
 });
 test('all public HTML uses the Clearcutt brand spelling',()=>{
  const home=enhanceHome(readFileSync(new URL('../index.html',import.meta.url),'utf8'));
@@ -233,7 +234,7 @@ test('legacy pages without optional fields render no optional markup and keep ti
   assert.equal(html.match(/<html lang="([^"]*)"/)[1],'en',`${p.slug} must default to lang en`);
  }
 });
-test('the transparent PNG guide targets the tool query and both comparisons include mobile layouts',()=>{
+test('the transparent PNG guide targets the tool query and both guides keep their visuals',()=>{
  const html=renderPage(pages.find(page=>page.slug==='transparent-background'));
  assert.match(html,/<title>Free Transparent Background Maker \| Clearcutt<\/title>/);
  assert.match(html,/<h1>Make a Transparent PNG for Free<\/h1>/);
@@ -242,12 +243,112 @@ test('the transparent PNG guide targets the tool query and both comparisons incl
  assert.match(html,/href="\/seo\.css\?v=[a-f0-9]{12}"/);
  assert.match(html,/<source media="\(max-width: 767px\)" srcset="\/artwork\/guides\/transparency-960\.webp">/);
  const car=renderPage(pages.find(page=>page.slug==='remove-background-cars'));
- assert.match(car,/class="guide-comparison guide-comparison--cars"/);
+ assert.doesNotMatch(car,/guide-comparison--cars/,'the car guide no longer uses the generic illustrated comparison');
+ assert.doesNotMatch(car,/cars-960\.webp/,'the old illustrated comparison must not be referenced');
  assert.match(car,/href="\/seo\.css\?v=[a-f0-9]{12}"/);
- assert.match(car,/<source media="\(max-width: 767px\)" srcset="\/artwork\/guides\/cars-960\.webp">/);
+});
+test('the car guide renders the five supplied example images with responsive sources, dimensions and captions',()=>{
+ const html=renderPage(pages.find(page=>page.slug==='remove-background-cars'));
+ const galleryStart=html.indexOf('<section class="car-gallery"');
+ const gallery=html.slice(galleryStart,html.indexOf('</section>',galleryStart));
+ assert.ok(gallery.length>1000,'the car gallery must render as a section');
+ assert.match(gallery,/<h2 id="car-gallery-heading">Car Background Removal Examples<\/h2>/);
+ assert.match(gallery,/Explore vehicle images processed with Clearcutt’s Standard model\./);
+ assert.match(gallery,/Inspect glass, mirrors, wheel gaps and fine edges in your own results before downloading/);
+ const base='/artwork/guides/car-examples';
+ const dims={'car-example-01-silver-electric-crossover':[1600,819],'car-example-02-black-sports-car':[1600,800],'car-example-03-futuristic-electric-sedan':[1600,800],'car-example-04-blue-coupe-rear-view':[1600,800],'car-example-05-offroad-suv-rocky-scene':[1536,1024]};
+ const items=[...gallery.matchAll(/<li><figure class="car-gallery-item">([\s\S]*?)<\/figure><\/li>/g)].map(m=>m[1]);
+ assert.equal(items.length,5,'all five supplied images must be present in the page HTML');
+ for(const [index,item] of items.entries()){
+  const name=Object.keys(dims)[index];
+  const [width,height]=dims[name];
+  assert.ok(item.includes(`${base}/${name}.jpg`),`image ${index+1} must reference its JPEG fallback`);
+  assert.match(item,new RegExp(`<source type="image/webp" srcset="${base}/${name}-480\\.webp 480w, ${base}/${name}-960\\.webp 960w" sizes="`),`image ${index+1} must offer both WebP widths`);
+  assert.match(item,/sizes="\(max-width: 767px\) calc\(100vw - 48px\), \(max-width: 1023px\) calc\(50vw - 40px\), 241px"/,`image ${index+1} must declare responsive sizes`);
+  assert.match(item,new RegExp(`alt="[^"]{20,}" width="${width}" height="${height}"`),`image ${index+1} must declare intrinsic dimensions and descriptive alt text`);
+  assert.match(item,/<figcaption>[^<]+<\/figcaption>/,`image ${index+1} needs a caption`);
+  if(index===0)assert.match(item,/fetchpriority="high"/,'the first gallery image may carry fetch priority');
+  else assert.match(item,/ loading="lazy"/,`image ${index+1} must lazy-load below the fold`);
+ }
+ assert.equal((gallery.match(/fetchpriority="high"/g)||[]).length,1,'exactly one gallery image may carry fetch priority');
+ assert.ok(html.indexOf('<h2>Prepare the vehicle image</h2>')>galleryStart,'the gallery must appear before the detailed guide sections');
+ assert.doesNotMatch(html,/guide-comparison--cars|AI-generated illustration/,'the generic illustrated comparison must be gone');
+ // The gallery presents opaque JPEGs only, without accuracy claims.
+ assert.doesNotMatch(gallery,/transparent|alpha|perfect|measured|guarantee/i,'gallery copy must stay honest about the opaque JPEGs');
+ // No invented vehicle makes or models.
+ assert.doesNotMatch(html,/Toyota|Ford|Chevrolet|BMW|Mercedes|Audi|Tesla|Hyundai|Kia|Mahindra|Suzuki|Honda|Nissan|Volkswagen|Porsche|Ferrari|Lamborghini/i,'examples must stay generic vehicle descriptions');
+});
+test('the car guide exposes the silver crossover as primaryImageOfPage and in its social cards',()=>{
+ const html=renderPage(pages.find(page=>page.slug==='remove-background-cars'));
+ const data=JSON.parse([...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/gs)].map(m=>m[1])[0]);
+ assert.deepEqual(data.primaryImageOfPage,{'@type':'ImageObject',url:'https://clearcutt.in/artwork/guides/car-examples/car-example-01-silver-electric-crossover.jpg',name:'Silver electric-style crossover viewed from the front three-quarter angle on a black background',width:1600,height:819});
+ assert.match(html,/property="og:image" content="https:\/\/clearcutt\.in\/artwork\/guides\/car-examples\/car-example-01-silver-electric-crossover\.jpg"/);
+ assert.match(html,/property="og:image:width" content="1600"/);
+ assert.match(html,/property="og:image:height" content="819"/);
+ assert.match(html,/property="og:image:alt" content="Silver electric-style crossover viewed from the front three-quarter angle on a black background"/);
+ assert.match(html,/name="twitter:image" content="https:\/\/clearcutt\.in\/artwork\/guides\/car-examples\/car-example-01-silver-electric-crossover\.jpg"/);
+ assert.ok(existsSync(new URL('../public/artwork/guides/car-examples/car-example-01-silver-electric-crossover.jpg',import.meta.url).pathname),'the primary image must exist in the tree that ships to the production build');
+});
+test('the transparent guide keeps the checkerboard and labels the car JPEG as opaque with its background included',()=>{
+ const html=renderPage(pages.find(page=>page.slug==='transparent-background'));
+ // The checkerboard comparison stays the page's primary transparency demonstration.
+ assert.match(html,/class="guide-comparison guide-comparison--transparency"/);
+ assert.match(html,/Illustration: a checkerboard represents transparency/);
+ const checkerboardAt=html.indexOf('guide-comparison--transparency');
+ const headingAt=html.indexOf('<h2>Transparent PNG vs. JPEG with a Fixed Background</h2>');
+ assert.ok(headingAt>0,'the opaque-JPEG comparison section must render');
+ assert.ok(html.indexOf('<h2>Why PNG and not JPG</h2>')<headingAt,'the comparison follows the PNG-vs-JPEG section');
+ assert.ok(checkerboardAt<headingAt,'the checkerboard demonstration stays ahead of the supplementary example');
+ const section=html.slice(headingAt,html.indexOf('</section>',headingAt));
+ assert.match(section,/The vehicle image below is an opaque JPEG: its black background is baked into the image pixels\./);
+ assert.match(section,/when you select Transparent in Clearcutt and download PNG, the file keeps genuinely transparent pixels/);
+ assert.match(section,/car-example-01-silver-electric-crossover\.jpg/,'the supplementary figure must reference the supplied JPEG');
+ assert.match(section,/car-example-01-silver-electric-crossover-480\.webp 480w, \/artwork\/guides\/car-examples\/car-example-01-silver-electric-crossover-960\.webp 960w/);
+ assert.match(section,/alt="Opaque JPEG of a silver electric-style crossover with its black background baked into the image pixels"/);
+ assert.match(section,/width="1600" height="819" loading="lazy" decoding="async"/);
+ assert.match(section,/Opaque JPEG example: the black background is part of the image pixels\. It is not a transparent PNG and contains no alpha channel\./);
+ // Neither guide may claim the supplied JPEGs are transparent.
+ for(const slug of ['remove-background-cars','transparent-background']){
+  const pageHtml=renderPage(pages.find(p=>p.slug===slug));
+  assert.doesNotMatch(pageHtml,/transparent JPEG/i);
+  assert.doesNotMatch(pageHtml,/(JPEG|JPG)[^<.]{0,40}is (a )?transparent/i);
+ }
+});
+test('the typed transparent renderer stays byte-for-byte identical to the shared renderer',()=>{
+ const p=pages.find(page=>page.slug==='transparent-background');
+ const shared=renderPage(p);
+ const linksHtml=pages.map(x=>`<li><a href="https://clearcutt.in/${x.slug}/">${x.title.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;')}</a></li>`).join('');
+ const typed=renderTransparentPage({linksHtml,lastModified:p.lastModified});
+ assert.equal(typed,shared,'the typed renderer must reproduce the shared renderer byte for byte');
+});
+test('the car example assets ship in the repository and stay inside their photographic budget',()=>{
+ const dir=new URL('../public/artwork/guides/car-examples/',import.meta.url);
+ const names=['car-example-01-silver-electric-crossover','car-example-02-black-sports-car','car-example-03-futuristic-electric-sedan','car-example-04-blue-coupe-rear-view','car-example-05-offroad-suv-rocky-scene'];
+ for(const name of names){
+  const jpeg=readFileSync(new URL(`${name}.jpg`,dir));
+  assert.equal(jpeg.subarray(0,3).toString('hex'),'ffd8ff',`${name}.jpg must be a real JPEG fallback`);
+  const small=statSync(new URL(`${name}-480.webp`,dir)).size;
+  const large=statSync(new URL(`${name}-960.webp`,dir)).size;
+  assert.ok(small<=35_000,`${name}-480.webp must stay at or below 35 KB, got ${small} bytes`);
+  assert.ok(large<=90_000,`${name}-960.webp must stay at or below 90 KB, got ${large} bytes`);
+ }
+ // Every car-examples URL referenced by either page must resolve to a real file.
+ for(const slug of ['remove-background-cars','transparent-background']){
+  const html=renderPage(pages.find(p=>p.slug===slug));
+  for(const match of html.matchAll(/(?:src|srcset)="([^"]*car-examples[^"]*)"/g)){
+   for(const candidate of match[1].split(',')){
+    const file=candidate.trim().split(/\s+/)[0];
+    if(!file)continue;
+    assert.ok(existsSync(new URL(`../public${file}`,import.meta.url).pathname),`${file} must exist under public/`);
+   }
+  }
+ }
 });
 test('guide pages render responsive lightweight visuals while policy pages stay media-free',()=>{
- const visualSlugs=['how-to-remove-background','remove-background-products','remove-background-portraits','remove-background-animals','remove-background-cars','transparent-background','photo-ka-background-kaise-hataye','passport-exam-form-white-background','amazon-flipkart-meesho-product-white-background','remove-background-from-signature-png'];
+ // The car guide is covered by the dedicated gallery tests below; the transparent
+ // guide's comparison plus the supplementary opaque-example figure are covered by
+ // the dedicated tests below as well.
+ const visualSlugs=['how-to-remove-background','remove-background-products','remove-background-portraits','remove-background-animals','transparent-background','photo-ka-background-kaise-hataye','passport-exam-form-white-background','amazon-flipkart-meesho-product-white-background','remove-background-from-signature-png'];
  for(const slug of visualSlugs){
   const html=renderPage(pages.find(page=>page.slug===slug));
   const figure=html.match(/<figure class="guide-visual">([\s\S]*?)<\/figure>/)?.[1];
@@ -401,18 +502,18 @@ test('sitemap publishes one accurate ISO 8601 lastmod for every canonical URL',(
  // and are never falsely marked as freshly updated.
  assert.equal(byPath.get('/how-to-remove-background'),'2026-11-14');
  assert.equal(byPath.get('/remove-background-animals'),'2026-11-14');
- assert.equal(byPath.get('/remove-background-cars'),'2026-11-14');
+ assert.equal(byPath.get('/remove-background-cars'),'2026-11-27T15:32:00Z','the car guide lastmod must be the 27 November 2026 gallery update instant');
  assert.equal(byPath.get('/photo-ka-background-kaise-hataye'),'2026-11-25T04:22:00Z','the Hinglish guide was content-corrected on 25 November 2026');
- assert.equal(byPath.get('/transparent-background'),'2026-11-19');
+ assert.equal(byPath.get('/transparent-background'),'2026-11-27T15:32:00Z','the transparent guide lastmod must be the 27 November 2026 opaque-example update instant');
  assert.equal(byPath.get('/photo-background-hindi'),'2026-11-25T04:22:00Z','the Hindi guide was content-corrected on 25 November 2026');
  assert.equal(byPath.get('/contact'),'2026-11-13');
  // Page metadata dates also reflect actual content updates.
- const expectedDates={'remove-background-products':'2026-11-20','remove-background-portraits':'2026-11-20','privacy':'2026-11-20','passport-exam-form-white-background':'2026-11-20','amazon-flipkart-meesho-product-white-background':'2026-11-20','remove-background-from-signature-png':'2026-11-20','remove-bg-shutting-down':'2026-11-20','about':'2026-11-22','transparent-background':'2026-11-19','photo-background-hindi':'2026-11-25','photo-ka-background-kaise-hataye':'2026-11-25','remove-background-cars':'2026-11-14','contact':'2026-11-13'};
+ const expectedDates={'remove-background-products':'2026-11-20','remove-background-portraits':'2026-11-20','privacy':'2026-11-20','passport-exam-form-white-background':'2026-11-20','amazon-flipkart-meesho-product-white-background':'2026-11-20','remove-background-from-signature-png':'2026-11-20','remove-bg-shutting-down':'2026-11-20','about':'2026-11-22','transparent-background':'2026-11-27','photo-background-hindi':'2026-11-25','photo-ka-background-kaise-hataye':'2026-11-25','remove-background-cars':'2026-11-27','contact':'2026-11-13'};
  for(const [slug,date] of Object.entries(expectedDates))assert.equal(pages.find(p=>p.slug===slug).lastModified,date,`${slug} page lastModified must reflect its actual content update`);
  // The Hindi guide keeps its original publication date.
  assert.equal(pages.find(p=>p.slug==='photo-background-hindi').datePublished,'2026-11-20');
  // No entry may carry a build-time or future timestamp.
- for(const [,loc,lastmod] of entries)assert.ok(lastmod.slice(0,10)<='2026-11-25',`lastmod ${lastmod} for ${loc} must not be a build or future timestamp`);
+ for(const [,loc,lastmod] of entries)assert.ok(lastmod.slice(0,10)<='2026-11-27',`lastmod ${lastmod} for ${loc} must not be a build or future timestamp`);
 });
 test('sitemap URLs stay canonical and complete',()=>{
  const locs=[...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match=>match[1]);

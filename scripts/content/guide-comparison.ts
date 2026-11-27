@@ -4,11 +4,6 @@ const comparisons = {
     caption: 'Illustration: a checkerboard represents transparency; it is not included in the exported PNG.',
     labels: ['Transparent PNG', 'White background'],
   },
-  cars: {
-    alt: 'Illustrated car cutout shown on neutral and white backgrounds',
-    caption: 'AI-generated illustration. Check glass, reflections, wheel gaps and the area beneath the vehicle.',
-    labels: ['Start with a clear photo', 'Inspect glass and wheel gaps'],
-  },
 } as const;
 
 const escape = (value: string): string => value

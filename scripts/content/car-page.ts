@@ -65,5 +65,11 @@ export const carPage = [
   {
     metaTitle: 'Car Background Remover: Free Car Photo Background Removal',
     h1: 'Car Background Remover: Remove Car Photo Backgrounds Free',
+    primaryImage: {
+      src: '/artwork/guides/car-examples/car-example-01-silver-electric-crossover.jpg',
+      alt: 'Silver electric-style crossover viewed from the front three-quarter angle on a black background',
+      width: 1600,
+      height: 819,
+    },
   },
 ] as const satisfies LegacyGuideSource;
