@@ -264,7 +264,7 @@ test('the car guide renders the five supplied example images with responsive sou
   const [width,height]=dims[name];
   assert.ok(item.includes(`${base}/${name}.jpg`),`image ${index+1} must reference its JPEG fallback`);
   assert.match(item,new RegExp(`<source type="image/webp" srcset="${base}/${name}-480\\.webp 480w, ${base}/${name}-960\\.webp 960w" sizes="`),`image ${index+1} must offer both WebP widths`);
-  assert.match(item,/sizes="\(max-width: 767px\) calc\(100vw - 48px\), \(max-width: 1023px\) calc\(50vw - 40px\), 241px"/,`image ${index+1} must declare responsive sizes`);
+  assert.match(item,/sizes="\(max-width: 767px\) calc\(100vw - 70px\), 736px"/,`image ${index+1} must declare full-column responsive sizes`);
   assert.match(item,new RegExp(`alt="[^"]{20,}" width="${width}" height="${height}"`),`image ${index+1} must declare intrinsic dimensions and descriptive alt text`);
   assert.match(item,/<figcaption>[^<]+<\/figcaption>/,`image ${index+1} needs a caption`);
   if(index===0)assert.match(item,/fetchpriority="high"/,'the first gallery image may carry fetch priority');
@@ -277,6 +277,34 @@ test('the car guide renders the five supplied example images with responsive sou
  assert.doesNotMatch(gallery,/transparent|alpha|perfect|measured|guarantee/i,'gallery copy must stay honest about the opaque JPEGs');
  // No invented vehicle makes or models.
  assert.doesNotMatch(html,/Toyota|Ford|Chevrolet|BMW|Mercedes|Audi|Tesla|Hyundai|Kia|Mahindra|Suzuki|Honda|Nissan|Volkswagen|Porsche|Ferrari|Lamborghini/i,'examples must stay generic vehicle descriptions');
+});
+test('the car gallery shows one full-width image per row at every viewport width',()=>{
+ const css=readFileSync(new URL('../public/seo.css',import.meta.url),'utf8');
+ // Strictly one column: the grid declares a single track and no breakpoint
+ // overrides it back to two or three columns.
+ assert.match(css,/\.car-gallery-grid\{list-style:none;margin:20px 0 0;padding:0;display:grid;grid-template-columns:minmax\(0,1fr\);gap:16px\}/,'the gallery grid must be single-column by default');
+ assert.doesNotMatch(css,/\.car-gallery-grid\{[^}]*repeat\(2/,'no two-column rule may remain');
+ assert.doesNotMatch(css,/\.car-gallery-grid\{[^}]*repeat\(3/,'no three-column rule may remain');
+ assert.doesNotMatch(css,/@media\(max-width:1023px\)\{\.car-gallery-grid/,'the tablet column override must be gone');
+ assert.doesNotMatch(css,/@media\(max-width:767px\)\{\.car-gallery-grid\{[^}]*grid-template-columns/,'the mobile override must not change the column count');
+ // Images scale naturally to the full gallery width; no fixed frame ratio,
+ // no cropping, no stretching — the fifth image keeps its 3:2 ratio.
+ const frame=css.match(/\.car-gallery-frame\{[^}]*\}/)?.[0];
+ assert.ok(frame,'the dark frame rule must stay');
+ assert.doesNotMatch(frame,/aspect-ratio/,'the fixed 2/1 frame ratio must be gone');
+ assert.match(frame,/background:#0c0e0d/,'the dark frame must stay');
+ assert.match(frame,/border-radius:14px/,'the rounded corners must stay');
+ assert.match(frame,/padding:10px/,'the frame padding must stay');
+ assert.match(css,/\.car-gallery-frame picture,\.car-gallery-frame img\{display:block;width:100%;height:auto\}/,'picture and img must scale full-width at natural height');
+ const imgRule=css.match(/\.car-gallery-frame img\{[^}]*\}/)?.[0];
+ assert.doesNotMatch(imgRule,/object-fit|max-height/,'no crop or clip may force the fifth image into another ratio');
+ // Every gallery item spans the full available gallery width.
+ assert.match(css,/\.car-gallery-item\{margin:0\}/);
+ assert.doesNotMatch(css,/\.car-gallery-grid\{[^}]*max-width/,'the gallery must fill the existing content column without extra narrowing');
+ // The rendered page must not reference the retired card sizes.
+ const html=renderPage(pages.find(page=>page.slug==='remove-background-cars'));
+ assert.doesNotMatch(html,/241px|calc\(50vw - 40px\)/,'the former three-column/two-column card widths must be gone');
+ assert.equal((html.match(/sizes="\(max-width: 767px\) calc\(100vw - 70px\), 736px"/g)||[]).length,5,'all five images must carry the full-column sizes value');
 });
 test('the car guide exposes the silver crossover as primaryImageOfPage and in its social cards',()=>{
  const html=renderPage(pages.find(page=>page.slug==='remove-background-cars'));
@@ -312,6 +340,9 @@ test('the transparent guide keeps the checkerboard and labels the car JPEG as op
  const comparisonCss=readFileSync(new URL('../public/seo.css',import.meta.url),'utf8');
  assert.match(comparisonCss,/\.guide-visual-image\{display:block;width:100%;height:auto/,'guide-visual-image must keep its full-width scaling rule');
  assert.match(section,/Opaque JPEG example: the black background is part of the image pixels\. It is not a transparent PNG and contains no alpha channel\./);
+ // The transparent page must not be touched by the car-gallery redesign.
+ assert.doesNotMatch(html,/car-gallery/,'the transparent page must stay free of gallery markup');
+ assert.match(section,/sizes="\(max-width: 767px\) calc\(100vw - 48px\), 756px"/,'the supplementary figure keeps its own sizes value');
  // Neither guide may claim the supplied JPEGs are transparent.
  for(const slug of ['remove-background-cars','transparent-background']){
   const pageHtml=renderPage(pages.find(p=>p.slug===slug));
@@ -507,9 +538,9 @@ test('sitemap publishes one accurate ISO 8601 lastmod for every canonical URL',(
  // and are never falsely marked as freshly updated.
  assert.equal(byPath.get('/how-to-remove-background'),'2026-11-14');
  assert.equal(byPath.get('/remove-background-animals'),'2026-11-14');
- assert.equal(byPath.get('/remove-background-cars'),'2026-11-27T15:32:00Z','the car guide lastmod must be the 27 November 2026 gallery update instant');
+ assert.equal(byPath.get('/remove-background-cars'),'2026-11-27T16:36:00Z','the car guide lastmod must be the one-image-per-row gallery redesign instant');
  assert.equal(byPath.get('/photo-ka-background-kaise-hataye'),'2026-11-25T04:22:00Z','the Hinglish guide was content-corrected on 25 November 2026');
- assert.equal(byPath.get('/transparent-background'),'2026-11-27T15:32:00Z','the transparent guide lastmod must be the 27 November 2026 opaque-example update instant');
+ assert.equal(byPath.get('/transparent-background'),'2026-11-27T15:32:00Z','the transparent guide keeps the 27 November 2026 opaque-example instant — the redesign touched only the car page');
  assert.equal(byPath.get('/photo-background-hindi'),'2026-11-25T04:22:00Z','the Hindi guide was content-corrected on 25 November 2026');
  assert.equal(byPath.get('/contact'),'2026-11-13');
  // Page metadata dates also reflect actual content updates.

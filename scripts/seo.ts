@@ -63,6 +63,10 @@ const contentCorrectionInstant = '2026-11-25T04:22:00Z';
 // comparison (commit instant pinned in the sitemap below).
 const visualUpdateDate = '2026-11-27';
 const visualUpdateInstant = '2026-11-27T15:32:00Z';
+// Gallery redesign follow-up (same day): the car guide's gallery became one
+// full-width image per row; only the car page changed, so its date-only
+// lastModified stays 2026-11-27 while its sitemap instant is pinned below.
+const galleryRedesignInstant = '2026-11-27T16:36:00Z';
 const pageDates: Record<string, string> = {
  'remove-background-products': contentUpdateDate,
  'remove-background-portraits': contentUpdateDate,
@@ -383,7 +387,7 @@ export const sitemapLastmod: Record<string, string> = {
  'remove-bg-shutting-down': contentUpdateInstant,
  'photo-ka-background-kaise-hataye': contentCorrectionInstant,
  'photo-background-hindi': contentCorrectionInstant,
- 'remove-background-cars': visualUpdateInstant,
+ 'remove-background-cars': galleryRedesignInstant,
  'transparent-background': visualUpdateInstant,
 };
 export const sitemap=`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${site}</loc><lastmod>${contentUpdateInstant}</lastmod></url>${pages.map(p=>`<url><loc>${site}${p.slug}/</loc><lastmod>${sitemapLastmod[p.slug] ?? p.lastModified}</lastmod></url>`).join('')}</urlset>\n`;
