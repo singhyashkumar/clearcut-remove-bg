@@ -305,7 +305,12 @@ test('the transparent guide keeps the checkerboard and labels the car JPEG as op
  assert.match(section,/car-example-01-silver-electric-crossover\.jpg/,'the supplementary figure must reference the supplied JPEG');
  assert.match(section,/car-example-01-silver-electric-crossover-480\.webp 480w, \/artwork\/guides\/car-examples\/car-example-01-silver-electric-crossover-960\.webp 960w/);
  assert.match(section,/alt="Opaque JPEG of a silver electric-style crossover with its black background baked into the image pixels"/);
- assert.match(section,/width="1600" height="819" loading="lazy" decoding="async"/);
+ assert.match(section,/<img class="guide-visual-image" src="\/artwork\/guides\/car-examples\/car-example-01-silver-electric-crossover\.jpg"/,'the supplementary image must reuse the guide-visual-image class so it scales to the content column');
+ assert.match(section,/width="1600" height="819" loading="lazy" decoding="async"/,'the intrinsic dimensions and lazy loading must stay on the img element');
+ // The reused class is the one that sets display:block, width:100% and height:auto,
+ // which keeps the 1600px image inside the content column without overflow.
+ const comparisonCss=readFileSync(new URL('../public/seo.css',import.meta.url),'utf8');
+ assert.match(comparisonCss,/\.guide-visual-image\{display:block;width:100%;height:auto/,'guide-visual-image must keep its full-width scaling rule');
  assert.match(section,/Opaque JPEG example: the black background is part of the image pixels\. It is not a transparent PNG and contains no alpha channel\./);
  // Neither guide may claim the supplied JPEGs are transparent.
  for(const slug of ['remove-background-cars','transparent-background']){
