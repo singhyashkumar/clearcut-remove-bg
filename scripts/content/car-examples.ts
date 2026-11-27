@@ -71,7 +71,10 @@ export const carPrimaryImage = {
   height: carExamples[0].height,
 } as const;
 
-const gallerySizes = '(max-width: 767px) calc(100vw - 48px), (max-width: 1023px) calc(50vw - 40px), 241px';
+// One full-width image per row inside the 756px content column: on desktop the
+// image renders at min(100vw - 64px, 756px) minus the frame's 22px of padding
+// and border; on mobile the page padding is 24px per side.
+const gallerySizes = '(max-width: 767px) calc(100vw - 70px), 736px';
 
 /**
  * Responsive example gallery for the car guide. Renders below the page
