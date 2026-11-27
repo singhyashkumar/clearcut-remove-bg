@@ -13,5 +13,5 @@ export const transparentPage = ['transparent-background','Make a Transparent Bac
  ['What does the Trim empty edges option do?','It crops the empty transparent canvas around the subject so the PNG contains just the cutout. Leave it unchecked if you need the original image dimensions, for example for a layout that expects them.'],
  ['My PNG looks like it has a white or black background in another app. Is the transparency gone?','Probably not. Many viewers render transparent pixels against white or black by default. Place the file over a colored background or a web page to confirm the alpha channel is present.'],
  ['Do partly transparent edge pixels survive the export?','Yes. Edge pixels can be partly transparent, which helps the cutout blend into a new background. Over-erasing hardens the edge, so use the Restore brush to bring back soft areas you removed by mistake.']],
- {metaTitle:'Free Transparent Background Maker',h1:'Make a Transparent PNG for Free',lastModified:'2026-11-19'},
+ {metaTitle:'Free Transparent Background Maker',h1:'Make a Transparent PNG for Free'},
 ] as const satisfies LegacyGuideSource;

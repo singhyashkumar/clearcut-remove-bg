@@ -22,6 +22,7 @@ type PageFields = {
  faqs: readonly GuideFaq[]; lastModified: string; explicitLang: boolean; isGuide: boolean;
  article?: boolean; datePublished?: string;
  images?: readonly EvidenceImage[]; tables?: readonly EvidenceTable[];
+ primaryImage?: EvidenceImage;
 };
 type Page = PageFields & (
  { india?: false; sections: readonly GuideSection[] } |
@@ -35,6 +36,7 @@ import { carPage } from './content/car-page.ts';
 import { transparentPage } from './content/transparent-page.ts';
 import { renderTransparentPage } from './content/transparent-renderer.ts';
 import { renderGuideComparison } from './content/guide-comparison.ts';
+import { renderCarGallery, renderOpaqueExampleSection, carPrimaryImage } from './content/car-examples.ts';
 import { comparisonStylesheet } from './content/guide-styles.ts';
 import { hindiDescription, hindiFaqs, hindiSections, hindiSlug, hindiTitle, hinglishSlug } from './content/hindi-page.ts';
 const site = 'https://clearcutt.in/';
@@ -56,12 +58,19 @@ const docsUpdateInstant = '2026-11-22T08:40:02Z';
 // only (commit instant pinned in the sitemap below).
 const contentCorrectionDate = '2026-11-25';
 const contentCorrectionInstant = '2026-11-25T04:22:00Z';
+// 27 November 2026 visual update: the car guide gained a gallery of genuine
+// owner-supplied car examples and the transparent guide gained the opaque-JPEG
+// comparison (commit instant pinned in the sitemap below).
+const visualUpdateDate = '2026-11-27';
+const visualUpdateInstant = '2026-11-27T15:32:00Z';
 const pageDates: Record<string, string> = {
  'remove-background-products': contentUpdateDate,
  'remove-background-portraits': contentUpdateDate,
  about: docsUpdateDate,
  privacy: contentUpdateDate,
  contact: '2026-11-13',
+ 'remove-background-cars': visualUpdateDate,
+ 'transparent-background': visualUpdateDate,
 };
 const policySlugs = new Set(['about', 'privacy', 'contact']);
 const socialImage = `${site}artwork/clearcut-social-card.png`;
@@ -140,7 +149,7 @@ const legacySources: readonly LegacyGuideSource[] = [
 ];
 const legacyPages = legacySources.map(([slug,title,description,sections,faqs,fields]): Page => {
  const o=typeof fields==='object'&&fields!==null?fields:{};
- return {slug,title,description,sections,faqs:faqs||[],metaTitle:o.metaTitle||title,h1:o.h1||title,lang:o.lang||'en',images:o.images||[],tables:o.tables||[],explicitLang:!!o.lang,lastModified:o.lastModified||pageDates[slug]||releaseDate,isGuide:!policySlugs.has(slug)};
+ return {slug,title,description,sections,faqs:faqs||[],metaTitle:o.metaTitle||title,h1:o.h1||title,lang:o.lang||'en',images:o.images||[],tables:o.tables||[],primaryImage:o.primaryImage,explicitLang:!!o.lang,lastModified:o.lastModified||pageDates[slug]||releaseDate,isGuide:!policySlugs.has(slug)};
 });
 const links = () => pages.map(p => `<li><a href="${site}${p.slug}/">${escape(p.title)}</a></li>`).join('');
 // Editorial sanitizers: strip internal implementation details (alpha thresholds, forensic RAM erasure)
@@ -244,7 +253,7 @@ const guideMedia: Record<string, GuideMedia> = {
 };
 const renderGuideVisual=(p: Page)=>{
  if(p.slug==='transparent-background')return renderGuideComparison('transparency');
- if(p.slug==='remove-background-cars')return renderGuideComparison('cars');
+ if(p.slug==='remove-background-cars')return renderCarGallery();
  const media=guideMedia[p.slug];
  if(!media)return '';
  return `<figure class="guide-visual"><img class="guide-visual-image" src="/artwork/guides/${media.name}-960.webp" srcset="/artwork/guides/${media.name}-480.webp 480w, /artwork/guides/${media.name}-960.webp 960w" sizes="(max-width: 767px) calc(100vw - 48px), 756px" width="${media.width}" height="${media.height}" alt="${escape(media.alt)}" decoding="async" fetchpriority="high"><figcaption>${escape(media.caption)}</figcaption></figure>`;
@@ -292,17 +301,28 @@ function renderPageBase(p: Page) {
  if(p.article){data.headline=p.h1||p.title;data.datePublished=p.datePublished;data.mainEntityOfPage=url;}
  if(p.explicitLang)data.inLanguage=p.lang;
  if(p.images&&p.images.length){const first=p.images[0];data.primaryImageOfPage={'@type':'ImageObject',url:new URL(first.src,url).href,name:first.alt,width:first.width,height:first.height};}
+ if(p.primaryImage){data.primaryImageOfPage={'@type':'ImageObject',url:new URL(p.primaryImage.src,url).href,name:p.primaryImage.alt,width:p.primaryImage.width,height:p.primaryImage.height};}
  if(p.faqs.length)data['@graph']=[{'@type':'FAQPage','@id':`${url}#faq`,mainEntity:p.faqs.map(([q,a])=>({'@type':'Question',name:q,acceptedAnswer:{'@type':'Answer',text:a}}))}];
  const figures=(p.images||[]).map(({src,alt,caption,...rest})=>`<figure class="evidence">${evidenceImage({src,alt,...rest}).html}${caption?`<figcaption>${escape(caption)}</figcaption>`:''}</figure>`).join('');
  const tables=(p.tables||[]).map(({caption,head,rows})=>`<div class="table-wrap"${caption?` role="group" aria-label="${escape(caption)}"`:''}><table>${caption?`<caption>${escape(caption)}</caption>`:''}<thead><tr>${head.map(h=>`<th scope="col">${escape(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${escape(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`).join('');
  const visual=renderGuideVisual(p);
+ // Pages with a dedicated primary image (currently the car guide) reference that
+ // image in the social cards; every other page keeps the default social card.
+ const pageSocial=p.primaryImage
+  ?{image:new URL(p.primaryImage.src,url).href,width:String(p.primaryImage.width),height:String(p.primaryImage.height),alt:p.primaryImage.alt}
+  :{image:socialImage,width:'1200',height:'630',alt:'Clearcutt Remove BG — private, on-device image background removal'};
  const visualBeforeSections=guideMedia[p.slug]?.afterFirstSection?'':visual;
  const insertAfterFirstSection=(body: string)=>guideMedia[p.slug]?.afterFirstSection?body.replace('</section>',`</section>${visual}`):body;
  const legacyBody=p.india?'':insertAfterFirstSection(p.sections.map(([h,t])=>`<section${p.slug==='about'&&h==='Editorial standards'?' id="editorial-standards"':''}><h2>${escape(h)}</h2><p>${md(t)}</p>${figures}${tables}</section>`).join(''));
+ // The transparent guide gains the supplementary opaque-JPEG comparison after the
+ // "Why PNG and not JPG" section; the typed renderer performs the same insertion.
+ const legacyBodyWithSupplement=p.slug==='transparent-background'
+  ?legacyBody.replace('<section><h2>Graphics and logos</h2>',`${renderOpaqueExampleSection()}<section><h2>Graphics and logos</h2>`)
+  :legacyBody;
  const indiaBody=p.india?insertAfterFirstSection(p.indiaBody):'';
- const contentBody=p.india?`${indiaBody}<p class="editorial-note">Editorially checked on ${p.editorialDate}. Product behaviour can change; this guide is reviewed against the current editor and the official sources listed on this page.</p><p><a class="cta" href="/#workspace">${escape(p.indiaCta)} →</a></p>`:`${legacyBody}${renderWorkflowDemo(p)}`;
+ const contentBody=p.india?`${indiaBody}<p class="editorial-note">Editorially checked on ${p.editorialDate}. Product behaviour can change; this guide is reviewed against the current editor and the official sources listed on this page.</p><p><a class="cta" href="/#workspace">${escape(p.indiaCta)} →</a></p>`:`${legacyBodyWithSupplement}${renderWorkflowDemo(p)}`;
  const pageMeta=p.isGuide?`<p class="page-meta">Maintained by <a href="/about/#editorial-standards">Clearcutt</a> · Last updated <time datetime="${p.lastModified}">${new Date(`${p.lastModified}T00:00:00Z`).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'})}</time></p>`:'';
- return `<!doctype html><html lang="${p.lang||'en'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escape(pageTitle)} | Clearcutt</title><meta name="description" content="${escape(p.description)}"><meta name="robots" content="index,follow,max-image-preview:large"><meta name="referrer" content="no-referrer"><meta property="og:site_name" content="Clearcutt Remove BG"><meta property="og:title" content="${escape(pageTitle)} | Clearcutt"><meta property="og:description" content="${escape(p.description)}"><meta property="og:type" content="website"><meta property="og:url" content="${url}"><meta property="og:image" content="${socialImage}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Clearcutt Remove BG — private, on-device image background removal"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${escape(pageTitle)} | Clearcutt"><meta name="twitter:description" content="${escape(p.description)}"><meta name="twitter:image" content="${socialImage}"><meta name="twitter:image:alt" content="Clearcutt Remove BG — private, on-device image background removal"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; font-src 'self'; img-src 'self' data:; script-src https://static.cloudflareinsights.com; connect-src 'self'; base-uri 'none'; object-src 'none'; form-action 'none'"><link rel="canonical" href="${url}"><link rel="stylesheet" href="/seo.css"><script type="application/ld+json">${JSON.stringify(data)}</script></head><body><a class="skip" href="#content">Skip to content</a><header><a class="brand" href="/">◩ clearcutt.</a><nav aria-label="Main"><a href="/#workspace">Remove background</a><a href="/how-to-remove-background/">How to use</a><a href="/#plans">Pricing</a></nav></header><main id="content"><p class="breadcrumb"><a href="/">Home</a><span aria-hidden="true"> / </span>${escape(p.title)}</p><h1>${escape(p.h1||p.title)}</h1><p class="lead">${p.india?p.lead:escape(p.description)}</p>${pageMeta}${visualBeforeSections}${contentBody}${p.faqs.length?`<section class="faq" aria-labelledby="faq-heading"><h2 id="faq-heading">Frequently asked questions</h2>${p.faqs.map(([q,a])=>`<h3>${escape(q)}</h3><p>${p.india?mdProse(a):md(a)}</p>`).join('')}</section>`:''}<p><a class="cta" href="/#workspace">Open the free background remover →</a></p>${p.slug==='contact'?'<p><a href="mailto:yxsingh2@gmail.com?subject=Clearcutt%20feedback">Send private feedback</a> · <a href="https://github.com/singhyashkumar/clearcut-remove-bg/issues">Open the public issue tracker</a></p>':''}<aside aria-label="Related guides"><h2>Explore Clearcutt</h2><ul>${links()}</ul></aside></main><footer><a href="/about/">About</a><a href="/privacy/">Privacy</a><a href="/contact/">Contact</a><a href="/THIRD_PARTY_NOTICES.md">Open-source notices</a></footer></body></html>`;
+ return `<!doctype html><html lang="${p.lang||'en'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escape(pageTitle)} | Clearcutt</title><meta name="description" content="${escape(p.description)}"><meta name="robots" content="index,follow,max-image-preview:large"><meta name="referrer" content="no-referrer"><meta property="og:site_name" content="Clearcutt Remove BG"><meta property="og:title" content="${escape(pageTitle)} | Clearcutt"><meta property="og:description" content="${escape(p.description)}"><meta property="og:type" content="website"><meta property="og:url" content="${url}"><meta property="og:image" content="${pageSocial.image}"><meta property="og:image:width" content="${pageSocial.width}"><meta property="og:image:height" content="${pageSocial.height}"><meta property="og:image:alt" content="${escape(pageSocial.alt)}"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${escape(pageTitle)} | Clearcutt"><meta name="twitter:description" content="${escape(p.description)}"><meta name="twitter:image" content="${pageSocial.image}"><meta name="twitter:image:alt" content="${escape(pageSocial.alt)}"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; font-src 'self'; img-src 'self' data:; script-src https://static.cloudflareinsights.com; connect-src 'self'; base-uri 'none'; object-src 'none'; form-action 'none'"><link rel="canonical" href="${url}"><link rel="stylesheet" href="/seo.css"><script type="application/ld+json">${JSON.stringify(data)}</script></head><body><a class="skip" href="#content">Skip to content</a><header><a class="brand" href="/">◩ clearcutt.</a><nav aria-label="Main"><a href="/#workspace">Remove background</a><a href="/how-to-remove-background/">How to use</a><a href="/#plans">Pricing</a></nav></header><main id="content"><p class="breadcrumb"><a href="/">Home</a><span aria-hidden="true"> / </span>${escape(p.title)}</p><h1>${escape(p.h1||p.title)}</h1><p class="lead">${p.india?p.lead:escape(p.description)}</p>${pageMeta}${visualBeforeSections}${contentBody}${p.faqs.length?`<section class="faq" aria-labelledby="faq-heading"><h2 id="faq-heading">Frequently asked questions</h2>${p.faqs.map(([q,a])=>`<h3>${escape(q)}</h3><p>${p.india?mdProse(a):md(a)}</p>`).join('')}</section>`:''}<p><a class="cta" href="/#workspace">Open the free background remover →</a></p>${p.slug==='contact'?'<p><a href="mailto:yxsingh2@gmail.com?subject=Clearcutt%20feedback">Send private feedback</a> · <a href="https://github.com/singhyashkumar/clearcut-remove-bg/issues">Open the public issue tracker</a></p>':''}<aside aria-label="Related guides"><h2>Explore Clearcutt</h2><ul>${links()}</ul></aside></main><footer><a href="/about/">About</a><a href="/privacy/">Privacy</a><a href="/contact/">Contact</a><a href="/THIRD_PARTY_NOTICES.md">Open-source notices</a></footer></body></html>`;
 }
 export function renderPage(p: Page) {
  const stylesheet = ['transparent-background','remove-background-cars'].includes(p.slug) ? comparisonStylesheet : '/seo.css';
@@ -363,6 +383,8 @@ export const sitemapLastmod: Record<string, string> = {
  'remove-bg-shutting-down': contentUpdateInstant,
  'photo-ka-background-kaise-hataye': contentCorrectionInstant,
  'photo-background-hindi': contentCorrectionInstant,
+ 'remove-background-cars': visualUpdateInstant,
+ 'transparent-background': visualUpdateInstant,
 };
 export const sitemap=`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${site}</loc><lastmod>${contentUpdateInstant}</lastmod></url>${pages.map(p=>`<url><loc>${site}${p.slug}/</loc><lastmod>${sitemapLastmod[p.slug] ?? p.lastModified}</lastmod></url>`).join('')}</urlset>\n`;
 export function seoPlugin(): Plugin {let outDir: string;return {name:'clearcut-seo',configResolved(config){outDir=resolve(config.root,config.build.outDir);},transformIndexHtml:enhanceHome,closeBundle(){for(const p of pages){const directory=resolve(outDir,p.slug);mkdirSync(directory,{recursive:true});writeFileSync(resolve(directory,'index.html'),renderPage(p));}writeFileSync(resolve(outDir,'robots.txt'),robots);writeFileSync(resolve(outDir,'sitemap.xml'),sitemap);}};}
